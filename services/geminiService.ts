@@ -5,6 +5,14 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 
+export type Enhancement = 'color' | 'grayscale' | 'bw';
+export type Corners = {
+    tl: { x: number; y: number };
+    tr: { x: number; y: number };
+    bl: { x: number; y: number };
+    br: { x: number; y: number };
+};
+
 // Helper function to convert a File object to a Gemini API Part
 const fileToPart = async (file: File): Promise<{ inlineData: { mimeType: string; data: string; } }> => {
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -93,15 +101,13 @@ export const generateEditedImageWithMask = async (
     const originalImagePart = await fileToPart(originalImage);
     const maskImagePart = dataUrlToPart(maskImageDataUrl);
     
-    const fullPrompt = `You are a world-class photo editing AI. The user has provided an image, a mask, and an instruction. Your task is to perform a photorealistic edit based on these inputs.
+    const fullPrompt = `You are a professional, pixel-perfect photo editing AI. The user has provided an image, a mask, and an instruction. Your task is to perform a photorealistic edit based ONLY on these inputs.
 
-**CRITICAL INSTRUCTIONS:**
-1.  **MASK IS KING:** The provided mask image dictates the **ONLY** area you are allowed to modify. The white (or non-black/transparent) areas of the mask are the edit zone.
-2.  **PRESERVE THE REST:** The black (or transparent) areas of the mask correspond to parts of the original image that **MUST BE PRESERVED EXACTLY** as they are. Do not change, recolor, or alter these areas in any way.
-3.  **SEAMLESS INTEGRATION:** The edit must blend perfectly with the untouched parts of the image. Match lighting, shadows, texture, grain, and perspective.
-4.  **FOLLOW THE PROMPT:** Apply the user's text request within the masked area.
-
-User's Edit Request: "${prompt}"
+**CRITICAL RULES:**
+1.  **THE MASK IS THE *ONLY* EDIT ZONE:** The provided mask image dictates the one and only area you can change. White pixels in the mask are the 'edit zone'. Black pixels are 'protected zones'.
+2.  **NEVER TOUCH PROTECTED ZONES:** The black areas of the mask correspond to parts of the original image that **MUST BE PRESERVED IDENTICALLY**. Do not change, recolor, distort, or alter these protected pixels in any way.
+3.  **PERFORM THIS EXACT TASK:** Inside the 'edit zone' (the white parts of the mask), perform the following action: **"${prompt}"**.
+4.  **BLEND SEAMLESSLY:** The edit must integrate perfectly with the protected parts of the image. Match lighting, shadows, texture, grain, perspective, and color grading.
 
 Output: Return ONLY the final, edited image as a PNG file. Do not output text, explanations, or apologies.`;
     const textPart = { text: fullPrompt };
@@ -278,4 +284,212 @@ Output: Return ONLY the final, fully rendered image with the transparent areas f
     console.log('Received response from model for expansion.', response);
 
     return handleApiResponse(response, 'expansion');
+};
+
+/**
+ * Generates a composite image by combining subjects and optional style/background images.
+ * @param subjectImages The main subject images.
+ * @param styleImages An array of optional images providing styles (e.g., clothing, textures).
+ * @param backgroundImage An optional new background image.
+ * @param prompt Text instructions for how to combine the images.
+ * @returns A promise that resolves to the data URL of the composite image.
+ */
+export const generateCompositeImage = async (
+    subjectImages: File[],
+    styleImages: File[],
+    backgroundImage: File | null,
+    prompt: string
+): Promise<string> => {
+    console.log(`Starting image composite generation with ${subjectImages.length} subjects and ${styleImages.length} styles: ${prompt}`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+    const parts: any[] = [];
+    
+    // Add all image parts in a specific order: Subjects -> Styles -> Background
+    const subjectParts = await Promise.all(subjectImages.map(file => fileToPart(file)));
+    parts.push(...subjectParts);
+    
+    if (styleImages.length > 0) {
+        const styleParts = await Promise.all(styleImages.map(file => fileToPart(file)));
+        parts.push(...styleParts);
+    }
+    if (backgroundImage) {
+        parts.push(await fileToPart(backgroundImage));
+    }
+
+    // Dynamically build the prompt to explain the provided images to the AI
+    let imageInputsDescription = `**Input Images Provided (in order):**
+- The first ${subjectImages.length} image(s) are the **[Subject Images]**. Preserve their identities and key features.`;
+    
+    if (styleImages.length > 0) {
+        imageInputsDescription += `\n- The next ${styleImages.length} image(s) are the **[Style Reference Images]**. Their purpose is to provide a visual reference for an *item, texture, or clothing style*. **CRITICAL: The people, faces, and backgrounds in these style images MUST be IGNORED.** Only the *style element itself* (e.g., the jacket, the dress, the pattern) should be extracted and applied to the subjects from the **[Subject Images]**.`;
+    }
+    if (backgroundImage) {
+        imageInputsDescription += `\n- The final image is the **[Background Image]**. This is the new background scene.`;
+    }
+
+    let taskDescription = `**Your Task:**
+1.  **Analyze and Complete Subjects:** Intelligently isolate the main subjects from their original backgrounds in the [Subject Images].
+    - **CRITICAL IDENTITY PRESERVATION RULE:** **YOU MUST PRESERVE THE EXACT FACE AND IDENTITY of any person from the [Subject Images].** Do not change their facial features, ethnicity, or identity. The final output **MUST** feature the **EXACT SAME PERSON** from the subject image.
+    - If a subject appears cropped (e.g., a portrait missing legs) and the user's instructions or style images imply a full-body outcome (e.g., adding shoes), you MUST realistically generate the missing body parts to create a complete, coherent subject.`;
+
+    let stepCounter = 1;
+    if (styleImages.length > 0) {
+        stepCounter++;
+        taskDescription += `\n${stepCounter}. **Extract and Apply Styles:** EXTRACT the key style elements (like clothing, objects, or textures) from the [Style Reference Images]. **DO NOT copy the people or faces from the style images.** Apply these extracted styles onto the subjects (including any newly generated parts) from the [Subject Images]. For example, if a subject image shows a person and a style image shows a different person wearing a leather jacket, your task is to put the *leather jacket* on the *person from the subject image*. You MUST NOT add the second person to the final image.`;
+    }
+    
+    stepCounter++;
+    if (backgroundImage) {
+        taskDescription += `\n${stepCounter}. **Composite Scene:** Place the modified subjects into the [Background Image] scene.`;
+    } else {
+        taskDescription += `\n${stepCounter}. **Create Scene:** Generate a suitable and photorealistic background scene that complements the subjects and the user's instructions, then place the subjects within it.`;
+    }
+    
+    stepCounter++;
+    taskDescription += `\n${stepCounter}. **Harmonize:** Make the final image look real. Match lighting, shadows, perspective, scale, and color grading perfectly.`;
+
+    const fullPrompt = `You are a master digital artist specializing in photorealistic image compositing. Your task is to combine the provided inputs into a single, cohesive, and believable image.
+
+${imageInputsDescription}
+
+**User's Instructions:**
+"${prompt || 'Combine the provided images into a cohesive, photorealistic scene. Analyze the inputs and make the best artistic choice.'}"
+
+${taskDescription}
+
+**Output:**
+Return ONLY the final, composited image. Do not output any text or explanations.`;
+    
+    const textPart = { text: fullPrompt };
+    parts.push(textPart);
+
+    console.log('Sending composite request to the model...');
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    console.log('Received response from model for composite.', response);
+    
+    return handleApiResponse(response, 'composite');
+};
+
+/**
+ * Automatically scans a document from an image.
+ * @param originalImage The original image file containing the document.
+ * @param enhancement The desired color enhancement ('color', 'grayscale', 'bw').
+ * @param removeShadows Whether to remove shadows from the document.
+ * @returns A promise that resolves to the data URL of the scanned document.
+ */
+export const generateScannedDocument = async (
+    originalImage: File,
+    enhancement: Enhancement,
+    removeShadows: boolean,
+): Promise<string> => {
+    console.log(`Starting auto document scan: enhancement=${enhancement}, shadows=${removeShadows}`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    
+    const originalImagePart = await fileToPart(originalImage);
+    const prompt = `**AI TASK: DOCUMENT SCAN**
+
+**INPUT:**
+- Image containing a document.
+
+**INSTRUCTIONS:**
+1.  **IDENTIFY DOCUMENT:** Analyze the image to find the primary document's four corners.
+2.  **EXECUTE PERSPECTIVE TRANSFORM:**
+    -   Input: The original image.
+    -   Source Quad: The four corners you identified.
+    -   Destination Quad: A perfect rectangle with the same aspect ratio as the detected document.
+    -   Action: Warp the source quad to fit the destination quad. This corrects any perspective distortion.
+3.  **CROP:** Crop the image to the bounds of the new rectangular document.
+4.  **ENHANCE:**
+    -   Mode: '${enhancement}'
+    -   Apply a filter to maximize contrast and readability.
+5.  **CLEANUP:**
+    -   Shadows: ${removeShadows ? 'REMOVE all shadows for even lighting.' : 'Preserve natural shadows.'}
+
+**OUTPUT:**
+-   **FORMAT:** Image file (PNG).
+-   **CONTENT:** ONLY the transformed, cropped, and enhanced document.
+-   **DO NOT** return the original image.
+-   **DO NOT** return any text.`;
+    const textPart = { text: prompt };
+
+    console.log('Sending image and scan prompt to the model...');
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [originalImagePart, textPart] },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    console.log('Received response from model for auto scan.', response);
+    
+    return handleApiResponse(response, 'scan');
+};
+
+
+/**
+ * Scans a document from an image using user-provided corner coordinates.
+ * @param originalImage The original image file.
+ * @param corners The user-defined corners of the document.
+ * @param enhancement The desired color enhancement.
+ * @param removeShadows Whether to remove shadows.
+ * @returns A promise that resolves to the data URL of the scanned document.
+ */
+export const generateScannedDocumentWithCorners = async (
+    originalImage: File,
+    corners: Corners,
+    enhancement: Enhancement,
+    removeShadows: boolean,
+): Promise<string> => {
+    console.log(`Starting manual document scan with corners: ${JSON.stringify(corners)}`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    
+    const originalImagePart = await fileToPart(originalImage);
+    const prompt = `**AI TASK: DOCUMENT PERSPECTIVE CROP**
+
+**INPUT:**
+-   Image containing a document.
+-   Source Quad (corners of the document in pixels):
+    -   Top-Left: (${corners.tl.x}, ${corners.tl.y})
+    -   Top-Right: (${corners.tr.x}, ${corners.tr.y})
+    -   Bottom-Left: (${corners.bl.x}, ${corners.bl.y})
+    -   Bottom-Right: (${corners.br.x}, ${corners.br.y})
+
+**INSTRUCTIONS:**
+1.  **EXECUTE PERSPECTIVE TRANSFORM:**
+    -   Input: The original image.
+    -   Source Quad: The exact pixel coordinates provided above.
+    -   Destination Quad: A perfect rectangle with an aspect ratio derived from the source quad.
+    -   Action: Warp the source quad to fit the destination quad. This corrects any perspective distortion.
+2.  **CROP:** Crop the image to the bounds of the new rectangular document.
+3.  **ENHANCE:**
+    -   Mode: '${enhancement}'
+    -   Apply a filter to maximize contrast and readability.
+4.  **CLEANUP:**
+    -   Shadows: ${removeShadows ? 'REMOVE all shadows for even lighting.' : 'Preserve natural shadows.'}
+
+**OUTPUT:**
+-   **FORMAT:** Image file (PNG).
+-   **CONTENT:** ONLY the transformed, cropped, and enhanced document.
+-   **DO NOT** return the original image.
+-   **DO NOT** return any text.`;
+    const textPart = { text: prompt };
+
+    console.log('Sending image and manual scan prompt to the model...');
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [originalImagePart, textPart] },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    console.log('Received response from model for manual scan.', response);
+    
+    return handleApiResponse(response, 'manual scan');
 };

@@ -51,7 +51,7 @@ const LanguageSwitcher: React.FC = () => {
       {/* Dropdown Menu */}
       {isOpen && (
         <div 
-          className="absolute right-0 top-full mt-2 w-48 bg-gray-900/50 border border-white/10 rounded-lg shadow-xl backdrop-blur-lg animate-fade-in z-20"
+          className="absolute right-0 top-full mt-2 w-48 bg-black/40 border border-white/10 rounded-lg shadow-xl backdrop-blur-xl animate-fade-in z-20"
           role="menu"
         >
           <ul className="py-1" role="none">

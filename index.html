@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-g" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pixshop</title>
@@ -23,46 +23,127 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://esm.sh/react-image-crop@^11.0.6/dist/ReactCrop.css" />
 <style>
+:root {
+  --glow-color-1: rgba(0, 255, 255, 0.5); /* Cyan */
+  --glow-color-2: rgba(191, 0, 255, 0.5); /* Magenta */
+  --glow-color-3: rgba(75, 0, 130, 0.4);   /* Indigo */
+  
+  --g1x: 10%; --g1y: 90%;
+  --g2x: 90%; --g2y: 20%;
+  --g3x: 50%; --g3y: 50%;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #020212;
-    background: 
-        radial-gradient(ellipse at 10% 90%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at 90% 20%, rgba(255, 0, 255, 0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(75, 0, 130, 0.25) 0%, transparent 60%),
-        #020212;
-    background-size: 200% 200%;
+    background-image: 
+        radial-gradient(circle at var(--g1x) var(--g1y), var(--glow-color-1), transparent 40%),
+        radial-gradient(circle at var(--g2x) var(--g2y), var(--glow-color-2), transparent 40%),
+        radial-gradient(circle at var(--g3x) var(--g3y), var(--glow-color-3), transparent 50%);
     min-height: 100vh;
-    animation: move-nebula 40s ease-in-out infinite alternate;
+    animation: aurora-bg 30s ease-in-out infinite alternate;
+    position: relative;
+    overflow-x: hidden;
 }
 
-@keyframes move-nebula {
-    from {
-        background-position: 0% 0%;
-    }
-    to {
-        background-position: 100% 100%;
-    }
+/* Grain overlay for texture */
+body::after {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%; right: -50%; bottom: -50%;
+    width: 200%; height: 200%;
+    z-index: -1;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXWBgYGHh4d5eXlzc3OLi4ubm5uVlZWYmJitbW1xcXFsbGxpaWlpaXVtbfHx8fLy8vT09PX19fb29vj4+Pj6+vqlqzmEAAAATElEQVRIx+3QSRKAQAxA0UpK2f3vK2e+gJg6ADjbEAnEWHu2YPKYy0z33Z8yNxHSoz2H1uR2gJ7puqw2mZ/2b6IFf9sD/AlP8HlT8h2wNVeAAAAAElFTkSuQmCC');
+    opacity: 0.03;
+    animation: grain 8s steps(10) infinite;
 }
 
-@keyframes fly {
-    from {
-        transform: translateY(0px);
-    }
-    to {
-        transform: translateY(-1000px);
-    }
-}
-
-@keyframes shooting-star {
+@keyframes aurora-bg {
     0% {
-        transform: translateX(0);
-        opacity: 1;
+        --g1x: 10%; --g1y: 90%;
+        --g2x: 90%; --g2y: 20%;
+        --g3x: 50%; --g3y: 50%;
     }
     100% {
-        transform: translateX(300vw);
-        opacity: 0;
+        --g1x: 20%; --g1y: 10%;
+        --g2x: 80%; --g2y: 90%;
+        --g3x: 40%; --g3y: 60%;
     }
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+/* Upgrading the Glass Panels */
+.bg-black\\/30 {
+  background-color: rgba(16, 16, 32, 0.45) !important; /* Slightly more opaque and bluer */
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+.bg-black\\/40 {
+  background-color: rgba(16, 16, 32, 0.55) !important;
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Subtle gradient border effect for panels */
+.rounded-2xl.bg-black\\/30, .rounded-2xl.bg-black\\/40 {
+    position: relative;
+    z-index: 1;
+}
+
+.rounded-2xl.bg-black\\/30::before, .rounded-2xl.bg-black\\/40::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem; /* match tailwind rounded-2xl */
+    padding: 1px; /* border thickness */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Text readability */
+body, .text-gray-100, .text-gray-200, .text-gray-300, .text-gray-400, .text-white {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Upgrade Inputs */
+.bg-white\\/5 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.bg-white\\/5:focus-within, .bg-white\\/5:focus {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 0 0 1px var(--glow-color-1);
+}
+
+/* Upgrade Buttons */
+.bg-gradient-to-br.from-cyan-500 {
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), 0 0 30px rgba(0, 255, 255, 0.1), inset 0 1px 1px rgba(255,255,255,0.2);
+}
+.bg-gradient-to-br.from-cyan-500:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2), inset 0 1px 1px rgba(255,255,255,0.2);
 }
 
 @keyframes pulse-draw {
@@ -83,14 +164,14 @@ body {
     animation: pulse-erase 1.8s infinite ease-in-out;
 }
 
-@keyframes glow-border {
-    0% { border-color: rgba(0, 255, 255, 0.4); box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), inset 0 0 5px rgba(0, 255, 255, 0.1); }
-    50% { border-color: rgba(191, 0, 255, 0.4); box-shadow: 0 0 20px rgba(191, 0, 255, 0.3), inset 0 0 10px rgba(191, 0, 255, 0.1); }
-    100% { border-color: rgba(0, 255, 255, 0.4); box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), inset 0 0 5px rgba(0, 255, 255, 0.1); }
+.glow-border-animate {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  animation: shimmer-border 4s ease-in-out infinite alternate;
 }
 
-.glow-border-animate {
-    animation: glow-border 8s ease-in-out infinite;
+@keyframes shimmer-border {
+  0% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.1), inset 0 0 5px rgba(0, 255, 255, 0.1); }
+  100% { box-shadow: 0 0 10px rgba(191, 0, 255, 0.2), inset 0 0 5px rgba(191, 0, 255, 0.1); }
 }
 
 @keyframes slide-in-right {
@@ -108,118 +189,48 @@ body {
 }
 
 
-#star-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    overflow: hidden;
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
 }
 
-#stars1, #stars2, #stars3 {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    height: 2000px; /* Double the pattern height for seamless looping */
-    background-repeat: repeat;
-    background-size: 1000px 1000px;
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
 }
 
-/* Distant stars: small, dense, slow */
-#stars1 {
-    background-image: 
-        radial-gradient(1px 1px at 100px 200px, white, transparent),
-        radial-gradient(1px 1px at 250px 800px, white, transparent),
-        radial-gradient(1px 1px at 400px 500px, white, transparent),
-        radial-gradient(1px 1px at 620px 720px, white, transparent),
-        radial-gradient(1px 1px at 800px 100px, white, transparent),
-        radial-gradient(1px 1px at 950px 450px, white, transparent),
-        radial-gradient(1px 1px at 150px 950px, white, transparent),
-        radial-gradient(1px 1px at 500px 300px, white, transparent),
-        radial-gradient(1px 1px at 50px 50px, white, transparent),
-        radial-gradient(1px 1px at 180px 600px, white, transparent),
-        radial-gradient(1px 1px at 330px 400px, white, transparent),
-        radial-gradient(1px 1px at 470px 900px, white, transparent),
-        radial-gradient(1px 1px at 600px 150px, white, transparent),
-        radial-gradient(1px 1px at 750px 650px, white, transparent),
-        radial-gradient(1px 1px at 880px 880px, white, transparent),
-        radial-gradient(1px 1px at 920px 250px, white, transparent),
-        radial-gradient(1px 1px at 20px 700px, white, transparent),
-        radial-gradient(1px 1px at 550px 50px, white, transparent);
-    animation: fly 200s linear infinite;
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
 }
 
-/* Mid-ground stars: medium, less dense, faster */
-#stars2 {
-    background-image: 
-        radial-gradient(1.5px 1.5px at 50px 300px, white, transparent),
-        radial-gradient(1.5px 1.5px at 300px 100px, white, transparent),
-        radial-gradient(1.5px 1.5px at 550px 600px, white, transparent),
-        radial-gradient(1.5px 1.5px at 750px 250px, white, transparent),
-        radial-gradient(1.5px 1.5px at 900px 900px, white, transparent),
-        radial-gradient(1.5px 1.5px at 150px 700px, white, transparent),
-        radial-gradient(1.5px 1.5px at 400px 400px, white, transparent),
-        radial-gradient(1.5px 1.5px at 650px 850px, white, transparent),
-        radial-gradient(1.5px 1.5px at 850px 500px, white, transparent),
-        radial-gradient(1.5px 1.5px at 200px 50px, white, transparent);
-    animation: fly 120s linear infinite;
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-/* Foreground stars: large, sparse, fastest */
-#stars3 {
-    background-image: 
-        radial-gradient(2px 2px at 200px 400px, white, transparent),
-        radial-gradient(2px 2px at 700px 800px, white, transparent),
-        radial-gradient(2px 2px at 50px 900px, white, transparent),
-        radial-gradient(2px 2px at 950px 50px, white, transparent),
-        radial-gradient(2px 2px at 450px 150px, white, transparent),
-        radial-gradient(2px 2px at 850px 650px, white, transparent),
-        radial-gradient(2px 2px at 300px 750px, white, transparent);
-    animation: fly 70s linear infinite;
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
 }
-
-/* Shooting Stars */
-#shooting-stars {
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    transform: rotateZ(-45deg);
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-#shooting-stars .star {
-    position: absolute;
-    height: 1px;
-    background: linear-gradient(-45deg, #a78bfa, transparent);
-    border-radius: 999px;
-    filter: drop-shadow(0 0 6px #8b5cf6);
-    animation: shooting-star 3s linear infinite;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
-
-#shooting-stars .star:nth-child(1) { top: 20%; left: 0; width: 300px; animation-delay: 0s; animation-duration: 2.8s; }
-#shooting-stars .star:nth-child(2) { top: 40%; left: 10%; width: 150px; animation-delay: 1.2s; animation-duration: 2.1s; }
-#shooting-stars .star:nth-child(3) { top: 60%; left: -20%; width: 200px; animation-delay: 2.5s; animation-duration: 3.5s; }
-#shooting-stars .star:nth-child(4) { top: 85%; left: 5%; width: 100px; animation-delay: 4.1s; animation-duration: 1.8s; }
 
 </style>
   <link rel="stylesheet" href="/index.css">
 </head>
   <body>
-    <div id="star-bg">
-        <div id="stars1"></div>
-        <div id="stars2"></div>
-        <div id="stars3"></div>
-        <div id="shooting-stars">
-            <div class="star"></div>
-            <div class="star"></div>
-            <div class="star"></div>
-            <div class="star"></div>
-        </div>
-    </div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

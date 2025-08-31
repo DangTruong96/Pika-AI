@@ -11,11 +11,12 @@ interface CropPanelProps {
   onSetAspect: (aspect: number | undefined) => void;
   isLoading: boolean;
   isCropping: boolean;
+  isImageLoaded: boolean;
 }
 
 type AspectRatio = 'free' | '1:1' | '16:9' | '4:3' | '3:4' | '3:2' | '2:3';
 
-const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoading, isCropping }) => {
+const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoading, isCropping, isImageLoaded }) => {
   const { t } = useTranslation();
   const [activeAspect, setActiveAspect] = useState<AspectRatio>('free');
   
@@ -35,7 +36,7 @@ const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoadi
   ];
 
   return (
-    <div className="w-full bg-black/20 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-lg">
+    <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
       <h3 className="text-lg font-semibold text-gray-200">{t('cropTitle')}</h3>
       <p className="text-sm text-gray-400 -mt-2">{t('cropDescription')}</p>
       
@@ -45,10 +46,10 @@ const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoadi
           <button
             key={name}
             onClick={() => handleAspectChange(name, value)}
-            disabled={isLoading}
+            disabled={isLoading || !isImageLoaded}
             className={`px-4 py-2 rounded-md text-base font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 ${
               activeAspect === name 
-              ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/30' 
+              ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-400/25 ring-1 ring-white/20' 
               : 'bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200'
             }`}
           >
@@ -59,8 +60,8 @@ const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoadi
 
       <button
         onClick={onApplyCrop}
-        disabled={isLoading || !isCropping}
-        className="w-full max-w-xs mt-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
+        disabled={isLoading || !isCropping || !isImageLoaded}
+        className="w-full max-w-xs mt-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
       >
         {t('applyCrop')}
       </button>

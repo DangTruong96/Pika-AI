@@ -3,39 +3,43 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { ZoomInIcon, ZoomOutIcon, ArrowsPointingOutIcon, XMarkIcon } from './icons';
+import Spinner from './Spinner';
 
 interface ScanViewerModalProps {
-  imageUrl: string;
+  imageUrl: string | null;
   onClose: () => void;
+  onSave: () => void;
+  onAdjust: () => void;
+  isLoading: boolean;
+  onDownloadPdf: () => void;
+  isDownloadingPdf: boolean;
 }
 
-const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose }) => {
+const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose, onSave, onAdjust, isLoading, onDownloadPdf, isDownloadingPdf }) => {
   const { t } = useTranslation();
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const panStartRef = useRef({ x: 0, y: 0 });
 
-  const resetView = () => {
+  const resetView = useCallback(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
-  };
+  }, []);
 
-  const handleZoom = (direction: 'in' | 'out', amount: number = 0.2) => {
+  const handleZoom = useCallback((direction: 'in' | 'out', amount: number = 0.2) => {
     setScale(prevScale => {
         const newScale = direction === 'in' ? prevScale * (1 + amount) : prevScale / (1 + amount);
-        return Math.max(0.1, Math.min(newScale, 10)); // Clamp scale between 0.1x and 10x
+        return Math.max(0.1, Math.min(newScale, 10)); // Clamp scale
     });
-  };
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
     e.preventDefault();
-    if (scale <= 1) return;
     setIsPanning(true);
     panStartRef.current = {
       x: e.clientX - position.x,
@@ -66,79 +70,113 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose }) 
 
   // Reset view when image changes
   useEffect(() => {
-    resetView();
-  }, [imageUrl]);
+    if(imageUrl) resetView();
+  }, [imageUrl, resetView]);
+
+  // Keyboard shortcuts for the modal
+  useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+              onClose();
+          }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+          window.removeEventListener('keydown', handleKeyDown);
+      };
+  }, [onClose]);
 
   return (
     <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-lg z-50 flex items-center justify-center animate-fade-in"
-        onClick={onClose}
+        className="fixed inset-0 bg-black/80 backdrop-blur-lg z-[100] flex flex-col items-center justify-center animate-fade-in"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="scan-modal-title"
     >
+      <h2 id="scan-modal-title" className="sr-only">{t('scanModalTitle')}</h2>
       <div 
-        ref={containerRef}
+        ref={viewerRef}
         className="relative w-full h-full flex items-center justify-center overflow-hidden"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
         onWheel={handleWheel}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the image area
       >
-        <img
-          ref={imageRef}
-          src={imageUrl}
-          alt={t('scanModalTitle')}
-          className={`transition-transform duration-100 ease-out ${isPanning || scale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-auto'}`}
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            maxWidth: '95vw',
-            maxHeight: '95vh',
-          }}
-          onMouseDown={handleMouseDown}
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={t('scanModalTitle')}
+            className={`transition-transform duration-100 ease-out shadow-2xl border border-white/10 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              maxWidth: '95vw',
+              maxHeight: '85vh',
+            }}
+            onMouseDown={handleMouseDown}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <Spinner />
+            <p className="text-gray-300">{t('loadingText')}</p>
+          </div>
+        )}
       </div>
 
-      {/* Header with Title and Close button */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
-        <h2 className="text-xl font-bold text-white">{t('scanModalTitle')}</h2>
-        <button
+      <button
           onClick={onClose}
-          className="p-2 rounded-full bg-black/30 text-white hover:bg-black/60 transition-colors"
+          disabled={isLoading || isDownloadingPdf}
+          className="absolute top-4 right-4 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors z-[110] disabled:opacity-50"
           aria-label={t('scanModalClose')}
           title={t('scanModalClose')}
         >
           <XMarkIcon className="w-6 h-6" />
+      </button>
+      
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[110] flex-wrap justify-center">
+          <button
+            onClick={onClose}
+            disabled={isLoading || isDownloadingPdf}
+            className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-6 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base disabled:opacity-50"
+          >
+            {t('scanDiscard')}
+          </button>
+          <button
+            onClick={onAdjust}
+            disabled={isLoading || isDownloadingPdf || !imageUrl}
+            className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-6 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base disabled:opacity-50"
+          >
+            {t('scanAdjustCorners')}
+          </button>
+        <button
+            onClick={onDownloadPdf}
+            disabled={isLoading || isDownloadingPdf || !imageUrl}
+            className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-purple-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center"
+        >
+           {isDownloadingPdf ? <Spinner/> : t('scanDownloadPdf')}
+        </button>
+        <button
+            onClick={onSave}
+            disabled={isLoading || isDownloadingPdf || !imageUrl}
+            className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-cyan-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center"
+        >
+           {t('scanSave')}
         </button>
       </div>
-
-      {/* Controls at the bottom */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/50 rounded-lg backdrop-blur-sm">
-        <button
-          onClick={() => handleZoom('out')}
-          className="p-3 rounded-md bg-white/10 text-white hover:bg-white/20 transition-colors active:scale-95"
-          aria-label={t('scanModalZoomOut')}
-          title={t('scanModalZoomOut')}
-        >
-          <ZoomOutIcon className="w-6 h-6" />
-        </button>
-        <button
-          onClick={resetView}
-          className="p-3 rounded-md bg-white/10 text-white hover:bg-white/20 transition-colors active:scale-95"
-          aria-label={t('scanModalResetZoom')}
-          title={t('scanModalResetZoom')}
-        >
-          <ArrowsPointingOutIcon className="w-6 h-6" />
-        </button>
-        <button
-          onClick={() => handleZoom('in')}
-          className="p-3 rounded-md bg-white/10 text-white hover:bg-white/20 transition-colors active:scale-95"
-          aria-label={t('scanModalZoomIn')}
-          title={t('scanModalZoomIn')}
-        >
-          <ZoomInIcon className="w-6 h-6" />
-        </button>
-      </div>
+      
+      {imageUrl && (
+        <div className="absolute right-4 bottom-4 lg:bottom-auto lg:left-1/2 lg:-translate-x-1/2 lg:top-4 flex items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-md border border-white/10 z-[110]">
+            <button onClick={() => handleZoom('out')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('scanModalZoomOut')}>
+                <ZoomOutIcon className="w-6 h-6" />
+            </button>
+            <button onClick={resetView} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('scanModalResetZoom')}>
+                <ArrowsPointingOutIcon className="w-6 h-6" />
+            </button>
+            <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('scanModalZoomIn')}>
+                <ZoomInIcon className="w-6 h-6" />
+            </button>
+        </div>
+      )}
     </div>
   );
 };
-
 export default ScanViewerModal;

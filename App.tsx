@@ -4,21 +4,20 @@
 */
 
 
+// Fix: Corrected syntax error in import statement to correctly import React hooks.
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask } from './services/geminiService';
+import jsPDF from 'jspdf';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, type Corners, type Enhancement } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
-import FilterPanel from './components/FilterPanel';
-import AdjustmentPanel from './components/AdjustmentPanel';
-import CropPanel from './components/CropPanel';
-import ExpandPanel from './components/ExpandPanel';
-import RetouchPanel, { SelectionMode, BrushMode } from './components/RetouchPanel';
-import { UndoIcon, RedoIcon, ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, ChevronsLeftRightIcon, DownloadIcon, BrushIcon, CropIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon } from './components/icons';
-import StartScreen from './components/StartScreen';
+import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
+import ScanViewerModal from './components/ScanViewerModal';
+import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, ChevronsLeftRightIcon, UploadIcon, EyeIcon, EyeSlashIcon, PaperAirplaneIcon, ClockIcon } from './components/icons';
 import { useTranslation } from './contexts/LanguageContext';
-// Fix: Import TranslationKey to allow casting for dynamic translation keys.
-import type { TranslationKey } from './translations';
+import { SelectionMode, BrushMode } from './components/RetouchPanel';
+import HistoryPanel from './components/HistoryPanel';
+
 
 // Helper to convert a data URL string to a File object
 const dataURLtoFile = (dataurl: string, filename: string): File => {
@@ -30,7 +29,6 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
     const mime = mimeMatch[1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
-    // Fix: Corrected typo from UintArray to Uint8Array.
     const u8arr = new Uint8Array(n);
     while(n--){
         u8arr[n] = bstr.charCodeAt(n);
@@ -38,7 +36,91 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
     return new File([u8arr], filename, {type:mime});
 }
 
-type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand';
+// Mobile-specific input bar for a better UX with on-screen keyboards
+const MobileInputBar: React.FC<{
+    prompt: string;
+    onPromptChange: (value: string) => void;
+    onSubmit: () => void;
+    isLoading: boolean;
+}> = ({ prompt, onPromptChange, onSubmit, isLoading }) => {
+    const { t } = useTranslation();
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            inputRef.current?.focus();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isLoading && prompt.trim()) {
+            onSubmit();
+        }
+    };
+
+    return (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] animate-slide-up z-40">
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={prompt}
+                    onChange={(e) => onPromptChange(e.target.value)}
+                    placeholder={t('retouchPlaceholderGenerative')}
+                    className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base"
+                    disabled={isLoading}
+                    autoComplete="off"
+                />
+                <button
+                    type="submit"
+                    className="flex-shrink-0 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold p-3 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 active:scale-95 active:shadow-inner disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none h-[50px] w-[50px] flex items-center justify-center ring-1 ring-white/10"
+                    disabled={isLoading || !prompt.trim()}
+                    aria-label={t('generate')}
+                >
+                    {isLoading ? <Spinner className="h-6 w-6"/> : <PaperAirplaneIcon className="w-6 h-6" />}
+                </button>
+            </form>
+        </div>
+    );
+};
+
+
+export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan';
+
+const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => void }> = ({ onFileSelect }) => {
+  const { t } = useTranslation();
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFileSelect(e.target.files);
+  };
+
+  return (
+    <div
+      className={`w-full h-full flex flex-col items-center justify-center text-gray-400 p-8 transition-all duration-300 rounded-2xl border-2 bg-black/30 backdrop-blur-xl shadow-2xl shadow-black/30 ${isDraggingOver ? 'border-dashed border-cyan-400' : 'border-transparent'}`}
+      onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+      onDragLeave={() => setIsDraggingOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDraggingOver(false);
+        onFileSelect(e.dataTransfer.files);
+      }}
+    >
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="p-4 bg-white/5 rounded-full border border-white/10">
+            <UploadIcon className="w-12 h-12 text-gray-300" />
+        </div>
+        <label htmlFor="image-upload-main" className="relative font-semibold text-cyan-300 cursor-pointer hover:underline text-lg">
+          {t('uploadImage')}
+          <input id="image-upload-main" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+        </label>
+        <p className="text-sm text-gray-500">{t('dragAndDrop')}</p>
+      </div>
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const { t } = useTranslation();
@@ -46,45 +128,141 @@ const App: React.FC = () => {
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('retouch');
   
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [aspect, setAspect] = useState<number | undefined>();
+  
+  // Editor State
+  const [activeTab, setActiveTab] = useState<Tab>('retouch');
+  const [isToolboxOpen, setIsToolboxOpen] = useState(true);
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
   
   // Retouch state
+  const [retouchPrompt, setRetouchPrompt] = useState('');
   const [selectionMode, setSelectionMode] = useState<SelectionMode>('point');
+  const [editHotspot, setEditHotspot] = useState<{ x: number, y: number } | null>(null);
   const [brushMode, setBrushMode] = useState<BrushMode>('draw');
   const [brushSize, setBrushSize] = useState(30);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [editHotspot, setEditHotspot] = useState<{ x: number, y: number } | null>(null);
-  const [displayHotspot, setDisplayHotspot] = useState<{ x: number, y: number } | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   const [isMouseOverViewer, setIsMouseOverViewer] = useState(false);
   const lastDrawPointRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Insert state
+  const [insertSubjectFiles, setInsertSubjectFiles] = useState<File[]>([]);
+  const [insertStyleFiles, setInsertStyleFiles] = useState<File[]>([]);
+  const [insertBackgroundFile, setInsertBackgroundFile] = useState<File | null>(null);
+  const [insertPrompt, setInsertPrompt] = useState('');
+
+  // Scan state
+  const [isManualScanMode, setIsManualScanMode] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [scannedImageUrl, setScannedImageUrl] = useState<string | null>(null);
+  const [corners, setCorners] = useState<Corners | null>(null);
+  const [activeCorner, setActiveCorner] = useState<keyof Corners | null>(null);
+  const [scanParams, setScanParams] = useState<{ enhancement: Enhancement, removeShadows: boolean } | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
 
   // Main image viewer refs
   const imgRef = useRef<HTMLImageElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
   const imageViewerRef = useRef<HTMLDivElement>(null);
+  const toolsContainerRef = useRef<HTMLDivElement>(null);
 
   // Zoom & Pan State
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef({ x: 0, y: 0 });
-  const didPanRef = useRef(false);
+  const panStartRef = useRef<{ startX: number; startY: number; initialPosition: { x: number; y: number; } } | null>(null);
+  const pinchStartDistRef = useRef<number | null>(null);
+  const pinchStartScaleRef = useRef<number>(1);
+  const [isZoomControlsVisible, setIsZoomControlsVisible] = useState(false);
+  const hideControlsTimeoutRef = useRef<number | null>(null);
+  
+  // Swipe gesture state (for tools panel)
+  const swipeStartRef = useRef<{ x: number, y: number, time: number } | null>(null);
+  const gestureLockRef = useRef<'horizontal' | 'vertical' | null>(null);
   
   // Slider state
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  const [isComparing, setIsComparing] = useState(false);
+  
+  // Image Info State
+  const [imageDimensions, setImageDimensions] = useState<{ width: number, height: number } | null>(null);
+
+  // Scroll-based UI state
+  const [imageScale, setImageScale] = useState(1);
+
+  // Interaction State for visual feedback on zoom
+  const [isInteracting, setIsInteracting] = useState(false);
+  const interactionTimeoutRef = useRef<number | null>(null);
 
   const currentImage = history[historyIndex] ?? null;
   const originalImage = history[0] ?? null;
 
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [currentImageUrl, setImageUrl] = useState<string | null>(null);
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   
+  // Helper to provide temporary visual feedback on interactions like zoom
+  const reportInteraction = useCallback(() => {
+    if (interactionTimeoutRef.current) {
+        window.clearTimeout(interactionTimeoutRef.current);
+    }
+    setIsInteracting(true);
+    interactionTimeoutRef.current = window.setTimeout(() => {
+        setIsInteracting(false);
+    }, 300); // Feedback visible for 300ms
+  }, []);
+  
+  const toggleToolbox = useCallback(() => setIsToolboxOpen(prev => !prev), []);
+  
+  // Effect to handle shrinking the image viewer when the tool panel is scrolled
+  useEffect(() => {
+    const toolsEl = toolsContainerRef.current;
+    if (!toolsEl) return;
+
+    const handleScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = toolsEl;
+        const totalScrollableDist = scrollHeight - clientHeight;
+        
+        if (totalScrollableDist <= 0) {
+            setImageScale(1);
+            return;
+        }
+
+        const scrollProgress = scrollTop / totalScrollableDist;
+        
+        // Scale from 1 down to 0.7 as user scrolls
+        const newScale = 1 - (scrollProgress * 0.3);
+        setImageScale(Math.max(0.7, newScale));
+    };
+    
+    toolsEl.addEventListener('scroll', handleScroll);
+    
+    // Run once on setup to set initial scale
+    handleScroll();
+
+    return () => {
+        toolsEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [activeTab, isLoading, currentImage]); // Re-run when sidebar content might change height
+
+  const resetView = useCallback(() => {
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+      setSliderPosition(50);
+  }, []);
+
+  const handleZoom = useCallback((direction: 'in' | 'out', amount: number = 0.2) => {
+    reportInteraction(); // Provide visual feedback for zoom
+    setScale(prevScale => {
+        const newScale = direction === 'in' ? prevScale * (1 + amount) : prevScale / (1 + amount);
+        return Math.max(0.2, Math.min(newScale, 10)); // Clamp scale
+    });
+  }, [reportInteraction]);
+
   const clearMask = useCallback(() => {
     if (maskCanvasRef.current) {
         const canvas = maskCanvasRef.current;
@@ -92,6 +270,14 @@ const App: React.FC = () => {
         ctx?.clearRect(0, 0, canvas.width, canvas.height);
     }
   }, []);
+
+  // When tab changes, reset transient states
+  useEffect(() => {
+    setEditHotspot(null);
+    setIsManualScanMode(false);
+    clearMask();
+  }, [activeTab, clearMask]);
+
 
   // Effect to sync mask canvas size with image and clear it
   useEffect(() => {
@@ -102,6 +288,7 @@ const App: React.FC = () => {
             if (img.naturalWidth > 0) {
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
+                setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
                 clearMask();
             }
         };
@@ -112,6 +299,8 @@ const App: React.FC = () => {
             img.addEventListener('load', setCanvasSize);
         }
         return () => img.removeEventListener('load', setCanvasSize);
+    } else {
+        setImageDimensions(null);
     }
   }, [currentImageUrl, clearMask]);
 
@@ -123,9 +312,9 @@ const App: React.FC = () => {
     
     if (currentImage) {
       currentUrl = URL.createObjectURL(currentImage);
-      setCurrentImageUrl(currentUrl);
+      setImageUrl(currentUrl);
     } else {
-      setCurrentImageUrl(null);
+      setImageUrl(null);
     }
     
     if (originalImage) {
@@ -140,23 +329,37 @@ const App: React.FC = () => {
       if (originalUrl) URL.revokeObjectURL(originalUrl);
     };
   }, [currentImage, originalImage]);
+  
 
-  // Effect to draw a circular mask when a hotspot is selected in 'point' mode.
-  useEffect(() => {
-    clearMask();
-    if (activeTab === 'retouch' && selectionMode === 'point' && editHotspot && maskCanvasRef.current) {
-        const canvas = maskCanvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            // Use a radius proportional to the image's smaller dimension for better scaling.
-            const pointRadius = Math.max(15, Math.min(canvas.width, canvas.height) * 0.025);
-            ctx.fillStyle = 'rgba(255, 255, 255, 1)'; // Opaque white for a clear mask
-            ctx.beginPath();
-            ctx.arc(editHotspot.x, editHotspot.y, pointRadius, 0, Math.PI * 2);
-            ctx.fill();
-        }
+  // Function to show controls and set a timeout to hide them
+  const showZoomControls = useCallback(() => {
+    if (hideControlsTimeoutRef.current) {
+        window.clearTimeout(hideControlsTimeoutRef.current);
     }
-  }, [editHotspot, selectionMode, activeTab, clearMask]);
+    setIsZoomControlsVisible(true);
+    hideControlsTimeoutRef.current = window.setTimeout(() => {
+        setIsZoomControlsVisible(false);
+    }, 3000); // Hide after 3 seconds
+  }, []);
+
+  // Show controls when the image first appears
+  useEffect(() => {
+      if (currentImage) {
+          showZoomControls();
+      }
+  }, [currentImage, showZoomControls]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+      return () => {
+          if (hideControlsTimeoutRef.current) {
+              window.clearTimeout(hideControlsTimeoutRef.current);
+          }
+          if (interactionTimeoutRef.current) {
+              window.clearTimeout(interactionTimeoutRef.current);
+          }
+      };
+  }, []);
 
 
   const canUndo = historyIndex > 0;
@@ -167,25 +370,56 @@ const App: React.FC = () => {
     newHistory.push(newImageFile);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
-    // Reset transient states after an action
+    // Reset transient states after an action, but keep Insert panel state
     setCrop(undefined);
     setCompletedCrop(undefined);
-    setEditHotspot(null);
-    setDisplayHotspot(null);
     clearMask();
+    setEditHotspot(null);
+    setRetouchPrompt('');
   }, [history, historyIndex, clearMask]);
 
   const handleImageUpload = useCallback((file: File) => {
     setError(null);
     setHistory([file]);
     setHistoryIndex(0);
-    setActiveTab('retouch');
     setCrop(undefined);
     setCompletedCrop(undefined);
-    setEditHotspot(null);
-    setDisplayHotspot(null);
     clearMask();
+    setRetouchPrompt('');
+    setEditHotspot(null);
+    // This is a new session, so we reset the insert panel
+    // and set the newly uploaded image as the first subject.
+    setInsertSubjectFiles([file]);
+    setInsertStyleFiles([]);
+    setInsertBackgroundFile(null);
+    setInsertPrompt('');
   }, [clearMask]);
+  
+  const handleStartOver = useCallback(() => {
+    setHistory([]);
+    setHistoryIndex(-1);
+    setError(null);
+    setCrop(undefined);
+    setCompletedCrop(undefined);
+    clearMask();
+    setRetouchPrompt('');
+    setEditHotspot(null);
+    // Reset Insert panel state
+    setInsertSubjectFiles([]);
+    setInsertStyleFiles([]);
+    setInsertBackgroundFile(null);
+    setInsertPrompt('');
+  }, [clearMask]);
+
+  const handleHistorySelect = (index: number) => {
+      setHistoryIndex(index);
+      clearMask();
+      setEditHotspot(null);
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+      setIsHistoryPanelOpen(false); // Close panel on mobile after selection
+  };
+
 
   const isMaskPresent = useCallback((): boolean => {
     const canvas = maskCanvasRef.current;
@@ -200,13 +434,13 @@ const App: React.FC = () => {
     return false;
   }, []);
 
-  const handleGenerate = useCallback(async (prompt: string) => {
+  const handleGenerate = useCallback(async () => {
     if (!currentImage) {
       setError(t('errorNoImageLoaded'));
       return;
     }
     
-    if (!prompt.trim()) {
+    if (!retouchPrompt.trim()) {
         setError(t('errorEnterDescription'));
         return;
     }
@@ -215,17 +449,39 @@ const App: React.FC = () => {
     setError(null);
     
     try {
-        if (!maskCanvasRef.current || !isMaskPresent()) {
-            if (selectionMode === 'point' && !editHotspot) {
-                setError(t('errorSelectArea'));
-            } else {
+        let finalMaskUrl = '';
+
+        if (selectionMode === 'brush') {
+            if (!maskCanvasRef.current || !isMaskPresent()) {
                 setError(t('errorNoMask'));
+                setIsLoading(false);
+                return;
             }
-            setIsLoading(false);
-            return;
+            finalMaskUrl = maskCanvasRef.current.toDataURL('image/png');
+        } else { // 'point' mode
+            if (!editHotspot) {
+                setError(t('errorSelectArea'));
+                setIsLoading(false);
+                return;
+            }
+            // Create a temporary canvas for the point mask
+            const pointCanvas = document.createElement('canvas');
+            const img = imgRef.current;
+            if (!img || !img.naturalWidth) throw new Error("Image not loaded");
+            pointCanvas.width = img.naturalWidth;
+            pointCanvas.height = img.naturalHeight;
+            const ctx = pointCanvas.getContext('2d');
+            if (!ctx) throw new Error("Could not create canvas context for point mask");
+            
+            const pointRadius = Math.max(15, Math.min(pointCanvas.width, pointCanvas.height) * 0.025);
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.beginPath();
+            ctx.arc(editHotspot.x, editHotspot.y, pointRadius, 0, Math.PI * 2);
+            ctx.fill();
+            finalMaskUrl = pointCanvas.toDataURL('image/png');
         }
-        const maskDataUrl = maskCanvasRef.current.toDataURL('image/png');
-        const editedImageUrl = await generateEditedImageWithMask(currentImage, prompt, maskDataUrl);
+
+        const editedImageUrl = await generateEditedImageWithMask(currentImage, retouchPrompt, finalMaskUrl);
 
         const newImageFile = dataURLtoFile(editedImageUrl, `edited-${Date.now()}.png`);
         addImageToHistory(newImageFile);
@@ -236,10 +492,11 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, editHotspot, selectionMode, addImageToHistory, isMaskPresent, t]);
+  }, [currentImage, addImageToHistory, isMaskPresent, t, selectionMode, editHotspot, retouchPrompt]);
   
   const handleApplyFilter = useCallback(async (filterPrompt: string) => {
-    if (!currentImage) {
+    // Each filter is applied to the original image, not stacked.
+    if (!originalImage) {
       setError(t('errorNoImageLoadedToFilter'));
       return;
     }
@@ -248,7 +505,7 @@ const App: React.FC = () => {
     setError(null);
     
     try {
-        const filteredImageUrl = await generateFilteredImage(currentImage, filterPrompt);
+        const filteredImageUrl = await generateFilteredImage(originalImage, filterPrompt);
         const newImageFile = dataURLtoFile(filteredImageUrl, `filtered-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
@@ -258,7 +515,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t]);
+  }, [originalImage, addImageToHistory, t]);
   
   const handleApplyAdjustment = useCallback(async (adjustmentPrompt: string) => {
     if (!currentImage) {
@@ -347,44 +604,168 @@ const App: React.FC = () => {
         setIsLoading(false);
     }
   }, [currentImage, addImageToHistory, t]);
-  
+
+  const handleApplyInsert = useCallback(async () => {
+    if (insertSubjectFiles.length === 0) {
+        setError(t('insertErrorNoSubjects'));
+        return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+        const insertedImageUrl = await generateCompositeImage(
+            insertSubjectFiles, 
+            insertStyleFiles, 
+            insertBackgroundFile, 
+            insertPrompt
+        );
+        const newImageFile = dataURLtoFile(insertedImageUrl, `inserted-${Date.now()}.png`);
+        
+        if (history.length === 0 || historyIndex === -1) {
+            // If this is the first image, treat it like a new upload
+            // which also sets the new image as a subject for further edits.
+            handleImageUpload(newImageFile);
+        } else {
+            addImageToHistory(newImageFile);
+        }
+
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
+        console.error(err);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, insertStyleFiles, insertBackgroundFile, insertPrompt]);
+
+  // --- Scan Handlers ---
+  const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean) => {
+    if (!currentImage) {
+      setError('No image loaded to scan.');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    setIsScanModalOpen(true);
+    setScannedImageUrl(null); // Show loading state in modal
+    setScanParams({ enhancement, removeShadows });
+
+    try {
+        const resultUrl = await generateScannedDocument(currentImage, enhancement, removeShadows);
+        setScannedImageUrl(resultUrl);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
+        console.error(err);
+        setIsScanModalOpen(false);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentImage, t]);
+
+  const handleApplyManualScan = useCallback(async () => {
+    if (!currentImage || !corners || !scanParams) return;
+
+    setIsLoading(true);
+    setError(null);
+    setIsManualScanMode(false);
+    setIsScanModalOpen(true);
+    setScannedImageUrl(null);
+
+    try {
+      const { enhancement, removeShadows } = scanParams;
+      const resultUrl = await generateScannedDocumentWithCorners(currentImage, corners, enhancement, removeShadows);
+      setScannedImageUrl(resultUrl);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
+        console.error(err);
+        setIsScanModalOpen(false); // Close modal on error
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentImage, corners, scanParams, t]);
+
+  const handleCloseScanModal = useCallback(() => {
+    setIsScanModalOpen(false);
+    setScannedImageUrl(null);
+  }, []);
+
+  const handleSaveScannedImage = useCallback(() => {
+    if (scannedImageUrl) {
+        const newImageFile = dataURLtoFile(scannedImageUrl, `scanned-${Date.now()}.png`);
+        addImageToHistory(newImageFile);
+        handleCloseScanModal();
+    }
+  }, [scannedImageUrl, addImageToHistory, handleCloseScanModal]);
+
+  const handleEnterManualMode = useCallback(() => {
+      if (!imgRef.current) return;
+      setIsScanModalOpen(false);
+      setIsManualScanMode(true);
+
+      const { naturalWidth: w, naturalHeight: h } = imgRef.current;
+      // Initialize corners to a 10% inset rectangle
+      setCorners({
+          tl: { x: w * 0.1, y: h * 0.1 },
+          tr: { x: w * 0.9, y: h * 0.1 },
+          br: { x: w * 0.9, y: h * 0.9 },
+          bl: { x: w * 0.1, y: h * 0.9 },
+      });
+      return true;
+  }, []);
+
+  const handleCancelManualMode = useCallback(() => {
+      setCorners(null);
+      setIsManualScanMode(false);
+      setIsScanModalOpen(true); // Re-open the modal with the last result
+  }, []);
+
+  const handleDownloadPdf = useCallback(async () => {
+      if (!scannedImageUrl) return;
+      setIsDownloadingPdf(true);
+      try {
+          const pdf = new jsPDF();
+          const img = new Image();
+          img.src = scannedImageUrl;
+          await new Promise(resolve => { img.onload = resolve; });
+          
+          const imgProps = pdf.getImageProperties(img);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+          pdf.addImage(img, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`pixshop-scan-${Date.now()}.pdf`);
+      } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to create PDF.');
+      } finally {
+          setIsDownloadingPdf(false);
+      }
+  }, [scannedImageUrl]);
+
+
   const handleUndo = useCallback(() => {
     if (canUndo) {
-      setHistoryIndex(historyIndex - 1);
-      setEditHotspot(null);
-      setDisplayHotspot(null);
-      clearMask();
+      handleHistorySelect(historyIndex - 1);
     }
-  }, [canUndo, historyIndex, clearMask]);
+  }, [canUndo, historyIndex]);
   
   const handleRedo = useCallback(() => {
     if (canRedo) {
-      setHistoryIndex(historyIndex + 1);
-      setEditHotspot(null);
-      setDisplayHotspot(null);
-      clearMask();
+      handleHistorySelect(historyIndex + 1);
     }
-  }, [canRedo, historyIndex, clearMask]);
+  }, [canRedo, historyIndex]);
 
   const handleReset = useCallback(() => {
     if (history.length > 0) {
-      setHistoryIndex(0);
+      handleHistorySelect(0);
       setError(null);
-      setEditHotspot(null);
-      setDisplayHotspot(null);
-      clearMask();
       resetView();
     }
-  }, [history, clearMask]);
-
-  const handleUploadNew = useCallback(() => {
-      setHistory([]);
-      setHistoryIndex(-1);
-      setError(null);
-      setEditHotspot(null);
-      setDisplayHotspot(null);
-      clearMask();
-  }, [clearMask]);
+  }, [history, resetView]);
 
   const handleDownload = useCallback(() => {
     if (!currentImage) {
@@ -458,8 +839,6 @@ const App: React.FC = () => {
   };
 
   const handleAspectSelect = (newAspect: number | undefined) => {
-    setAspect(newAspect);
-
     if (imgRef.current) {
         const { naturalWidth, naturalHeight } = imgRef.current;
         if (newAspect) {
@@ -480,74 +859,52 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Zoom and Pan Handlers ---
-  const handleZoom = useCallback((direction: 'in' | 'out', amount: number = 0.2) => {
-    setScale(prevScale => {
-        const newScale = direction === 'in' ? prevScale * (1 + amount) : prevScale / (1 + amount);
-        return Math.max(0.2, Math.min(newScale, 10)); // Clamp scale
-    });
-  }, []);
-
-  const resetView = useCallback(() => {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-      setSliderPosition(50);
-  }, []);
-  
   const handleViewerMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0 || (e.target as HTMLElement).closest('.slider-handle')) return;
+      if (e.button !== 0 || (e.target as HTMLElement).closest('.slider-handle') || (e.target as HTMLElement).closest('.corner-handle')) return;
       if (activeTab === 'retouch' && selectionMode === 'brush') return; // Let canvas handle it
-      didPanRef.current = false;
+      if (activeTab === 'scan' && isManualScanMode) return; // Let corner handles manage clicks
+      if (scale <= 1) return; // Don't pan if not zoomed
+
+      e.preventDefault();
       setIsPanning(true);
       panStartRef.current = {
-          x: e.clientX - position.x,
-          y: e.clientY - position.y,
+          startX: e.clientX,
+          startY: e.clientY,
+          initialPosition: position,
       };
-  }, [position, activeTab, selectionMode]);
+
+  }, [activeTab, selectionMode, isManualScanMode, position, scale]);
 
   const handleViewerMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+      showZoomControls();
       // For custom cursor
       if (activeTab === 'retouch' && selectionMode === 'brush') {
           const rect = e.currentTarget.getBoundingClientRect();
           setMousePosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       }
-
-      // For panning
-      if (isPanning) {
-        didPanRef.current = true;
-        setPosition({
-            x: e.clientX - panStartRef.current.x,
-            y: e.clientY - panStartRef.current.y,
-        });
-      }
-  }, [isPanning, activeTab, selectionMode]);
+  }, [showZoomControls, activeTab, selectionMode]);
   
   const handleViewerClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (didPanRef.current || activeTab !== 'retouch' || selectionMode !== 'point' || !imgRef.current) return;
+      if (activeTab !== 'retouch' || selectionMode !== 'point' || !imgRef.current) return;
       
       const img = imgRef.current;
-      const viewer = e.currentTarget;
-      
-      const viewerRect = viewer.getBoundingClientRect();
       const imgRect = img.getBoundingClientRect();
       
+      // Check if the click was inside the image bounds within the viewer
+      if (e.clientX < imgRect.left || e.clientX > imgRect.right || e.clientY < imgRect.top || e.clientY > imgRect.bottom) {
+          return; // Click was outside the image, in the letterboxing area
+      }
+
       const clickOnImgX = e.clientX - imgRect.left;
       const clickOnImgY = e.clientY - imgRect.top;
-      
-      const displayX = e.clientX - viewerRect.left;
-      const displayY = e.clientY - viewerRect.top;
-      setDisplayHotspot({ x: displayX, y: displayY });
       
       const { naturalWidth, naturalHeight } = img;
       const originalX = Math.round((clickOnImgX / imgRect.width) * naturalWidth);
       const originalY = Math.round((clickOnImgY / imgRect.height) * naturalHeight);
       
       setEditHotspot({ x: originalX, y: originalY });
+      setRetouchPrompt(''); // Reset prompt for new point
   };
-
-  const handleViewerMouseUpOrLeave = useCallback(() => {
-      setIsPanning(false);
-  }, []);
 
   const handleViewerWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -558,17 +915,147 @@ const App: React.FC = () => {
           handleZoom('out', zoomAmount);
       }
   }, [handleZoom]);
+
+  // --- Pinch-to-Zoom and Touch Pan Handlers ---
+  const getDistanceBetweenTouches = (touches: React.TouchList): number => {
+    return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+    );
+  };
+  
+  const handleViewerTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    showZoomControls();
+    if ((e.target as HTMLElement).closest('.slider-handle') || (e.target as HTMLElement).closest('.corner-handle')) return;
+    if (activeTab === 'retouch' && selectionMode === 'brush') return;
+    if (activeTab === 'scan' && isManualScanMode) return;
+
+    e.preventDefault();
+
+    if (e.touches.length === 2) {
+        // Pinch start
+        setIsPanning(false);
+        panStartRef.current = null;
+        pinchStartDistRef.current = getDistanceBetweenTouches(e.touches);
+        pinchStartScaleRef.current = scale;
+    } else if (e.touches.length === 1 && scale > 1) {
+        // Pan start
+        setIsPanning(true);
+        panStartRef.current = {
+            startX: e.touches[0].clientX,
+            startY: e.touches[0].clientY,
+            initialPosition: position,
+        };
+    }
+  }, [scale, showZoomControls, activeTab, selectionMode, isManualScanMode, position]);
+
+  const handleViewerTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    showZoomControls();
+    e.preventDefault();
+    if (e.touches.length === 2 && pinchStartDistRef.current !== null) {
+        reportInteraction(); // Provide visual feedback for pinch-zoom
+        // Pinch move
+        const newDist = getDistanceBetweenTouches(e.touches);
+        const ratio = newDist / pinchStartDistRef.current;
+        const newScale = pinchStartScaleRef.current * ratio;
+        setScale(Math.max(0.2, Math.min(newScale, 10)));
+    }
+  }, [showZoomControls, reportInteraction]);
+
+  const handleViewerTouchEnd = useCallback(() => {
+    // Reset gesture states
+    pinchStartDistRef.current = null;
+    setIsPanning(false);
+    panStartRef.current = null;
+  }, []);
+
+  // --- Handlers for Tools Panel Swiping ---
+  const handleToolsTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.touches.length === 1) {
+          swipeStartRef.current = {
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+              time: Date.now(),
+          };
+          gestureLockRef.current = null;
+      } else {
+          swipeStartRef.current = null; // Invalidate swipe if more than one finger
+      }
+  }, []);
+
+  const handleToolsTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+      if (!swipeStartRef.current || e.touches.length !== 1) {
+          return;
+      }
+      
+      // Determine and lock gesture direction on first significant movement
+      if (gestureLockRef.current === null) {
+          const deltaX = e.touches[0].clientX - swipeStartRef.current.x;
+          const deltaY = e.touches[0].clientY - swipeStartRef.current.y;
+          
+          if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) { // Threshold to prevent locking on small jitters
+              if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                  gestureLockRef.current = 'horizontal';
+              } else {
+                  gestureLockRef.current = 'vertical';
+              }
+          }
+      }
+      
+      // If gesture is horizontal, prevent vertical scroll
+      if (gestureLockRef.current === 'horizontal') {
+          e.preventDefault();
+      }
+  }, []);
+
+  const handleToolsTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+      if (gestureLockRef.current !== 'horizontal' || !swipeStartRef.current || e.changedTouches.length !== 1) {
+          swipeStartRef.current = null;
+          gestureLockRef.current = null;
+          return;
+      }
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - swipeStartRef.current.x;
+      const deltaY = touch.clientY - swipeStartRef.current.y;
+      const deltaTime = Date.now() - swipeStartRef.current.time;
+
+      const swipeThreshold = 50; // Min horizontal pixels
+      const verticalThreshold = 75; // Max vertical movement for a horizontal swipe
+
+      if (deltaTime < 500 && Math.abs(deltaX) > swipeThreshold && Math.abs(deltaY) < verticalThreshold) {
+          const availableTabs = TABS_CONFIG.filter(tab => {
+              if (tab.id === 'insert') return true; // Always available
+              return !!currentImage;
+          });
+          const currentIndex = availableTabs.findIndex(tab => tab.id === activeTab);
+          
+          if (currentIndex !== -1) {
+              let nextIndex;
+              if (deltaX < 0) { // Swipe left (next tab)
+                  nextIndex = (currentIndex + 1) % availableTabs.length;
+              } else { // Swipe right (previous tab)
+                  nextIndex = (currentIndex - 1 + availableTabs.length) % availableTabs.length;
+              }
+              setActiveTab(availableTabs[nextIndex].id as Tab);
+          }
+      }
+      
+      // Reset for next gesture
+      swipeStartRef.current = null;
+      gestureLockRef.current = null;
+  }, [activeTab, currentImage]);
   
   // --- Mask Canvas Drawing Handlers ---
-  const getBrushCoordinates = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
+  const getBrushCoordinates = (point: { clientX: number; clientY: number }): { x: number; y: number } | null => {
     const canvas = maskCanvasRef.current;
     if (!canvas) return null;
 
     const rect = canvas.getBoundingClientRect();
 
-    // Mouse position relative to the canvas element
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    // Point position relative to the canvas element
+    const pointX = point.clientX - rect.left;
+    const pointY = point.clientY - rect.top;
     
     // The canvas's drawing surface dimensions (from the image's natural dimensions)
     const contentWidth = canvas.width;
@@ -599,14 +1086,14 @@ const App: React.FC = () => {
         renderedY = (elementHeight - renderedHeight) / 2;
     }
     
-    // Check if the mouse is outside the rendered content area
-    if (mouseX < renderedX || mouseX > renderedX + renderedWidth || mouseY < renderedY || mouseY > renderedY + renderedHeight) {
-        return null; // Mouse is in the "empty" letterboxed area
+    // Check if the point is outside the rendered content area
+    if (pointX < renderedX || pointX > renderedX + renderedWidth || pointY < renderedY || pointY > renderedY + renderedHeight) {
+        return null; // Point is in the "empty" letterboxed area
     }
 
-    // Translate mouse coordinates to be relative to the rendered content's top-left corner
-    const xInContent = mouseX - renderedX;
-    const yInContent = mouseY - renderedY;
+    // Translate point coordinates to be relative to the rendered content's top-left corner
+    const xInContent = pointX - renderedX;
+    const yInContent = pointY - renderedY;
     
     // Scale these coordinates to match the canvas's internal drawing surface resolution
     const scaleX = contentWidth / renderedWidth;
@@ -615,7 +1102,7 @@ const App: React.FC = () => {
     return { x: xInContent * scaleX, y: yInContent * scaleY };
   };
 
-  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasMouseDown = (e: MouseEvent) => {
     if (e.button !== 0) return;
     
     const coords = getBrushCoordinates(e);
@@ -636,7 +1123,7 @@ const App: React.FC = () => {
     ctx.fill();
   };
   
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasMouseMove = (e: MouseEvent) => {
     if (!isDrawing) return;
 
     const coords = getBrushCoordinates(e);
@@ -675,6 +1162,92 @@ const App: React.FC = () => {
     setIsDrawing(false);
     lastDrawPointRef.current = null;
   };
+  
+  const handleCanvasTouchStart = (e: TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const coords = getBrushCoordinates(touch);
+    if (!coords) return;
+
+    setIsDrawing(true);
+    lastDrawPointRef.current = coords;
+
+    const canvas = maskCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) return;
+
+    ctx.globalCompositeOperation = brushMode === 'draw' ? 'source-over' : 'destination-out';
+    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+    ctx.beginPath();
+    ctx.arc(coords.x, coords.y, brushSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  
+  const handleCanvasTouchMove = (e: TouchEvent) => {
+    e.preventDefault();
+    if (!isDrawing || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const coords = getBrushCoordinates(touch);
+
+    if (!coords) {
+        lastDrawPointRef.current = null;
+        return;
+    }
+    
+    const lastPoint = lastDrawPointRef.current;
+    if (!lastPoint) {
+        lastDrawPointRef.current = coords;
+        return;
+    }
+
+    const canvas = maskCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) return;
+
+    ctx.globalCompositeOperation = brushMode === 'draw' ? 'source-over' : 'destination-out';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(coords.x, coords.y);
+    ctx.stroke();
+
+    lastDrawPointRef.current = coords;
+  };
+
+  useEffect(() => {
+      const canvas = maskCanvasRef.current;
+      if (!canvas || activeTab !== 'retouch' || selectionMode !== 'brush') return;
+
+      const onMouseDown = (e: MouseEvent) => handleCanvasMouseDown(e);
+      const onMouseMove = (e: MouseEvent) => handleCanvasMouseMove(e);
+      const onTouchStart = (e: TouchEvent) => handleCanvasTouchStart(e);
+      const onTouchMove = (e: TouchEvent) => handleCanvasTouchMove(e);
+
+      canvas.addEventListener('mousedown', onMouseDown);
+      canvas.addEventListener('mousemove', onMouseMove);
+      canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+      
+      // Handle end of drawing on window to catch cases where mouse leaves canvas while pressed
+      window.addEventListener('mouseup', handleCanvasMouseUpOrLeave);
+      window.addEventListener('touchend', handleCanvasMouseUpOrLeave);
+      window.addEventListener('touchcancel', handleCanvasMouseUpOrLeave);
+      
+      return () => {
+        canvas.removeEventListener('mousedown', onMouseDown);
+        canvas.removeEventListener('mousemove', onMouseMove);
+        canvas.removeEventListener('touchstart', onTouchStart);
+        canvas.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('mouseup', handleCanvasMouseUpOrLeave);
+        window.removeEventListener('touchend', handleCanvasMouseUpOrLeave);
+        window.removeEventListener('touchcancel', handleCanvasMouseUpOrLeave);
+      };
+  }, [activeTab, selectionMode, isDrawing, brushMode, brushSize]);
 
 
   // --- Slider Handlers ---
@@ -684,36 +1257,174 @@ const App: React.FC = () => {
       setIsDraggingSlider(true);
   };
 
-  const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
-      if (!isDraggingSlider || !imageViewerRef.current) return;
+  const handleSliderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingSlider(true);
+  };
+
+  const updateSliderPosition = useCallback((clientX: number) => {
+      if (!imageViewerRef.current) return;
       const rect = imageViewerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
+      const x = clientX - rect.left;
       const viewerWidth = rect.width;
       const newSliderPosition = Math.max(0, Math.min(100, (x / viewerWidth) * 100));
       setSliderPosition(newSliderPosition);
-  }, [isDraggingSlider]);
+  }, []);
+
+  const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
+      if (isDraggingSlider) {
+          updateSliderPosition(e.clientX);
+      } else if (activeCorner) {
+          handleCornerDrag(e.clientX, e.clientY);
+      } else if (isPanning && panStartRef.current) {
+          const dx = e.clientX - panStartRef.current.startX;
+          const dy = e.clientY - panStartRef.current.startY;
+          setPosition({
+              x: panStartRef.current.initialPosition.x + dx,
+              y: panStartRef.current.initialPosition.y + dy,
+          });
+      }
+  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning]);
+
+  const handleGlobalTouchMove = useCallback((e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      if (isDraggingSlider) {
+          updateSliderPosition(e.touches[0].clientX);
+      } else if (activeCorner) {
+          handleCornerDrag(e.touches[0].clientX, e.touches[0].clientY);
+      } else if (isPanning && panStartRef.current && e.touches.length === 1) {
+          // Handle pan move globally to allow dragging outside the viewer bounds.
+          const dx = e.touches[0].clientX - panStartRef.current.startX;
+          const dy = e.touches[0].clientY - panStartRef.current.startY;
+          setPosition({
+              x: panStartRef.current.initialPosition.x + dx,
+              y: panStartRef.current.initialPosition.y + dy,
+          });
+      }
+  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning]);
+
 
   const handleGlobalMouseUp = useCallback(() => {
       setIsDraggingSlider(false);
+      setActiveCorner(null);
+      setIsPanning(false);
+      panStartRef.current = null;
   }, []);
 
   useEffect(() => {
-      if (isDraggingSlider) {
+      const isDragging = isDraggingSlider || !!activeCorner || isPanning;
+      if (isDragging) {
           window.addEventListener('mousemove', handleGlobalMouseMove);
           window.addEventListener('mouseup', handleGlobalMouseUp);
           window.addEventListener('mouseleave', handleGlobalMouseUp);
+          
+          window.addEventListener('touchmove', handleGlobalTouchMove);
+          window.addEventListener('touchend', handleGlobalMouseUp);
+          window.addEventListener('touchcancel', handleGlobalMouseUp);
       }
       return () => {
           window.removeEventListener('mousemove', handleGlobalMouseMove);
           window.removeEventListener('mouseup', handleGlobalMouseUp);
           window.removeEventListener('mouseleave', handleGlobalMouseUp);
+          
+          window.removeEventListener('touchmove', handleGlobalTouchMove);
+          window.removeEventListener('touchend', handleGlobalMouseUp);
+          window.removeEventListener('touchcancel', handleGlobalMouseUp);
       };
-  }, [isDraggingSlider, handleGlobalMouseMove, handleGlobalMouseUp]);
+  }, [isDraggingSlider, activeCorner, isPanning, handleGlobalMouseMove, handleGlobalTouchMove, handleGlobalMouseUp]);
   
+  // --- Corner Drag Handlers ---
+  const handleCornerDrag = (clientX: number, clientY: number) => {
+      if (!activeCorner || !imgRef.current) return;
+      
+      const img = imgRef.current;
+      const imgRect = img.getBoundingClientRect();
+      
+      // Calculate mouse position relative to the scaled image
+      let x = clientX - imgRect.left;
+      let y = clientY - imgRect.top;
+      
+      // Clamp to image boundaries
+      x = Math.max(0, Math.min(x, imgRect.width));
+      y = Math.max(0, Math.min(y, imgRect.height));
+      
+      // Convert to natural image coordinates
+      const naturalX = Math.round((x / imgRect.width) * img.naturalWidth);
+      const naturalY = Math.round((y / imgRect.height) * img.naturalHeight);
+      
+      setCorners(prev => prev ? { ...prev, [activeCorner]: { x: naturalX, y: naturalY } } : null);
+  };
+  
+  const handleCornerMouseDown = (e: React.MouseEvent, corner: keyof Corners) => {
+      e.stopPropagation();
+      setActiveCorner(corner);
+  };
+
+  const handleCornerTouchStart = (e: React.TouchEvent, corner: keyof Corners) => {
+      e.stopPropagation();
+      setActiveCorner(corner);
+  };
+
+  // --- Keyboard Shortcuts ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts if user is typing in an input
+      if ((e.target as HTMLElement).tagName.toLowerCase() === 'input') {
+        return;
+      }
+      
+      if (e.ctrlKey || e.metaKey) {
+        let handled = false;
+        switch (e.key.toLowerCase()) {
+          case 'z':
+            if (e.shiftKey) {
+              handleRedo(); // Ctrl+Shift+Z or Cmd+Shift+Z
+            } else {
+              handleUndo(); // Ctrl+Z or Cmd+Z
+            }
+            handled = true;
+            break;
+          case 'y':
+            handleRedo(); // Ctrl+Y or Cmd+Y
+            handled = true;
+            break;
+        }
+        if (handled) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleUndo, handleRedo]);
+
+  // Conditionally attach pan/zoom handlers only when an image is loaded
+  const viewerEventHandlers = currentImage ? {
+      onMouseDown: handleViewerMouseDown,
+      onMouseMove: handleViewerMouseMove,
+      onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => {
+          setIsMouseOverViewer(false);
+      },
+      onMouseEnter: () => {
+          setIsMouseOverViewer(true);
+          showZoomControls();
+      },
+      onClick: handleViewerClick,
+      onWheel: handleViewerWheel,
+      onTouchStart: handleViewerTouchStart,
+      onTouchMove: handleViewerTouchMove,
+      onTouchEnd: handleViewerTouchEnd,
+  } : {};
+
+
   const renderContent = () => {
     if (error) {
        return (
-           <div className="text-center animate-fade-in bg-red-900/20 backdrop-blur-md border border-red-500/30 p-8 rounded-2xl max-w-2xl mx-auto flex flex-col items-center gap-4">
+           <div className="text-center animate-fade-in bg-red-500/10 backdrop-blur-xl border border-red-400/30 p-8 rounded-2xl max-w-2xl mx-auto flex flex-col items-center gap-4 shadow-2xl shadow-black/30">
             <h2 className="text-2xl font-bold text-red-300">{t('errorAnErrorOccurred')}</h2>
             <p className="text-md text-red-400">{error}</p>
             <button
@@ -726,99 +1437,29 @@ const App: React.FC = () => {
         );
     }
     
-    if (!currentImageUrl || !originalImageUrl) {
-      return <StartScreen onFileSelect={handleFileSelect} />;
-    }
-
-    const TABS_CONFIG = [
-        { id: 'retouch', icon: BrushIcon, tooltip: t('tooltipRetouch') },
-        { id: 'crop', icon: CropIcon, tooltip: t('tooltipCrop') },
-        { id: 'adjust', icon: AdjustmentsIcon, tooltip: t('tooltipAdjust') },
-        { id: 'filters', icon: MagicWandIcon, tooltip: t('tooltipFilters') },
-        { id: 'expand', icon: ExpandIcon, tooltip: t('tooltipExpand') },
-    ];
-    
-    const actionButtons = (
-      <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-3 w-full bg-black/20 backdrop-blur-lg border border-white/10 p-2 rounded-2xl">
-        <div className="flex items-center gap-2">
-            <button 
-                onClick={handleUndo}
-                disabled={!canUndo}
-                className="flex items-center justify-center text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold p-3 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={t('undo')}
-            >
-                <UndoIcon className="w-5 h-5 lg:mr-2" />
-                <span className="hidden lg:inline">{t('undo')}</span>
-            </button>
-            <button 
-                onClick={handleRedo}
-                disabled={!canRedo}
-                className="flex items-center justify-center text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold p-3 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={t('redo')}
-            >
-                <RedoIcon className="w-5 h-5 lg:mr-2" />
-                <span className="hidden lg:inline">{t('redo')}</span>
-            </button>
-        </div>
-        
-        <div className="flex items-center flex-wrap gap-2">
-            <button 
-                onClick={handleReset}
-                disabled={!canUndo}
-                className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-4 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('reset')}
-            </button>
-            <button 
-                onClick={handleUploadNew}
-                className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-4 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-sm"
-            >
-                {t('uploadNew')}
-            </button>
-            <div className="relative">
-              <button
-                onClick={handleDownload}
-                disabled={!currentImage}
-                className="flex items-center justify-center text-center bg-gradient-to-br from-green-500 to-cyan-500 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 ease-in-out hover:opacity-90 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-500"
-                title={t('downloadImage')}
-              >
-                <DownloadIcon className="w-5 h-5 lg:mr-2" />
-                <span className="hidden lg:inline">{t('downloadImage')}</span>
-              </button>
-            </div>
-        </div>
-      </div>
-    );
-    
     const cropImageElement = (
       <img 
         ref={imgRef}
         key={`crop-${historyIndex}`}
-        src={currentImageUrl} 
+        src={currentImageUrl ?? ''} 
         alt="Crop this image"
         crossOrigin="anonymous"
-        className="w-full h-auto object-contain max-h-[75vh] rounded-2xl"
+        className="w-full h-full object-contain"
       />
     );
 
     const imageDisplay = (
         <div
             ref={imageViewerRef}
-            className={`relative w-full h-full min-h-[50vh] lg:min-h-0 overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl select-none 
-                ${activeTab === 'retouch' && selectionMode === 'point' ? 'cursor-crosshair' : ''}
-                ${activeTab !== 'retouch' && !isDraggingSlider ? 'cursor-move active:cursor-grabbing' : ''}
-                ${activeTab === 'retouch' && selectionMode === 'brush' ? 'cursor-none' : ''}
+            className={`relative w-full h-full overflow-hidden bg-black/30 select-none rounded-2xl transition-all duration-200 ease-in-out
+                ${currentImage ? 'touch-none' : ''}
+                ${isPanning ? 'cursor-grabbing' : ''}
+                ${!isPanning && scale > 1 ? 'cursor-grab' : ''}
+                ${activeTab === 'retouch' && selectionMode === 'point' && currentImage ? 'cursor-crosshair' : ''}
+                ${activeTab === 'retouch' && selectionMode === 'brush' && currentImage ? 'cursor-none' : ''}
+                ${(isPanning || isInteracting) ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/25' : ''}
             `}
-            onMouseDown={handleViewerMouseDown}
-            onMouseMove={handleViewerMouseMove}
-            onMouseUp={handleViewerMouseUpOrLeave}
-            onMouseLeave={(e) => {
-                handleViewerMouseUpOrLeave();
-                setIsMouseOverViewer(false);
-            }}
-            onMouseEnter={() => setIsMouseOverViewer(true)}
-            onClick={handleViewerClick}
-            onWheel={handleViewerWheel}
+            {...viewerEventHandlers}
         >
             <div
                 className="transition-transform duration-100 ease-out"
@@ -829,68 +1470,112 @@ const App: React.FC = () => {
                 }}
             >
                 <div 
-                  className="relative w-full h-full"
+                  className="relative w-full h-full flex items-center justify-center"
                 >
+                    {/* Placeholder when no image is loaded */}
+                    {!currentImageUrl && (
+                      <div className="w-full h-full max-h-[70vh] flex items-center justify-center">
+                          <ImagePlaceholder onFileSelect={handleFileSelect} />
+                      </div>
+                    )}
+
                     {/* Original Image (bottom layer) */}
-                    <img
-                        src={originalImageUrl}
-                        alt={t('original')}
-                        crossOrigin="anonymous"
-                        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                    />
-                    {/* Edited Image (top layer, clipped only if an edit has been made) */}
-                    <div
-                        className="absolute inset-0 w-full h-full"
-                        style={{ clipPath: historyIndex > 0 ? `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` : 'none' }}
-                    >
+                    {originalImageUrl && (
                         <img
-                            ref={imgRef}
-                            key={historyIndex}
-                            src={currentImageUrl}
-                            alt={t('edited')}
+                            src={originalImageUrl}
+                            alt={t('original')}
                             crossOrigin="anonymous"
-                            className={`absolute inset-0 w-full h-full object-contain pointer-events-none`}
+                            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                         />
-                    </div>
+                    )}
+                    {/* Edited Image (top layer, clipped or hidden) */}
+                    {currentImageUrl && (
+                        <div
+                            className="absolute inset-0 w-full h-full"
+                            style={{ 
+                                clipPath: (historyIndex > 0 && !isComparing) ? `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` : 'none',
+                                opacity: isComparing ? 0 : 1
+                            }}
+                        >
+                            <img
+                                ref={imgRef}
+                                key={historyIndex}
+                                src={currentImageUrl}
+                                alt={t('edited')}
+                                crossOrigin="anonymous"
+                                className={`absolute inset-0 w-full h-full object-contain pointer-events-none`}
+                            />
+                        </div>
+                    )}
                     
                     {/* Mask Canvas for brushing */}
                     <canvas
                         ref={maskCanvasRef}
                         className="absolute inset-0 w-full h-full object-contain opacity-40"
                         style={{
-                            pointerEvents: activeTab === 'retouch' && selectionMode === 'brush' ? 'auto' : 'none',
+                            pointerEvents: activeTab === 'retouch' && selectionMode === 'brush' && currentImage ? 'auto' : 'none',
                             cursor: 'none'
                         }}
-                        onMouseDown={handleCanvasMouseDown}
-                        onMouseMove={handleCanvasMouseMove}
-                        onMouseUp={handleCanvasMouseUpOrLeave}
-                        onMouseLeave={handleCanvasMouseUpOrLeave}
                     />
+
+                    {/* Manual Scan UI Layer */}
+                    {activeTab === 'scan' && isManualScanMode && corners && imgRef.current && (
+                        <div className="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                            <svg 
+                                className="absolute inset-0 w-full h-full"
+                                viewBox={`0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}`}
+                                preserveAspectRatio="xMidYMid meet"
+                            >
+                                <polygon
+                                    points={`${corners.tl.x},${corners.tl.y} ${corners.tr.x},${corners.tr.y} ${corners.br.x},${corners.br.y} ${corners.bl.x},${corners.bl.y}`}
+                                    className="fill-cyan-500/20 stroke-cyan-400"
+                                    style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: '2px' }}
+                                />
+                            </svg>
+                            {Object.keys(corners).map((key) => {
+                                const cornerKey = key as keyof Corners;
+                                return (
+                                    <div
+                                        key={cornerKey}
+                                        className="corner-handle absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-2 border-cyan-500 cursor-move pointer-events-auto shadow-lg"
+                                        style={{
+                                            left: `${(corners[cornerKey].x / imgRef.current!.naturalWidth) * 100}%`,
+                                            top: `${(corners[cornerKey].y / imgRef.current!.naturalHeight) * 100}%`,
+                                        }}
+                                        onMouseDown={(e) => handleCornerMouseDown(e, cornerKey)}
+                                        onTouchStart={(e) => handleCornerTouchStart(e, cornerKey)}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+
                     
                     {/* Slider Handle (only shown after first edit) */}
-                    {historyIndex > 0 && (
+                    {historyIndex > 0 && !isComparing && (
                       <div
-                          className="slider-handle absolute top-0 bottom-0 -translate-x-1/2 w-1 bg-cyan-400 cursor-col-resize group z-30"
+                          className="slider-handle absolute top-0 bottom-0 -translate-x-1/2 w-1 bg-cyan-300 cursor-col-resize group z-30"
                           style={{ left: `${sliderPosition}%` }}
                           onMouseDown={handleSliderMouseDown}
+                          onTouchStart={handleSliderTouchStart}
                           role="separator"
                           aria-label={t('compareSliderAria')}
                           aria-valuenow={sliderPosition}
                           aria-orientation="vertical"
                       >
-                          <div className="absolute top-1/2 -translate-y-1/2 bg-cyan-400/80 backdrop-blur-sm rounded-full p-2 shadow-lg group-hover:scale-110 transition-transform -left-4">
+                          <div className="absolute top-1/2 -translate-y-1/2 bg-cyan-400/80 backdrop-blur-sm rounded-full p-2 shadow-lg group-hover:scale-110 transition-transform -left-4 ring-1 ring-white/10">
                               <ChevronsLeftRightIcon className="w-5 h-5 text-white" />
                           </div>
                       </div>
                     )}
                     
                     {/* Labels (only shown after first edit) */}
-                    {historyIndex > 0 && (
+                    {historyIndex > 0 && !isComparing && (
                       <>
-                        <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20">
+                        <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20">
                             {t('original')}
                         </div>
-                        <div className="absolute top-2 left-2 bg-black/40 backdrop-blur-sm text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20"
+                        <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20"
                           style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}
                         >
                             {t('edited')}
@@ -900,14 +1585,35 @@ const App: React.FC = () => {
                 </div>
             </div>
 
-            {displayHotspot && !isLoading && activeTab === 'retouch' && selectionMode === 'point' && (
-                <div 
-                    className="absolute rounded-full w-5 h-5 bg-cyan-500/70 border-2 border-white pointer-events-none -translate-x-1/2 -translate-y-1/2 z-40"
-                    style={{ left: `${displayHotspot.x}px`, top: `${displayHotspot.y}px` }}
-                >
-                    <div className="absolute inset-[-4px] rounded-full w-7 h-7 animate-ping bg-cyan-400 opacity-80"></div>
-                </div>
-            )}
+            {/* Hotspot Indicator - Logic is now dynamic to handle resizes */}
+            {editHotspot && !isLoading && activeTab === 'retouch' && selectionMode === 'point' && imgRef.current && imageViewerRef.current && (() => {
+                const img = imgRef.current;
+                const viewer = imageViewerRef.current;
+
+                const { naturalWidth, naturalHeight } = img;
+                if (naturalWidth === 0 || naturalHeight === 0) return null;
+
+                const viewerRect = viewer.getBoundingClientRect();
+                const imgRect = img.getBoundingClientRect();
+
+                const percentX = editHotspot.x / naturalWidth;
+                const percentY = editHotspot.y / naturalHeight;
+
+                const hotspotOnImgX = percentX * imgRect.width;
+                const hotspotOnImgY = percentY * imgRect.height;
+                
+                const finalX = (imgRect.left - viewerRect.left) + hotspotOnImgX;
+                const finalY = (imgRect.top - viewerRect.top) + hotspotOnImgY;
+
+                return (
+                    <div 
+                        className="absolute rounded-full w-5 h-5 bg-cyan-500/70 border-2 border-white pointer-events-none -translate-x-1/2 -translate-y-1/2 z-40"
+                        style={{ left: `${finalX}px`, top: `${finalY}px` }}
+                    >
+                        <div className="absolute inset-[-4px] rounded-full w-7 h-7 animate-ping bg-cyan-400 opacity-80"></div>
+                    </div>
+                );
+            })()}
             
             {/* Custom Brush Cursor */}
             {isMouseOverViewer && activeTab === 'retouch' && selectionMode === 'brush' && mousePosition && imgRef.current && (
@@ -938,128 +1644,208 @@ const App: React.FC = () => {
                 })()
             )}
 
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-black/30 rounded-lg backdrop-blur-md border border-white/10 z-20">
-                <button onClick={() => handleZoom('out')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomOut')}>
-                    <ZoomOutIcon className="w-6 h-6" />
-                </button>
-                <button onClick={resetView} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('resetZoom')}>
-                    <ArrowsPointingOutIcon className="w-6 h-6" />
-                </button>
-                <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomIn')}>
-                    <ZoomInIcon className="w-6 h-6" />
-                </button>
+            {currentImage && (activeTab !== 'insert' || !!currentImage) && (
+              <div className={`absolute z-20 transition-all duration-300 ease-in-out
+                  left-4 top-1/2 -translate-y-1/2
+                  ${isZoomControlsVisible
+                    ? 'opacity-100 translate-x-0'
+                    : 'opacity-0 pointer-events-none -translate-x-4'
+                  }
+              `}>
+                  <div className="flex flex-col items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-xl border border-white/10">
+                      <button onClick={() => handleZoom('out')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomOut')}>
+                          <ZoomOutIcon className="w-6 h-6" />
+                      </button>
+                      <button onClick={resetView} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('resetZoom')}>
+                          <ArrowsPointingOutIcon className="w-6 h-6" />
+                      </button>
+                      <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomIn')}>
+                          <ZoomInIcon className="w-6 h-6" />
+                      </button>
+                       {canUndo && (
+                         <button 
+                            onClick={() => setIsComparing(prev => !prev)}
+                            className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
+                            aria-label={t('compareAria')}
+                            title={t('compareAria')}
+                         >
+                           {isComparing ? <EyeSlashIcon className="w-6 h-6 text-cyan-400" /> : <EyeIcon className="w-6 h-6" />}
+                         </button>
+                       )}
+                       {history.length > 1 && (
+                         <button 
+                            onClick={() => setIsHistoryPanelOpen(p => !p)}
+                            className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
+                            title={t('historyTitle')}
+                         >
+                           <ClockIcon className={`w-6 h-6 ${isHistoryPanelOpen ? 'text-cyan-400' : ''}`} />
+                         </button>
+                       )}
+                  </div>
+              </div>
+            )}
+        </div>
+    );
+    
+    const editorSidebarProps = {
+        isImageLoaded: !!currentImage,
+        isLoading: isLoading,
+        activeTab: activeTab,
+        setActiveTab: setActiveTab,
+        onApplyRetouch: handleGenerate,
+        onApplyCrop: handleApplyCrop,
+        onSetAspect: handleAspectSelect,
+        isCropping: !!completedCrop?.width && completedCrop.width > 0,
+        onApplyAdjustment: handleApplyAdjustment,
+        onApplyFilter: handleApplyFilter,
+        onApplyExpansion: handleApplyExpansion,
+        onApplyInsert: handleApplyInsert,
+        insertSubjectFiles: insertSubjectFiles,
+        onInsertSubjectFilesChange: setInsertSubjectFiles,
+        insertStyleFiles: insertStyleFiles,
+        onInsertStyleFilesChange: setInsertStyleFiles,
+        insertBackgroundFile: insertBackgroundFile,
+        onInsertBackgroundFileChange: setInsertBackgroundFile,
+        insertPrompt: insertPrompt,
+        onInsertPromptChange: setInsertPrompt,
+        onApplyScan: handleApplyScan,
+        onApplyManualScan: handleApplyManualScan,
+        onCancelManualMode: handleCancelManualMode,
+        onEnterManualMode: handleEnterManualMode,
+        isMaskPresent: isMaskPresent(),
+        clearMask: clearMask,
+        retouchPrompt: retouchPrompt,
+        onRetouchPromptChange: setRetouchPrompt,
+        selectionMode: selectionMode,
+        setSelectionMode: (mode: SelectionMode) => {
+            setSelectionMode(mode);
+            setEditHotspot(null);
+            clearMask();
+            setRetouchPrompt('');
+        },
+        brushMode: brushMode,
+        setBrushMode: setBrushMode,
+        brushSize: brushSize,
+        setBrushSize: setBrushSize,
+        isHotspotSelected: !!editHotspot,
+        isManualScanMode: isManualScanMode,
+        setIsManualScanMode: setIsManualScanMode,
+    };
+
+    const editorLayout = (
+        <div className="w-full h-full flex-grow flex flex-col md:grid md:grid-cols-[1fr_auto] gap-4 overflow-hidden">
+             {isScanModalOpen && (
+              <ScanViewerModal
+                imageUrl={scannedImageUrl}
+                onClose={handleCloseScanModal}
+                onSave={handleSaveScannedImage}
+                onAdjust={handleEnterManualMode}
+                isLoading={isLoading}
+                onDownloadPdf={handleDownloadPdf}
+                isDownloadingPdf={isDownloadingPdf}
+              />
+            )}
+            
+            {/* Image Viewer Area */}
+            <div className={`flex flex-col min-w-0 min-h-0 relative ${currentImage ? 'flex-none h-[40vh] md:h-auto md:flex-1' : 'flex-1'}`}>
+                 <div
+                    className="w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
+                    style={{ transform: `scale(${imageScale})` }}
+                 >
+                    <div className="w-full h-full relative">
+                        {isLoading && !isScanModalOpen && (
+                            <div className="absolute inset-0 bg-black/70 z-50 flex flex-col items-center justify-center gap-4 animate-fade-in rounded-2xl">
+                                <Spinner />
+                                <p className="text-gray-300">{t('loadingText')}</p>
+                            </div>
+                        )}
+                        
+                        <div className="w-full h-full border glow-border-animate rounded-2xl p-1 relative">
+                            {activeTab === 'crop' && currentImage ? (
+                              <div className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-xl w-full h-full flex items-center justify-center">
+                                <ReactCrop 
+                                  crop={crop} 
+                                  onChange={c => setCrop(c)} 
+                                  onComplete={c => setCompletedCrop(c)}
+                                  aspect={completedCrop?.width ? completedCrop.width / completedCrop.height : undefined}
+                                  className="w-full h-full flex items-center justify-center"
+                                >
+                                  {cropImageElement}
+                                </ReactCrop>
+                              </div>
+                            ) : imageDisplay }
+                        </div>
+                    </div>
+                </div>
+                <HistoryPanel
+                    history={history}
+                    currentIndex={historyIndex}
+                    onSelect={handleHistorySelect}
+                    isLoading={isLoading}
+                    isOpen={isHistoryPanelOpen}
+                    onClose={() => setIsHistoryPanelOpen(false)}
+                />
+            </div>
+
+            {/* Controls (visible on mobile and desktop) */}
+            <div className={`
+              transition-all duration-300 ease-in-out overflow-hidden
+              ${isToolboxOpen ? 'w-full md:w-[400px]' : 'w-0 h-0 md:w-0 md:h-auto' }
+            `}>
+              <div 
+                ref={toolsContainerRef} 
+                className="w-full md:w-[400px] h-full flex flex-col overflow-y-auto md:pr-2 touch-pan-y"
+                onTouchStart={handleToolsTouchStart}
+                onTouchMove={handleToolsTouchMove}
+                onTouchEnd={handleToolsTouchEnd}
+              >
+                  <EditorSidebar {...editorSidebarProps} />
+              </div>
             </div>
         </div>
     );
     
-    const panelContent = () => {
-        switch (activeTab) {
-            case 'retouch':
-                return <RetouchPanel 
-                            onApplyRetouch={handleGenerate} 
-                            isLoading={isLoading} 
-                            isHotspotSelected={!!editHotspot}
-                            selectionMode={selectionMode}
-                            onSelectionModeChange={(mode) => {
-                                setSelectionMode(mode);
-                                setEditHotspot(null);
-                                setDisplayHotspot(null);
-                                clearMask();
-                            }}
-                            brushMode={brushMode}
-                            onBrushModeChange={setBrushMode}
-                            brushSize={brushSize}
-                            onBrushSizeChange={setBrushSize}
-                            onClearMask={clearMask}
-                        />;
-            case 'crop':
-                return <CropPanel onApplyCrop={handleApplyCrop} onSetAspect={handleAspectSelect} isLoading={isLoading} isCropping={!!completedCrop?.width && completedCrop.width > 0} />;
-            case 'adjust':
-                return <AdjustmentPanel onApplyAdjustment={handleApplyAdjustment} isLoading={isLoading} />;
-            case 'filters':
-                return <FilterPanel onApplyFilter={handleApplyFilter} isLoading={isLoading} />;
-            case 'expand':
-                return <ExpandPanel onApplyExpansion={handleApplyExpansion} isLoading={isLoading} />;
-            default:
-                return null;
-        }
-    };
-
-
-    return (
-      <div className="w-full animate-fade-in flex flex-col lg:flex-row gap-6">
-        {/* Main Content Area (Image + Actions) */}
-        <div className="flex-1 flex flex-col gap-4">
-            <div className="relative w-full shadow-2xl flex-1 flex">
-                {isLoading && (
-                    <div className="absolute inset-0 bg-black/70 z-50 flex flex-col items-center justify-center gap-4 animate-fade-in rounded-2xl">
-                        <Spinner />
-                        <p className="text-gray-300">{t('loadingText')}</p>
-                    </div>
-                )}
-                
-                <div className="w-full border glow-border-animate rounded-2xl p-1">
-                    {activeTab === 'crop' ? (
-                      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl">
-                        <ReactCrop 
-                          crop={crop} 
-                          onChange={c => setCrop(c)} 
-                          onComplete={c => setCompletedCrop(c)}
-                          aspect={aspect}
-                          className="max-h-[75vh]"
-                        >
-                          {cropImageElement}
-                        </ReactCrop>
-                      </div>
-                    ) : imageDisplay }
-                </div>
-            </div>
-            <div className="hidden lg:block">
-              {actionButtons}
-            </div>
-        </div>
-
-        {/* Right Sidebar (Toolbar + Panels) */}
-        <div className="flex flex-col lg:flex-row gap-4">
-            <div className="w-full lg:w-auto bg-black/20 border border-white/10 rounded-2xl p-2 flex lg:flex-col items-center justify-center gap-2 backdrop-blur-lg">
-                {TABS_CONFIG.map(tab => (
-                    <div key={tab.id} className="relative group">
-                        <button
-                           onClick={() => setActiveTab(tab.id as Tab)}
-                           className={`relative w-14 h-14 flex items-center justify-center rounded-xl transition-all duration-200 ${
-                               activeTab === tab.id 
-                               ? 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md shadow-cyan-500/30' 
-                               : 'text-gray-300 hover:text-white bg-white/5 hover:bg-white/10'
-                           }`}
-                           title={tab.tooltip}
-                        >
-                            <tab.icon className="w-7 h-7" />
-                        </button>
-                    </div>
-                ))}
-            </div>
-            
-            <div className="w-full lg:w-[360px]">
-              <div key={activeTab} className="animate-slide-in-right">
-                {panelContent()}
-              </div>
-            </div>
-        </div>
-        
-        {/* Mobile Action Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-2">
-            {actionButtons}
-        </div>
-      </div>
-    );
+    return editorLayout;
   };
   
   return (
-    <div className="min-h-screen text-gray-100 flex flex-col">
-      <Header />
-      <main className={`flex-grow w-full max-w-screen-2xl mx-auto p-4 md:p-6 flex justify-center ${currentImage ? 'items-start' : 'items-center'} pb-28 lg:pb-6`}>
-        {renderContent()}
-      </main>
+    <div className="min-h-screen text-gray-100 flex flex-col h-screen overflow-hidden">
+        <input
+            type="file"
+            id="global-file-input"
+            className="hidden"
+            accept="image/*"
+            onChange={(e) => {
+                handleFileSelect(e.target.files);
+                if (e.target) e.target.value = '';
+            }}
+        />
+        <Header
+            isImageLoaded={!!currentImage}
+            imageFile={currentImage}
+            imageDimensions={imageDimensions}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onReset={handleReset}
+            onDownload={handleDownload}
+            isLoading={isLoading}
+            onToggleToolbox={toggleToolbox}
+            onStartOver={handleStartOver}
+            isToolboxOpen={isToolboxOpen}
+        />
+        <main className={`flex-grow w-full max-w-screen-2xl mx-auto p-2 md:p-4 flex flex-col justify-center items-stretch overflow-hidden`}>
+            {renderContent()}
+        </main>
+        {activeTab === 'retouch' && selectionMode === 'point' && !!editHotspot && !isLoading && (
+            <MobileInputBar 
+                prompt={retouchPrompt}
+                onPromptChange={setRetouchPrompt}
+                onSubmit={handleGenerate}
+                isLoading={isLoading}
+            />
+        )}
     </div>
   );
 };
