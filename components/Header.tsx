@@ -47,7 +47,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-4 flex-shrink-0">
             <button 
                 onClick={onToggleToolbox}
-                disabled={isLoading && !isImageLoaded}
+                disabled={isLoading}
                 className="flex items-center justify-center gap-3 transition-opacity hover:opacity-80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={t('appName')}
                 aria-expanded={isToolboxOpen}

@@ -75,25 +75,31 @@ const HistoryPanel: React.FC<{
                         flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory px-[calc(50%-2.5rem)]
                         md:flex-col md:h-full md:overflow-y-auto md:pb-0 md:snap-none md:px-0
                     ">
-                        {thumbnailUrls.map((url, index) => (
-                            <button
-                                key={`${history[index].name}-${index}`}
-                                ref={index === currentIndex ? activeItemRef : null}
-                                onClick={() => onSelect(index)}
-                                disabled={isLoading}
-                                className={`
-                                    w-20 h-20 md:w-full md:aspect-square
-                                    flex-shrink-0 rounded-lg overflow-hidden transition-all duration-200 ring-2 focus:outline-none focus:ring-offset-2 focus:ring-offset-black/50
-                                    snap-center
-                                    ${currentIndex === index ? 'ring-cyan-400 scale-105' : 'ring-transparent hover:ring-white/50 opacity-80 hover:opacity-100'}
-                                    disabled:opacity-50 disabled:cursor-not-allowed
-                                `}
-                                aria-label={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
-                                title={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
-                            >
-                                <img src={url} alt={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })} className="w-full h-full object-cover" />
-                            </button>
-                        ))}
+                        {history.map((file, index) => {
+                            const url = thumbnailUrls[index];
+                            // Guard against the URL not being ready yet for one render cycle
+                            if (!url) return null;
+
+                            return (
+                                <button
+                                    key={`${file.name}-${index}`}
+                                    ref={index === currentIndex ? activeItemRef : null}
+                                    onClick={() => onSelect(index)}
+                                    disabled={isLoading}
+                                    className={`
+                                        w-20 h-20 md:w-full md:aspect-square
+                                        flex-shrink-0 rounded-lg overflow-hidden transition-all duration-200 ring-2 focus:outline-none focus:ring-offset-2 focus:ring-offset-black/50
+                                        snap-center
+                                        ${currentIndex === index ? 'ring-cyan-400 scale-105' : 'ring-transparent hover:ring-white/50 opacity-80 hover:opacity-100'}
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                    `}
+                                    aria-label={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
+                                    title={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
+                                >
+                                    <img src={url} alt={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })} className="w-full h-full object-cover" />
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

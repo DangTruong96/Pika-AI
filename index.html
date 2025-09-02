@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-g" />
+    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pixshop</title>
@@ -24,9 +24,9 @@
 <link rel="stylesheet" href="https://esm.sh/react-image-crop@^11.0.6/dist/ReactCrop.css" />
 <style>
 :root {
-  --glow-color-1: rgba(0, 255, 255, 0.5); /* Cyan */
-  --glow-color-2: rgba(191, 0, 255, 0.5); /* Magenta */
-  --glow-color-3: rgba(75, 0, 130, 0.4);   /* Indigo */
+  --glow-color-1: rgba(0, 220, 255, 0.6);   /* Brighter Cyan */
+  --glow-color-2: rgba(255, 0, 220, 0.6);   /* Brighter Magenta */
+  --glow-color-3: rgba(120, 50, 255, 0.5);  /* Lighter, more vibrant Indigo/Purple */
   
   --g1x: 10%; --g1y: 90%;
   --g2x: 90%; --g2y: 20%;
@@ -41,7 +41,7 @@ body {
         radial-gradient(circle at var(--g2x) var(--g2y), var(--glow-color-2), transparent 40%),
         radial-gradient(circle at var(--g3x) var(--g3y), var(--glow-color-3), transparent 50%);
     min-height: 100vh;
-    animation: aurora-bg 30s ease-in-out infinite alternate;
+    animation: aurora-bg 20s ease-in-out infinite alternate;
     position: relative;
     overflow-x: hidden;
 }
@@ -85,19 +85,12 @@ body::after {
 }
 
 /* Upgrading the Glass Panels */
-.bg-black\\/30 {
-  background-color: rgba(16, 16, 32, 0.45) !important; /* Slightly more opaque and bluer */
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-.bg-black\\/40 {
-  background-color: rgba(16, 16, 32, 0.55) !important;
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+.bg-black\\/30, .bg-black\\/40 {
+  background-color: rgba(28, 28, 50, 0.55) !important;
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid transparent !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Subtle gradient border effect for panels */
@@ -112,7 +105,12 @@ body::after {
     inset: 0;
     border-radius: 1rem; /* match tailwind rounded-2xl */
     padding: 1px; /* border thickness */
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.35),
+        rgba(0, 255, 255, 0.15),
+        rgba(191, 0, 255, 0.15),
+        rgba(255, 255, 255, 0.05)
+    );
     -webkit-mask: 
         linear-gradient(#fff 0 0) content-box, 
         linear-gradient(#fff 0 0);
@@ -132,8 +130,8 @@ body, .text-gray-100, .text-gray-200, .text-gray-300, .text-gray-400, .text-whit
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 .bg-white\\/5:focus-within, .bg-white\\/5:focus {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 0 0 1px var(--glow-color-1);
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 0 15px rgba(0, 220, 255, 0.3);
 }
 
 /* Upgrade Buttons */
@@ -142,8 +140,8 @@ body, .text-gray-100, .text-gray-200, .text-gray-300, .text-gray-400, .text-whit
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), 0 0 30px rgba(0, 255, 255, 0.1), inset 0 1px 1px rgba(255,255,255,0.2);
 }
 .bg-gradient-to-br.from-cyan-500:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 0 25px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2), inset 0 1px 1px rgba(255,255,255,0.2);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 30px rgba(0, 255, 255, 0.5), 0 0 50px rgba(78, 183, 235, 0.3), inset 0 1px 1px rgba(255,255,255,0.3);
 }
 
 @keyframes pulse-draw {

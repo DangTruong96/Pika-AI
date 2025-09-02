@@ -191,16 +191,19 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
                             </div>
                         ))}
                         {subjectFiles.length < 4 && (
-                            <label
-                                {...subjectDragProps}
-                                className={`aspect-square border-2 rounded-lg flex flex-col items-center justify-center text-center p-1 transition-all duration-200 cursor-pointer overflow-hidden
-                                    ${isDraggingSubjects ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
-                                }
-                            >
-                                <UploadIcon className="w-6 h-6 text-gray-400" />
-                                <span className="text-xs mt-1 text-gray-500">{t('insertUploadPlaceholder')}</span>
-                                <input type="file" className="hidden" accept="image/*" onChange={handleSubjectFileChange} />
-                            </label>
+                            <div>
+                                <label
+                                    htmlFor="subject-file-input"
+                                    {...subjectDragProps}
+                                    className={`aspect-square border-2 rounded-lg flex flex-col items-center justify-center text-center p-1 transition-all duration-200 cursor-pointer overflow-hidden w-full h-full
+                                        ${isDraggingSubjects ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
+                                    }
+                                >
+                                    <UploadIcon className="w-6 h-6 text-gray-400" />
+                                    <span className="text-xs mt-1 text-gray-500">{t('insertUploadPlaceholder')}</span>
+                                </label>
+                                <input id="subject-file-input" type="file" className="hidden" accept="image/*" onChange={handleSubjectFileChange} />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -222,16 +225,19 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
                             </div>
                         ))}
                         {styleFiles.length < 3 && (
-                             <label
-                                {...styleDragProps}
-                                className={`h-24 border-2 rounded-lg flex flex-col items-center justify-center text-center p-1 transition-all duration-200 cursor-pointer overflow-hidden
-                                    ${isDraggingStyle ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
-                                }
-                            >
-                                <UploadIcon className="w-6 h-6 text-gray-400" />
-                                <span className="text-xs mt-1 text-gray-500">{t('insertUploadPlaceholder')}</span>
-                                <input type="file" className="hidden" accept="image/*" onChange={handleStyleFileChange} />
-                            </label>
+                             <div>
+                                 <label
+                                    htmlFor="style-file-input"
+                                    {...styleDragProps}
+                                    className={`h-24 border-2 rounded-lg flex flex-col items-center justify-center text-center p-1 transition-all duration-200 cursor-pointer overflow-hidden w-full
+                                        ${isDraggingStyle ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
+                                    }
+                                >
+                                    <UploadIcon className="w-6 h-6 text-gray-400" />
+                                    <span className="text-xs mt-1 text-gray-500">{t('insertUploadPlaceholder')}</span>
+                                </label>
+                                <input id="style-file-input" type="file" className="hidden" accept="image/*" onChange={handleStyleFileChange} />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -239,33 +245,36 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
                 {/* Background Section */}
                 <div className="w-full flex flex-col gap-2">
                     <span className="text-sm font-semibold text-gray-300">{t('insertBackground')}</span>
-                     <label
-                        {...backgroundDragProps}
-                        className={`relative w-full h-24 border-2 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer overflow-hidden
-                            ${isDraggingBackground ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
-                        }
-                    >
-                        {backgroundPreview ? (
-                           <>
-                                <img src={backgroundPreview} alt={t('insertBackground')} className="w-full h-full object-cover" />
-                                {backgroundFile && (
-                                    <button
-                                        onClick={handleClearBackground}
-                                        className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white z-10 hover:bg-black/80"
-                                        aria-label={`Clear background image`}
-                                    >
-                                        <XMarkIcon className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            <div className="text-center text-gray-400 p-2">
-                                <UploadIcon className="w-6 h-6 mx-auto" />
-                                <span className="text-xs mt-1 block">{t('insertUploadPlaceholder')}</span>
-                            </div>
-                        )}
-                        <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundFileChange} />
-                    </label>
+                     <div>
+                         <label
+                            htmlFor="background-file-input"
+                            {...backgroundDragProps}
+                            className={`relative w-full h-24 border-2 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer overflow-hidden
+                                ${isDraggingBackground ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
+                            }
+                        >
+                            {backgroundPreview ? (
+                               <>
+                                    <img src={backgroundPreview} alt={t('insertBackground')} className="w-full h-full object-cover" />
+                                    {backgroundFile && (
+                                        <button
+                                            onClick={handleClearBackground}
+                                            className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white z-10 hover:bg-black/80"
+                                            aria-label={`Clear background image`}
+                                        >
+                                            <XMarkIcon className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="text-center text-gray-400 p-2">
+                                    <UploadIcon className="w-6 h-6 mx-auto" />
+                                    <span className="text-xs mt-1 block">{t('insertUploadPlaceholder')}</span>
+                                </div>
+                            )}
+                        </label>
+                        <input id="background-file-input" type="file" className="hidden" accept="image/*" onChange={handleBackgroundFileChange} />
+                    </div>
                 </div>
             </div>
 

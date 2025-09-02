@@ -8,7 +8,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, type Corners, type Enhancement } from './services/geminiService';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateProductImage, type Corners, type Enhancement } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
@@ -87,7 +87,8 @@ const MobileInputBar: React.FC<{
 };
 
 
-export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan';
+export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'product';
+type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
 
 const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => void }> = ({ onFileSelect }) => {
   const { t } = useTranslation();
@@ -109,12 +110,14 @@ const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => voi
       }}
     >
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="p-4 bg-white/5 rounded-full border border-white/10">
-            <UploadIcon className="w-12 h-12 text-gray-300" />
-        </div>
-        <label htmlFor="image-upload-main" className="relative font-semibold text-cyan-300 cursor-pointer hover:underline text-lg">
-          {t('uploadImage')}
-          <input id="image-upload-main" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+        <label htmlFor="image-upload-main" className="flex flex-col items-center gap-4 cursor-pointer group">
+            <div className="p-4 bg-white/5 rounded-full border border-white/10 transition-colors duration-200 group-hover:bg-white/10 group-hover:border-cyan-400/50">
+              <UploadIcon className="w-12 h-12 text-gray-300" />
+            </div>
+            <span className="font-semibold text-cyan-300 group-hover:underline text-lg">
+              {t('uploadImage')}
+            </span>
+            <input id="image-upload-main" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
         </label>
         <p className="text-sm text-gray-500">{t('dragAndDrop')}</p>
       </div>
@@ -131,6 +134,7 @@ const App: React.FC = () => {
   
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [aspect, setAspect] = useState<number | undefined>();
   
   // Editor State
   const [activeTab, setActiveTab] = useState<Tab>('retouch');
@@ -153,6 +157,17 @@ const App: React.FC = () => {
   const [insertStyleFiles, setInsertStyleFiles] = useState<File[]>([]);
   const [insertBackgroundFile, setInsertBackgroundFile] = useState<File | null>(null);
   const [insertPrompt, setInsertPrompt] = useState('');
+  
+  // Product state
+  const [productPrompt, setProductPrompt] = useState('');
+  
+  // Expand state
+  const [expandPrompt, setExpandPrompt] = useState('');
+  const [expansionPadding, setExpansionPadding] = useState({ top: 0, right: 0, bottom: 0, left: 0 });
+  const [activeExpansionHandle, setActiveExpansionHandle] = useState<ExpansionHandle | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number, y: number, initialPadding: typeof expansionPadding } | null>(null);
+  const hasExpansion = Object.values(expansionPadding).some(p => p > 0);
+
 
   // Scan state
   const [isManualScanMode, setIsManualScanMode] = useState(false);
@@ -218,6 +233,12 @@ const App: React.FC = () => {
   
   const toggleToolbox = useCallback(() => setIsToolboxOpen(prev => !prev), []);
   
+  const resetView = useCallback(() => {
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+      setSliderPosition(50);
+  }, []);
+
   // Effect to handle shrinking the image viewer when the tool panel is scrolled
   useEffect(() => {
     const toolsEl = toolsContainerRef.current;
@@ -249,12 +270,6 @@ const App: React.FC = () => {
     };
   }, [activeTab, isLoading, currentImage]); // Re-run when sidebar content might change height
 
-  const resetView = useCallback(() => {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-      setSliderPosition(50);
-  }, []);
-
   const handleZoom = useCallback((direction: 'in' | 'out', amount: number = 0.2) => {
     reportInteraction(); // Provide visual feedback for zoom
     setScale(prevScale => {
@@ -276,7 +291,12 @@ const App: React.FC = () => {
     setEditHotspot(null);
     setIsManualScanMode(false);
     clearMask();
-  }, [activeTab, clearMask]);
+    setExpansionPadding({ top: 0, right: 0, bottom: 0, left: 0 });
+    // When switching to a mode that needs a clean view, reset zoom/pan.
+    if (activeTab === 'crop') {
+        resetView();
+    }
+  }, [activeTab, clearMask, resetView]);
 
 
   // Effect to sync mask canvas size with image and clear it
@@ -495,8 +515,7 @@ const App: React.FC = () => {
   }, [currentImage, addImageToHistory, isMaskPresent, t, selectionMode, editHotspot, retouchPrompt]);
   
   const handleApplyFilter = useCallback(async (filterPrompt: string) => {
-    // Each filter is applied to the original image, not stacked.
-    if (!originalImage) {
+    if (!currentImage) {
       setError(t('errorNoImageLoadedToFilter'));
       return;
     }
@@ -505,7 +524,7 @@ const App: React.FC = () => {
     setError(null);
     
     try {
-        const filteredImageUrl = await generateFilteredImage(originalImage, filterPrompt);
+        const filteredImageUrl = await generateFilteredImage(currentImage, filterPrompt);
         const newImageFile = dataURLtoFile(filteredImageUrl, `filtered-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
@@ -515,7 +534,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [originalImage, addImageToHistory, t]);
+  }, [currentImage, addImageToHistory, t]);
   
   const handleApplyAdjustment = useCallback(async (adjustmentPrompt: string) => {
     if (!currentImage) {
@@ -540,41 +559,41 @@ const App: React.FC = () => {
   }, [currentImage, addImageToHistory, t]);
 
   const handleApplyCrop = useCallback(() => {
-    if (!completedCrop || !imgRef.current) {
-        setError(t('errorPleaseSelectCrop'));
-        return;
+    if (!completedCrop || !imgRef.current || !imgRef.current.naturalWidth) {
+      setError(t('errorPleaseSelectCrop'));
+      return;
     }
 
     const image = imgRef.current;
     const canvas = document.createElement('canvas');
+
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    
-    canvas.width = completedCrop.width;
-    canvas.height = completedCrop.height;
+
+    const sourceCropWidth = completedCrop.width * scaleX;
+    const sourceCropHeight = completedCrop.height * scaleY;
+
+    canvas.width = Math.round(sourceCropWidth);
+    canvas.height = Math.round(sourceCropHeight);
+
     const ctx = canvas.getContext('2d');
-
     if (!ctx) {
-        setError(t('errorCouldNotProcessCrop'));
-        return;
+      setError(t('errorCouldNotProcessCrop'));
+      return;
     }
-
-    const pixelRatio = window.devicePixelRatio || 1;
-    canvas.width = completedCrop.width * pixelRatio;
-    canvas.height = completedCrop.height * pixelRatio;
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    
     ctx.imageSmoothingQuality = 'high';
 
     ctx.drawImage(
       image,
-      completedCrop.x * scaleX,
-      completedCrop.y * scaleY,
-      completedCrop.width * scaleX,
-      completedCrop.height * scaleY,
-      0,
-      0,
-      completedCrop.width,
-      completedCrop.height,
+      completedCrop.x * scaleX, // Source X
+      completedCrop.y * scaleY, // Source Y
+      sourceCropWidth,          // Source Width
+      sourceCropHeight,         // Source Height
+      0,                        // Destination X
+      0,                        // Destination Y
+      canvas.width,             // Destination Width
+      canvas.height             // Destination Height
     );
     
     const croppedImageUrl = canvas.toDataURL('image/png');
@@ -583,9 +602,14 @@ const App: React.FC = () => {
 
   }, [completedCrop, addImageToHistory, t]);
 
-  const handleApplyExpansion = useCallback(async (aspectRatio: number, prompt: string) => {
-    if (!currentImage) {
+  const handleApplyExpansion = useCallback(async (prompt: string) => {
+    if (!currentImage || !imgRef.current) {
         setError(t('errorNoImageLoadedToExpand'));
+        return;
+    }
+    
+    if (!hasExpansion) {
+        // Optionally show a message to the user
         return;
     }
 
@@ -593,9 +617,43 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-        const expandedImageUrl = await generateExpandedImage(currentImage, aspectRatio, prompt);
+        const img = imgRef.current;
+        const { naturalWidth, naturalHeight } = img;
+        const imgRect = img.getBoundingClientRect(); // This gives the current on-screen size, including zoom
+
+        // This is the ratio of original image pixels to displayed pixels.
+        const scaleX = naturalWidth / imgRect.width;
+        const scaleY = naturalHeight / imgRect.height;
+        
+        // Convert padding from screen pixels to natural image pixels
+        const naturalPadding = {
+            top: Math.round(expansionPadding.top * scaleY),
+            right: Math.round(expansionPadding.right * scaleX),
+            bottom: Math.round(expansionPadding.bottom * scaleY),
+            left: Math.round(expansionPadding.left * scaleX),
+        };
+
+        const newW = naturalWidth + naturalPadding.left + naturalPadding.right;
+        const newH = naturalHeight + naturalPadding.top + naturalPadding.bottom;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = newW;
+        canvas.height = newH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error("Could not get canvas context");
+
+        ctx.drawImage(img, naturalPadding.left, naturalPadding.top);
+        
+        const paddedImageDataUrl = canvas.toDataURL('image/png');
+        
+        const expandedImageUrl = await generateExpandedImage(paddedImageDataUrl, prompt);
         const newImageFile = dataURLtoFile(expandedImageUrl, `expanded-${Date.now()}.png`);
+        
         addImageToHistory(newImageFile);
+        
+        setExpansionPadding({ top: 0, right: 0, bottom: 0, left: 0 });
+        setExpandPrompt('');
+        
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`${t('errorFailedToExpandImage')} ${errorMessage}`);
@@ -603,7 +661,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t]);
+  }, [currentImage, addImageToHistory, t, expansionPadding, hasExpansion]);
 
   const handleApplyInsert = useCallback(async () => {
     if (insertSubjectFiles.length === 0) {
@@ -639,6 +697,29 @@ const App: React.FC = () => {
         setIsLoading(false);
     }
   }, [addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, insertStyleFiles, insertBackgroundFile, insertPrompt]);
+
+  const handleApplyProductScene = useCallback(async () => {
+    if (!currentImage) {
+      setError(t('errorNoImageLoadedToAdjust'));
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+        const adjustedImageUrl = await generateProductImage(currentImage, productPrompt);
+        const newImageFile = dataURLtoFile(adjustedImageUrl, `product-${Date.now()}.png`);
+        addImageToHistory(newImageFile);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
+        console.error(err);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentImage, addImageToHistory, t, productPrompt]);
+
 
   // --- Scan Handlers ---
   const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean) => {
@@ -838,31 +919,57 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRequestFileUpload = useCallback(() => {
+    document.getElementById('global-file-input')?.click();
+  }, []);
+
   const handleAspectSelect = (newAspect: number | undefined) => {
+    setAspect(newAspect);
     if (imgRef.current) {
-        const { naturalWidth, naturalHeight } = imgRef.current;
+        const { width, height } = imgRef.current;
+        
+        let cropWidth: number, cropHeight: number;
+        
         if (newAspect) {
-            const newCrop = makeAspectCrop({ unit: '%', width: 90 }, newAspect, naturalWidth, naturalHeight);
-            const centeredCrop = centerCrop(newCrop, naturalWidth, naturalHeight);
-            setCrop(centeredCrop);
-            setCompletedCrop({
-                unit: 'px',
-                x: (centeredCrop.x / 100) * naturalWidth,
-                y: (centeredCrop.y / 100) * naturalHeight,
-                width: (centeredCrop.width / 100) * naturalWidth,
-                height: (centeredCrop.height / 100) * naturalHeight,
-            });
+            const imageAspect = width / height;
+            if (newAspect > imageAspect) {
+                // The crop is wider than the image, so width is the limiting factor
+                cropWidth = width * 0.9;
+                cropHeight = cropWidth / newAspect;
+            } else {
+                // The crop is taller than the image, so height is the limiting factor
+                cropHeight = height * 0.9;
+                cropWidth = cropHeight * newAspect;
+            }
         } else {
-            setCrop(undefined);
-            setCompletedCrop(undefined);
+            // Free crop, default to 90%
+            cropWidth = width * 0.9;
+            cropHeight = height * 0.9;
         }
+
+        const newCrop = centerCrop(
+            makeAspectCrop(
+                {
+                    unit: 'px',
+                    width: cropWidth,
+                },
+                newAspect ?? (cropWidth / cropHeight),
+                width,
+                height,
+            ),
+            width,
+            height
+        );
+        setCrop(newCrop);
+        setCompletedCrop(undefined);
     }
-  };
+};
 
   const handleViewerMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
       if (e.button !== 0 || (e.target as HTMLElement).closest('.slider-handle') || (e.target as HTMLElement).closest('.corner-handle')) return;
       if (activeTab === 'retouch' && selectionMode === 'brush') return; // Let canvas handle it
       if (activeTab === 'scan' && isManualScanMode) return; // Let corner handles manage clicks
+      if (activeTab === 'crop') return; // Disable panning in crop mode
       if (scale <= 1) return; // Don't pan if not zoomed
 
       e.preventDefault();
@@ -907,6 +1014,7 @@ const App: React.FC = () => {
   };
 
   const handleViewerWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+      if (activeTab === 'crop') return; // Disable zoom in crop mode
       e.preventDefault();
       const zoomAmount = 0.1;
       if (e.deltaY < 0) {
@@ -914,7 +1022,7 @@ const App: React.FC = () => {
       } else {
           handleZoom('out', zoomAmount);
       }
-  }, [handleZoom]);
+  }, [handleZoom, activeTab]);
 
   // --- Pinch-to-Zoom and Touch Pan Handlers ---
   const getDistanceBetweenTouches = (touches: React.TouchList): number => {
@@ -929,6 +1037,7 @@ const App: React.FC = () => {
     if ((e.target as HTMLElement).closest('.slider-handle') || (e.target as HTMLElement).closest('.corner-handle')) return;
     if (activeTab === 'retouch' && selectionMode === 'brush') return;
     if (activeTab === 'scan' && isManualScanMode) return;
+    if (activeTab === 'crop') return;
 
     e.preventDefault();
 
@@ -1277,7 +1386,26 @@ const App: React.FC = () => {
           updateSliderPosition(e.clientX);
       } else if (activeCorner) {
           handleCornerDrag(e.clientX, e.clientY);
-      } else if (isPanning && panStartRef.current) {
+      } else if (activeExpansionHandle && dragStart) {
+        const deltaX = (e.clientX - dragStart.x) / scale;
+        const deltaY = (e.clientY - dragStart.y) / scale;
+        
+        const newPadding = { ...dragStart.initialPadding };
+
+        if (activeExpansionHandle.includes('t')) {
+            newPadding.top = Math.max(0, dragStart.initialPadding.top - deltaY);
+        }
+        if (activeExpansionHandle.includes('b')) {
+            newPadding.bottom = Math.max(0, dragStart.initialPadding.bottom + deltaY);
+        }
+        if (activeExpansionHandle.includes('l')) {
+            newPadding.left = Math.max(0, dragStart.initialPadding.left - deltaX);
+        }
+        if (activeExpansionHandle.includes('r')) {
+            newPadding.right = Math.max(0, dragStart.initialPadding.right + deltaX);
+        }
+        setExpansionPadding(newPadding);
+    } else if (isPanning && panStartRef.current) {
           const dx = e.clientX - panStartRef.current.startX;
           const dy = e.clientY - panStartRef.current.startY;
           setPosition({
@@ -1285,7 +1413,7 @@ const App: React.FC = () => {
               y: panStartRef.current.initialPosition.y + dy,
           });
       }
-  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning]);
+  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning, activeExpansionHandle, dragStart, scale]);
 
   const handleGlobalTouchMove = useCallback((e: TouchEvent) => {
       if (e.touches.length === 0) return;
@@ -1293,6 +1421,23 @@ const App: React.FC = () => {
           updateSliderPosition(e.touches[0].clientX);
       } else if (activeCorner) {
           handleCornerDrag(e.touches[0].clientX, e.touches[0].clientY);
+      } else if (activeExpansionHandle && dragStart && e.touches.length === 1) {
+          const deltaX = (e.touches[0].clientX - dragStart.x) / scale;
+          const deltaY = (e.touches[0].clientY - dragStart.y) / scale;
+          const newPadding = { ...dragStart.initialPadding };
+          if (activeExpansionHandle.includes('t')) {
+              newPadding.top = Math.max(0, dragStart.initialPadding.top - deltaY);
+          }
+          if (activeExpansionHandle.includes('b')) {
+              newPadding.bottom = Math.max(0, dragStart.initialPadding.bottom + deltaY);
+          }
+          if (activeExpansionHandle.includes('l')) {
+              newPadding.left = Math.max(0, dragStart.initialPadding.left - deltaX);
+          }
+          if (activeExpansionHandle.includes('r')) {
+              newPadding.right = Math.max(0, dragStart.initialPadding.right + deltaX);
+          }
+          setExpansionPadding(newPadding);
       } else if (isPanning && panStartRef.current && e.touches.length === 1) {
           // Handle pan move globally to allow dragging outside the viewer bounds.
           const dx = e.touches[0].clientX - panStartRef.current.startX;
@@ -1302,7 +1447,7 @@ const App: React.FC = () => {
               y: panStartRef.current.initialPosition.y + dy,
           });
       }
-  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning]);
+  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning, activeExpansionHandle, dragStart, scale]);
 
 
   const handleGlobalMouseUp = useCallback(() => {
@@ -1310,10 +1455,12 @@ const App: React.FC = () => {
       setActiveCorner(null);
       setIsPanning(false);
       panStartRef.current = null;
+      setActiveExpansionHandle(null);
+      setDragStart(null);
   }, []);
 
   useEffect(() => {
-      const isDragging = isDraggingSlider || !!activeCorner || isPanning;
+      const isDragging = isDraggingSlider || !!activeCorner || isPanning || !!activeExpansionHandle;
       if (isDragging) {
           window.addEventListener('mousemove', handleGlobalMouseMove);
           window.addEventListener('mouseup', handleGlobalMouseUp);
@@ -1332,7 +1479,7 @@ const App: React.FC = () => {
           window.removeEventListener('touchend', handleGlobalMouseUp);
           window.removeEventListener('touchcancel', handleGlobalMouseUp);
       };
-  }, [isDraggingSlider, activeCorner, isPanning, handleGlobalMouseMove, handleGlobalTouchMove, handleGlobalMouseUp]);
+  }, [isDraggingSlider, activeCorner, isPanning, activeExpansionHandle, handleGlobalMouseMove, handleGlobalTouchMove, handleGlobalMouseUp]);
   
   // --- Corner Drag Handlers ---
   const handleCornerDrag = (clientX: number, clientY: number) => {
@@ -1366,11 +1513,29 @@ const App: React.FC = () => {
       setActiveCorner(corner);
   };
 
+  // --- Expand Handlers ---
+  const handleExpansionHandleMouseDown = (e: React.MouseEvent, handle: ExpansionHandle) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveExpansionHandle(handle);
+    setDragStart({ x: e.clientX, y: e.clientY, initialPadding: expansionPadding });
+  };
+
+  const handleExpansionHandleTouchStart = (e: React.TouchEvent, handle: ExpansionHandle) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length === 1) {
+        setActiveExpansionHandle(handle);
+        setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY, initialPadding: expansionPadding });
+    }
+  };
+
+
   // --- Keyboard Shortcuts ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts if user is typing in an input
-      if ((e.target as HTMLElement).tagName.toLowerCase() === 'input') {
+      if ((e.target as HTMLElement).tagName.toLowerCase() === 'input' || (e.target as HTMLElement).tagName.toLowerCase() === 'textarea') {
         return;
       }
       
@@ -1444,7 +1609,7 @@ const App: React.FC = () => {
         src={currentImageUrl ?? ''} 
         alt="Crop this image"
         crossOrigin="anonymous"
-        className="w-full h-full object-contain"
+        className="block"
       />
     );
 
@@ -1454,7 +1619,7 @@ const App: React.FC = () => {
             className={`relative w-full h-full overflow-hidden bg-black/30 select-none rounded-2xl transition-all duration-200 ease-in-out
                 ${currentImage ? 'touch-none' : ''}
                 ${isPanning ? 'cursor-grabbing' : ''}
-                ${!isPanning && scale > 1 ? 'cursor-grab' : ''}
+                ${!isPanning && scale > 1 && (activeTab !== 'crop') ? 'cursor-grab' : ''}
                 ${activeTab === 'retouch' && selectionMode === 'point' && currentImage ? 'cursor-crosshair' : ''}
                 ${activeTab === 'retouch' && selectionMode === 'brush' && currentImage ? 'cursor-none' : ''}
                 ${(isPanning || isInteracting) ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/25' : ''}
@@ -1494,7 +1659,7 @@ const App: React.FC = () => {
                             className="absolute inset-0 w-full h-full"
                             style={{ 
                                 clipPath: (historyIndex > 0 && !isComparing) ? `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` : 'none',
-                                opacity: isComparing ? 0 : 1
+                                opacity: isComparing ? 1 : 1 // Changed to always be 1, comparison is now handled by hiding the element
                             }}
                         >
                             <img
@@ -1503,7 +1668,7 @@ const App: React.FC = () => {
                                 src={currentImageUrl}
                                 alt={t('edited')}
                                 crossOrigin="anonymous"
-                                className={`absolute inset-0 w-full h-full object-contain pointer-events-none`}
+                                className={`absolute inset-0 w-full h-full object-contain pointer-events-none transition-opacity ${isComparing ? 'opacity-0' : 'opacity-100'}`}
                             />
                         </div>
                     )}
@@ -1584,6 +1749,79 @@ const App: React.FC = () => {
                     )}
                 </div>
             </div>
+
+             {/* Interactive Expansion UI v2 */}
+             {currentImage && activeTab === 'expand' && imgRef.current && imageViewerRef.current && (() => {
+                const img = imgRef.current;
+                const viewer = imageViewerRef.current;
+
+                const imgRect = img.getBoundingClientRect();
+                const viewerRect = viewer.getBoundingClientRect();
+                if (imgRect.width === 0) return null;
+
+                const imgTop = imgRect.top - viewerRect.top;
+                const imgLeft = imgRect.left - viewerRect.left;
+
+                const newLeft = imgLeft - expansionPadding.left;
+                const newTop = imgTop - expansionPadding.top;
+                const newWidth = imgRect.width + expansionPadding.left + expansionPadding.right;
+                const newHeight = imgRect.height + expansionPadding.top + expansionPadding.bottom;
+                
+                const handles: { id: ExpansionHandle, cursor: string, positionStyle: React.CSSProperties, shapeClass: string }[] = [
+                    // Corners
+                    { id: 'tl', cursor: 'nwse-resize', positionStyle: { top: 0, left: 0 }, shapeClass: 'w-3 h-3' },
+                    { id: 'tr', cursor: 'nesw-resize', positionStyle: { top: 0, right: 0 }, shapeClass: 'w-3 h-3' },
+                    { id: 'bl', cursor: 'nesw-resize', positionStyle: { bottom: 0, left: 0 }, shapeClass: 'w-3 h-3' },
+                    { id: 'br', cursor: 'nwse-resize', positionStyle: { bottom: 0, right: 0 }, shapeClass: 'w-3 h-3' },
+                    // Edges
+                    { id: 'top', cursor: 'ns-resize', positionStyle: { top: 0, left: '50%', transform: 'translateX(-50%)' }, shapeClass: 'w-6 h-1.5' },
+                    { id: 'bottom', cursor: 'ns-resize', positionStyle: { bottom: 0, left: '50%', transform: 'translateX(-50%)' }, shapeClass: 'w-6 h-1.5' },
+                    { id: 'left', cursor: 'ew-resize', positionStyle: { left: 0, top: '50%', transform: 'translateY(-50%)' }, shapeClass: 'w-1.5 h-6' },
+                    { id: 'right', cursor: 'ew-resize', positionStyle: { right: 0, top: '50%', transform: 'translateY(-50%)' }, shapeClass: 'w-1.5 h-6' },
+                ];
+                
+                return (
+                    <>
+                        {/* Overlay to dim outside area */}
+                        <div className="absolute pointer-events-none" style={{ top: newTop, left: newLeft, width: newWidth, height: newHeight, boxShadow: '0 0 0 9999px rgba(0,0,0,0.7)' }} />
+
+                        {/* Bounding box with handles */}
+                        <div
+                            className="absolute pointer-events-none"
+                            style={{
+                                top: newTop,
+                                left: newLeft,
+                                width: newWidth,
+                                height: newHeight,
+                            }}
+                        >
+                            {/* Border and rule-of-thirds lines */}
+                            <div className="absolute inset-0 border-2 border-white pointer-events-none">
+                                <div className="absolute top-1/3 w-full h-px bg-white/50"></div>
+                                <div className="absolute top-2/3 w-full h-px bg-white/50"></div>
+                                <div className="absolute left-1/3 h-full w-px bg-white/50"></div>
+                                <div className="absolute left-2/3 h-full w-px bg-white/50"></div>
+                            </div>
+                            
+                            {/* Render Handles */}
+                            {handles.map(({ id, cursor, positionStyle, shapeClass }) => (
+                                <div
+                                    key={id}
+                                    className="absolute pointer-events-auto"
+                                    style={{ ...positionStyle, cursor }}
+                                    onMouseDown={(e) => handleExpansionHandleMouseDown(e, id)}
+                                    onTouchStart={(e) => handleExpansionHandleTouchStart(e, id)}
+                                >
+                                    {/* Visual handle element with larger invisible touch area */}
+                                    <div className="absolute p-2" style={{ transform: 'translate(-50%, -50%)' }}>
+                                        <div className={`bg-white rounded-full border-2 border-cyan-500 shadow-lg ${shapeClass}`}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                );
+            })()}
 
             {/* Hotspot Indicator - Logic is now dynamic to handle resizes */}
             {editHotspot && !isLoading && activeTab === 'retouch' && selectionMode === 'point' && imgRef.current && imageViewerRef.current && (() => {
@@ -1699,7 +1937,11 @@ const App: React.FC = () => {
         onApplyAdjustment: handleApplyAdjustment,
         onApplyFilter: handleApplyFilter,
         onApplyExpansion: handleApplyExpansion,
+        expandPrompt: expandPrompt,
+        onExpandPromptChange: setExpandPrompt,
+        hasExpansion: hasExpansion,
         onApplyInsert: handleApplyInsert,
+        onApplyProductScene: handleApplyProductScene,
         insertSubjectFiles: insertSubjectFiles,
         onInsertSubjectFilesChange: setInsertSubjectFiles,
         insertStyleFiles: insertStyleFiles,
@@ -1708,6 +1950,8 @@ const App: React.FC = () => {
         onInsertBackgroundFileChange: setInsertBackgroundFile,
         insertPrompt: insertPrompt,
         onInsertPromptChange: setInsertPrompt,
+        productPrompt: productPrompt,
+        onProductPromptChange: setProductPrompt,
         onApplyScan: handleApplyScan,
         onApplyManualScan: handleApplyManualScan,
         onCancelManualMode: handleCancelManualMode,
@@ -1730,6 +1974,7 @@ const App: React.FC = () => {
         isHotspotSelected: !!editHotspot,
         isManualScanMode: isManualScanMode,
         setIsManualScanMode: setIsManualScanMode,
+        onRequestFileUpload: handleRequestFileUpload,
     };
 
     const editorLayout = (
@@ -1750,7 +1995,7 @@ const App: React.FC = () => {
             <div className={`flex flex-col min-w-0 min-h-0 relative ${currentImage ? 'flex-none h-[40vh] md:h-auto md:flex-1' : 'flex-1'}`}>
                  <div
                     className="w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
-                    style={{ transform: `scale(${imageScale})` }}
+                    style={{ transform: activeTab === 'crop' || activeTab === 'expand' ? 'scale(1)' : `scale(${imageScale})` }}
                  >
                     <div className="w-full h-full relative">
                         {isLoading && !isScanModalOpen && (
@@ -1760,18 +2005,19 @@ const App: React.FC = () => {
                             </div>
                         )}
                         
-                        <div className="w-full h-full border glow-border-animate rounded-2xl p-1 relative">
+                        <div className="w-full h-full border glow-border-animate rounded-2xl p-1 relative flex items-center justify-center">
                             {activeTab === 'crop' && currentImage ? (
-                              <div className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-xl w-full h-full flex items-center justify-center">
-                                <ReactCrop 
-                                  crop={crop} 
-                                  onChange={c => setCrop(c)} 
-                                  onComplete={c => setCompletedCrop(c)}
-                                  aspect={completedCrop?.width ? completedCrop.width / completedCrop.height : undefined}
-                                  className="w-full h-full flex items-center justify-center"
-                                >
-                                  {cropImageElement}
-                                </ReactCrop>
+                              <div className="w-full h-full overflow-auto bg-black/30 backdrop-blur-xl border border-white/10 rounded-xl">
+                                <div className="grid min-h-full place-items-center p-2">
+                                    <ReactCrop 
+                                      crop={crop} 
+                                      onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)} 
+                                      onComplete={c => setCompletedCrop(c)}
+                                      aspect={aspect}
+                                    >
+                                      {cropImageElement}
+                                    </ReactCrop>
+                                </div>
                               </div>
                             ) : imageDisplay }
                         </div>

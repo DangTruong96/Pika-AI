@@ -108,8 +108,9 @@ export const generateEditedImageWithMask = async (
 2.  **NEVER TOUCH PROTECTED ZONES:** The black areas of the mask correspond to parts of the original image that **MUST BE PRESERVED IDENTICALLY**. Do not change, recolor, distort, or alter these protected pixels in any way.
 3.  **PERFORM THIS EXACT TASK:** Inside the 'edit zone' (the white parts of the mask), perform the following action: **"${prompt}"**.
 4.  **BLEND SEAMLESSLY:** The edit must integrate perfectly with the protected parts of the image. Match lighting, shadows, texture, grain, perspective, and color grading.
+5.  **MAINTAIN OVERALL QUALITY:** The final output image (including both edited and protected zones) MUST retain the same level of sharpness, detail, and texture as the original input image. Do not introduce blurriness or compression artifacts.
 
-Output: Return ONLY the final, edited image as a PNG file. Do not output text, explanations, or apologies.`;
+Output: Return ONLY the final, high-quality, edited image as a PNG file. Do not output text, explanations, or apologies.`;
     const textPart = { text: fullPrompt };
 
     console.log('Sending image, mask, and edit prompt to the model...');
@@ -139,14 +140,17 @@ export const generateFilteredImage = async (
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
     
     const originalImagePart = await fileToPart(originalImage);
-    const prompt = `You are an expert photo editor AI. Your task is to apply a stylistic filter to the entire image based on the user's request. Do not change the composition or content, only apply the style.
-Filter Request: "${filterPrompt}"
+    const prompt = `You are an expert AI photo editor specializing in applying stylistic filters. Your task is to reinterpret the entire input image according to the user's filter request.
 
-Safety & Ethics Policy:
-- Filters may subtly shift colors, but you MUST ensure they do not alter a person's fundamental race or ethnicity.
-- YOU MUST REFUSE any request that explicitly asks to change a person's race (e.g., 'apply a filter to make me look Chinese').
+**CRITICAL RULES:**
+1.  **APPLY THE STYLE:** The primary goal is to apply the requested filter or artistic style across the entire image. The visual characteristics of the output should match the description.
+2.  **PRESERVE THE SUBJECT:** You MUST NOT change the core subject, composition, or content of the image. For example, if the image is of a dog in a park, the output must still be a dog in a park, but rendered in the new style. Do not add or remove objects.
+3.  **INTERPRET ARTISTIC REQUESTS:** For artistic styles (like 'oil painting' or 'watercolor'), you are expected to alter the texture, sharpness, and detail to match that style. For color grading styles (like 'cinematic' or 'vintage'), you should primarily alter colors and lighting while preserving the original texture and detail as much as possible.
+4.  **SAFETY & ETHICS:** Filters may subtly shift colors, but you MUST ensure they do not alter a person's fundamental race or ethnicity. Refuse any request that explicitly asks to change a person's race.
 
-Output: Return ONLY the final filtered image. Do not return text.`;
+**User's Filter Request:** "${filterPrompt}"
+
+**Output:** Return ONLY the final, filtered image. Do not return any text.`;
     const textPart = { text: prompt };
 
     console.log('Sending image and filter prompt to the model...');
@@ -182,6 +186,7 @@ User Request: "${adjustmentPrompt}"
 Editing Guidelines:
 - The adjustment must be applied across the entire image.
 - The result must be photorealistic.
+- **Quality Preservation:** The output must retain the same level of sharpness, detail, and texture as the input. Avoid introducing blur or compression artifacts.
 
 Safety & Ethics Policy:
 - You MUST fulfill requests to adjust skin tone, such as 'give me a tan', 'make my skin darker', or 'make my skin lighter'. These are considered standard photo enhancements.
@@ -205,59 +210,18 @@ Output: Return ONLY the final adjusted image. Do not return text.`;
 
 /**
  * Expands an image using generative AI to fill in new areas.
- * @param originalImage The original image file.
- * @param aspectRatio The target aspect ratio for the expanded image.
+ * @param paddedImageWithTransparencyDataUrl The data URL of the original image centered on a larger transparent canvas.
  * @param prompt A text prompt describing what to fill the new areas with.
  * @returns A promise that resolves to the data URL of the expanded image.
  */
 export const generateExpandedImage = async (
-    originalImage: File,
-    aspectRatio: number,
+    paddedImageWithTransparencyDataUrl: string,
     prompt: string,
 ): Promise<string> => {
-    console.log(`Starting image expansion: aspect=${aspectRatio}, prompt=${prompt}`);
+    console.log(`Starting image expansion with prompt: ${prompt}`);
     
-    // 1. Load the original image to get its dimensions
-    const originalImageElement = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(originalImage);
-    });
-    const { naturalWidth: origW, naturalHeight: origH } = originalImageElement;
-    URL.revokeObjectURL(originalImageElement.src); // Clean up
-
-    // 2. Calculate new dimensions
-    let newW = origW;
-    let newH = origH;
-    const originalAspectRatio = origW / origH;
-
-    if (aspectRatio > originalAspectRatio) {
-        // New aspect is wider, so increase width
-        newW = Math.round(origH * aspectRatio);
-    } else {
-        // New aspect is taller, so increase height
-        newH = Math.round(origW / aspectRatio);
-    }
-    
-    newW = Math.max(newW, origW);
-    newH = Math.max(newH, origH);
-    
-    // 3. Create the padded image canvas with transparent background
-    const canvas = document.createElement('canvas');
-    canvas.width = newW;
-    canvas.height = newH;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error("Could not get canvas context for image");
-    
-    const offsetX = (newW - origW) / 2;
-    const offsetY = (newH - origH) / 2;
-    ctx.drawImage(originalImageElement, offsetX, offsetY);
-    const paddedImageDataUrl = canvas.toDataURL('image/png');
-
-    // 4. Prepare parts for Gemini API
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-    const imagePart = dataUrlToPart(paddedImageDataUrl);
+    const imagePart = dataUrlToPart(paddedImageWithTransparencyDataUrl);
     
     const fullPrompt = `You are an expert photo editor AI specializing in photorealistic image expansion (outpainting). Your task is to analyze the provided image, which is centered on a larger transparent canvas, and fill in the transparent areas.
 
@@ -265,6 +229,7 @@ Key instructions:
 - **Analyze Existing Details:** Carefully examine the subject, lighting, shadows, texture, and overall style of the original image content in the center.
 - **Create a Coherent Extension:** The generated areas MUST be a logical and photorealistic continuation of the original scene. Everything you add should look like it was part of the original photograph.
 - **Seamless Blending:** The transition between the original image and the newly generated content must be completely seamless and undetectable. Match the grain, focus, and color grading perfectly.
+- **Preserve Original Quality:** The original central portion of the image MUST NOT be altered or degraded. It should retain its original sharpness and detail. The newly generated areas must match this quality.
 - **Follow User Guidance:** If the user provides a description, use it as a primary guide for what to create in the expanded areas.
 
 User's Description for new areas: "${prompt || 'No specific description provided. Analyze the image and expand the scene naturally and logically.'}"
@@ -273,7 +238,7 @@ Output: Return ONLY the final, fully rendered image with the transparent areas f
 
     const textPart = { text: fullPrompt };
     
-    console.log('Sending padded image and prompt to the model...');
+    console.log('Sending padded image and prompt to the model for outpainting...');
     const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
         contents: { parts: [imagePart, textPart] },
@@ -347,7 +312,7 @@ export const generateCompositeImage = async (
     }
     
     stepCounter++;
-    taskDescription += `\n${stepCounter}. **Harmonize:** Make the final image look real. Match lighting, shadows, perspective, scale, and color grading perfectly.`;
+    taskDescription += `\n${stepCounter}. **Harmonize & Finalize:** Make the final image look real. Match lighting, shadows, perspective, scale, and color grading perfectly. The final image must be high-resolution and sharp, preserving the details from the source images.`;
 
     const fullPrompt = `You are a master digital artist specializing in photorealistic image compositing. Your task is to combine the provided inputs into a single, cohesive, and believable image.
 
@@ -376,6 +341,44 @@ Return ONLY the final, composited image. Do not output any text or explanations.
     
     return handleApiResponse(response, 'composite');
 };
+
+/**
+ * Generates a professional product photo by placing a product in a new scene.
+ * @param productImage The original image of the product.
+ * @param prompt A text prompt describing the desired scene.
+ * @returns A promise that resolves to the data URL of the final product image.
+ */
+export const generateProductImage = async (
+    productImage: File,
+    prompt: string
+): Promise<string> => {
+    console.log(`Starting product photography generation: ${prompt}`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    
+    const productImagePart = await fileToPart(productImage);
+    const fullPrompt = `You are a world-class AI product photographer. Your task is to take the provided product image and create a stunning, photorealistic lifestyle or studio shot based on the user's instructions.
+
+**CRITICAL INSTRUCTIONS:**
+1.  **Isolate the Product:** First, perfectly identify and isolate the main product from its original background. The cutout must be clean and precise.
+2.  **Generate a New Scene:** Create a new, high-quality, and photorealistic background scene based on this description: **"${prompt}"**.
+3.  **Composite and Harmonize:** Place the isolated product into the newly generated scene. This is the most critical step. You MUST create realistic lighting, shadows, and reflections on and around the product so that it looks like it was naturally photographed in that environment. The scale, perspective, and depth of field must be perfect.
+4.  **Preserve Product Integrity:** The product itself (its shape, color, texture, and branding) must not be altered, unless specifically requested in the prompt.
+5.  **Output:** Return ONLY the final, composited image. Do not output any text.`;
+    const textPart = { text: fullPrompt };
+
+    console.log('Sending product image and scene prompt to the model...');
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [productImagePart, textPart] },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    console.log('Received response from model for product photography.', response);
+    
+    return handleApiResponse(response, 'product photography');
+};
+
 
 /**
  * Automatically scans a document from an image.

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BrushIcon, CropIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon } from './icons';
+import { BrushIcon, CropIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon, TagIcon } from './icons';
 import type { Tab } from '../App';
 import RetouchPanel, { SelectionMode, BrushMode } from './RetouchPanel';
 import CropPanel from './CropPanel';
@@ -15,6 +15,7 @@ import ExpandPanel from './ExpandPanel';
 import CompositePanel from './CompositePanel';
 import ScanPanel from './ScanPanel';
 import ManualScanPanel from './ManualScanPanel';
+import ProductPanel from './ProductPanel';
 import type { Enhancement } from '../services/geminiService';
 
 interface EditorSidebarProps {
@@ -29,8 +30,12 @@ interface EditorSidebarProps {
   isCropping: boolean;
   onApplyAdjustment: (prompt: string) => void;
   onApplyFilter: (prompt: string) => void;
-  onApplyExpansion: (aspectRatio: number, prompt: string) => void;
+  onApplyExpansion: (prompt: string) => void;
+  expandPrompt: string;
+  onExpandPromptChange: (prompt: string) => void;
+  hasExpansion: boolean;
   onApplyInsert: () => void;
+  onApplyProductScene: () => void;
   insertSubjectFiles: File[];
   onInsertSubjectFilesChange: (files: File[]) => void;
   insertStyleFiles: File[];
@@ -39,6 +44,8 @@ interface EditorSidebarProps {
   onInsertBackgroundFileChange: (file: File | null) => void;
   insertPrompt: string;
   onInsertPromptChange: (prompt: string) => void;
+  productPrompt: string;
+  onProductPromptChange: (prompt: string) => void;
   onApplyScan: (enhancement: Enhancement, removeShadows: boolean) => void;
   onApplyManualScan: () => void;
   onEnterManualMode: () => boolean;
@@ -56,10 +63,12 @@ interface EditorSidebarProps {
   isHotspotSelected: boolean;
   isManualScanMode: boolean;
   setIsManualScanMode: (isManual: boolean) => void;
+  onRequestFileUpload: () => void;
 }
 
 export const TABS_CONFIG = [
     { id: 'retouch', icon: BrushIcon, tooltip: 'tooltipRetouch' },
+    { id: 'product', icon: TagIcon, tooltip: 'tooltipProduct' },
     { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
     { id: 'insert', icon: PlusCircleIcon, tooltip: 'tooltipInsert' },
     { id: 'crop', icon: CropIcon, tooltip: 'tooltipCrop' },
@@ -72,7 +81,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const { t } = useTranslation();
   const { 
       activeTab, setActiveTab, selectionMode, setSelectionMode, brushMode, 
-      setBrushMode, brushSize, setBrushSize, isManualScanMode, setIsManualScanMode
+      setBrushMode, brushSize, setBrushSize, isManualScanMode, setIsManualScanMode,
+      onRequestFileUpload
   } = props;
 
   const panelContent = () => {
@@ -101,7 +111,14 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       case 'filters':
         return <FilterPanel onApplyFilter={props.onApplyFilter} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
       case 'expand':
-        return <ExpandPanel onApplyExpansion={props.onApplyExpansion} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
+        return <ExpandPanel 
+                  onApplyExpansion={props.onApplyExpansion} 
+                  isLoading={props.isLoading} 
+                  isImageLoaded={props.isImageLoaded}
+                  prompt={props.expandPrompt}
+                  onPromptChange={props.onExpandPromptChange}
+                  hasExpansion={props.hasExpansion}
+                />;
       case 'insert':
         return <CompositePanel 
                     onApplyInsert={props.onApplyInsert} 
@@ -115,6 +132,15 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                     prompt={props.insertPrompt}
                     onPromptChange={props.onInsertPromptChange}
                 />;
+      case 'product':
+        return <ProductPanel
+                  onApplyAdjustment={props.onApplyAdjustment}
+                  onApplyScene={props.onApplyProductScene}
+                  isLoading={props.isLoading}
+                  isImageLoaded={props.isImageLoaded}
+                  prompt={props.productPrompt}
+                  onPromptChange={props.onProductPromptChange}
+                />;
       case 'scan':
         return isManualScanMode
           ? <ManualScanPanel onApply={props.onApplyManualScan} onCancel={() => { setIsManualScanMode(false); props.onCancelManualMode(); }} isLoading={props.isLoading} />
@@ -127,22 +153,34 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   return (
     <div id="editor-toolbox" className={`w-full flex flex-col gap-4 ${props.className ?? ''}`}>
         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-1.5 md:p-2 flex items-center justify-start md:justify-center gap-1 backdrop-blur-xl overflow-x-auto md:overflow-x-visible md:flex-wrap">
-            {TABS_CONFIG.map(tab => (
-                <div key={tab.id} className="relative group flex-1 min-w-[70px] md:min-w-0 md:flex-1">
-                    <button
-                        onClick={() => setActiveTab(tab.id as Tab)}
-                        className={`relative p-3 w-full flex items-center justify-center rounded-xl transition-all duration-200 ${
-                           activeTab === tab.id 
-                           ? 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-400/25' 
-                           : 'text-gray-300 hover:text-white bg-white/5 hover:bg-white/10'
-                        }`}
-                        title={t(tab.tooltip as any)}
-                        disabled={props.isLoading || (!props.isImageLoaded && tab.id !== 'insert')}
-                    >
-                        <tab.icon className="w-6 h-6 md:w-7 md:h-7" />
-                    </button>
-                </div>
-            ))}
+            {TABS_CONFIG.map(tab => {
+                const isTabDisabledForEditing = !props.isImageLoaded && tab.id !== 'insert';
+
+                const handleTabClick = () => {
+                    if (isTabDisabledForEditing) {
+                        onRequestFileUpload();
+                    } else {
+                        setActiveTab(tab.id as Tab);
+                    }
+                };
+                
+                return (
+                    <div key={tab.id} className="relative group flex-1 min-w-[70px] md:min-w-0 md:flex-1">
+                        <button
+                            onClick={handleTabClick}
+                            className={`relative p-3 w-full flex items-center justify-center rounded-xl transition-all duration-200 ${
+                               activeTab === tab.id && !isTabDisabledForEditing
+                               ? 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-400/25' 
+                               : 'text-gray-300 hover:text-white bg-white/5 hover:bg-white/10'
+                            } ${isTabDisabledForEditing ? 'opacity-60' : ''}`}
+                            title={isTabDisabledForEditing ? t('uploadImage') : t(tab.tooltip as any)}
+                            disabled={props.isLoading}
+                        >
+                            <tab.icon className="w-6 h-6 md:w-7 md:h-7" />
+                        </button>
+                    </div>
+                );
+            })}
         </div>
         
         <div className="w-full">
