@@ -8,12 +8,12 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateProductImage, type Corners, type Enhancement } from './services/geminiService';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateProductImage, generateFaceSwap, type Corners, type Enhancement } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
 import ScanViewerModal from './components/ScanViewerModal';
-import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, ChevronsLeftRightIcon, UploadIcon, EyeIcon, EyeSlashIcon, PaperAirplaneIcon, ClockIcon } from './components/icons';
+import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, ChevronsLeftRightIcon, UploadIcon, EyeIcon, EyeSlashIcon, PaperAirplaneIcon, ClockIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon } from './components/icons';
 import { useTranslation } from './contexts/LanguageContext';
 import { SelectionMode, BrushMode } from './components/RetouchPanel';
 import HistoryPanel from './components/HistoryPanel';
@@ -87,7 +87,8 @@ const MobileInputBar: React.FC<{
 };
 
 
-export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'product';
+export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'product' | 'beauty' | 'swap_face';
+export type TransformType = 'rotate-cw' | 'rotate-ccw' | 'flip-h' | 'flip-v';
 type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
 
 const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => void }> = ({ onFileSelect }) => {
@@ -173,9 +174,10 @@ const App: React.FC = () => {
   const [isManualScanMode, setIsManualScanMode] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [scannedImageUrl, setScannedImageUrl] = useState<string | null>(null);
+  const [scanHistory, setScanHistory] = useState<string[]>([]);
   const [corners, setCorners] = useState<Corners | null>(null);
   const [activeCorner, setActiveCorner] = useState<keyof Corners | null>(null);
-  const [scanParams, setScanParams] = useState<{ enhancement: Enhancement, removeShadows: boolean } | null>(null);
+  const [scanParams, setScanParams] = useState<{ enhancement: Enhancement, removeShadows: boolean, restoreText: boolean } | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
 
@@ -413,6 +415,7 @@ const App: React.FC = () => {
     setInsertStyleFiles([]);
     setInsertBackgroundFile(null);
     setInsertPrompt('');
+    setScanHistory([]);
   }, [clearMask]);
   
   const handleStartOver = useCallback(() => {
@@ -429,6 +432,7 @@ const App: React.FC = () => {
     setInsertStyleFiles([]);
     setInsertBackgroundFile(null);
     setInsertPrompt('');
+    setScanHistory([]);
   }, [clearMask]);
 
   const handleHistorySelect = (index: number) => {
@@ -549,6 +553,69 @@ const App: React.FC = () => {
         const adjustedImageUrl = await generateAdjustedImage(currentImage, adjustmentPrompt);
         const newImageFile = dataURLtoFile(adjustedImageUrl, `adjusted-${Date.now()}.png`);
         addImageToHistory(newImageFile);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        setError(`${t('errorFailedToApplyAdjustment')} ${errorMessage}`);
+        console.error(err);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentImage, addImageToHistory, t]);
+
+  const handleApplyTransform = useCallback(async (transform: TransformType) => {
+    if (!currentImage) {
+        setError(t('errorNoImageLoadedToAdjust'));
+        return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        const imageUrl = URL.createObjectURL(currentImage);
+        
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => {
+                URL.revokeObjectURL(imageUrl);
+                resolve();
+            };
+            image.onerror = (err) => {
+                URL.revokeObjectURL(imageUrl);
+                reject(err);
+            };
+            image.src = imageUrl;
+        });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get canvas context');
+
+        let { naturalWidth: w, naturalHeight: h } = image;
+
+        if (transform === 'rotate-cw' || transform === 'rotate-ccw') {
+            canvas.width = h;
+            canvas.height = w;
+            ctx.translate(h / 2, w / 2);
+            ctx.rotate(transform === 'rotate-cw' ? 90 * Math.PI / 180 : -90 * Math.PI / 180);
+            ctx.drawImage(image, -w / 2, -h / 2);
+        } else if (transform === 'flip-h') {
+            canvas.width = w;
+            canvas.height = h;
+            ctx.translate(w, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(image, 0, 0);
+        } else if (transform === 'flip-v') {
+            canvas.width = w;
+            canvas.height = h;
+            ctx.translate(0, h);
+            ctx.scale(1, -1);
+            ctx.drawImage(image, 0, 0);
+        }
+
+        const transformedDataUrl = canvas.toDataURL('image/png');
+        const newImageFile = dataURLtoFile(transformedDataUrl, `transformed-${Date.now()}.png`);
+        addImageToHistory(newImageFile);
+
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`${t('errorFailedToApplyAdjustment')} ${errorMessage}`);
@@ -720,9 +787,31 @@ const App: React.FC = () => {
     }
   }, [currentImage, addImageToHistory, t, productPrompt]);
 
+  const handleApplySwap = useCallback(async (targetFaceFile: File) => {
+    if (!currentImage) {
+      setError(t('errorNoImageLoadedToAdjust'));
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+        const swappedImageUrl = await generateFaceSwap(currentImage, targetFaceFile);
+        const newImageFile = dataURLtoFile(swappedImageUrl, `swapped-${Date.now()}.png`);
+        addImageToHistory(newImageFile);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
+        console.error(err);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentImage, addImageToHistory, t]);
+
 
   // --- Scan Handlers ---
-  const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean) => {
+  const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => {
     if (!currentImage) {
       setError('No image loaded to scan.');
       return;
@@ -732,11 +821,12 @@ const App: React.FC = () => {
     setError(null);
     setIsScanModalOpen(true);
     setScannedImageUrl(null); // Show loading state in modal
-    setScanParams({ enhancement, removeShadows });
+    setScanParams({ enhancement, removeShadows, restoreText });
 
     try {
-        const resultUrl = await generateScannedDocument(currentImage, enhancement, removeShadows);
+        const resultUrl = await generateScannedDocument(currentImage, enhancement, removeShadows, restoreText);
         setScannedImageUrl(resultUrl);
+        setScanHistory(prev => [resultUrl, ...prev].slice(0, 5));
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
@@ -757,9 +847,10 @@ const App: React.FC = () => {
     setScannedImageUrl(null);
 
     try {
-      const { enhancement, removeShadows } = scanParams;
-      const resultUrl = await generateScannedDocumentWithCorners(currentImage, corners, enhancement, removeShadows);
+      const { enhancement, removeShadows, restoreText } = scanParams;
+      const resultUrl = await generateScannedDocumentWithCorners(currentImage, corners, enhancement, removeShadows, restoreText);
       setScannedImageUrl(resultUrl);
+      setScanHistory(prev => [resultUrl, ...prev].slice(0, 5));
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
@@ -782,6 +873,11 @@ const App: React.FC = () => {
         handleCloseScanModal();
     }
   }, [scannedImageUrl, addImageToHistory, handleCloseScanModal]);
+  
+  const handleReviewScan = useCallback((url: string) => {
+    setScannedImageUrl(url);
+    setIsScanModalOpen(true);
+  }, []);
 
   const handleEnterManualMode = useCallback(() => {
       if (!imgRef.current) return;
@@ -1882,45 +1978,70 @@ const App: React.FC = () => {
                 })()
             )}
 
-            {currentImage && (activeTab !== 'insert' || !!currentImage) && (
-              <div className={`absolute z-20 transition-all duration-300 ease-in-out
-                  left-4 top-1/2 -translate-y-1/2
-                  ${isZoomControlsVisible
-                    ? 'opacity-100 translate-x-0'
-                    : 'opacity-0 pointer-events-none -translate-x-4'
-                  }
-              `}>
-                  <div className="flex flex-col items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-xl border border-white/10">
-                      <button onClick={() => handleZoom('out')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomOut')}>
-                          <ZoomOutIcon className="w-6 h-6" />
-                      </button>
-                      <button onClick={resetView} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('resetZoom')}>
-                          <ArrowsPointingOutIcon className="w-6 h-6" />
-                      </button>
-                      <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomIn')}>
-                          <ZoomInIcon className="w-6 h-6" />
-                      </button>
-                       {canUndo && (
-                         <button 
-                            onClick={() => setIsComparing(prev => !prev)}
-                            className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
-                            aria-label={t('compareAria')}
-                            title={t('compareAria')}
-                         >
-                           {isComparing ? <EyeSlashIcon className="w-6 h-6 text-cyan-400" /> : <EyeIcon className="w-6 h-6" />}
-                         </button>
-                       )}
-                       {history.length > 1 && (
-                         <button 
-                            onClick={() => setIsHistoryPanelOpen(p => !p)}
-                            className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
-                            title={t('historyTitle')}
-                         >
-                           <ClockIcon className={`w-6 h-6 ${isHistoryPanelOpen ? 'text-cyan-400' : ''}`} />
-                         </button>
-                       )}
-                  </div>
-              </div>
+            {currentImage && (
+              <>
+                <div className={`absolute z-20 transition-all duration-300 ease-in-out
+                    left-4 top-1/2 -translate-y-1/2
+                    ${isZoomControlsVisible
+                      ? 'opacity-100 translate-x-0'
+                      : 'opacity-0 pointer-events-none -translate-x-4'
+                    }
+                `}>
+                    <div className="flex flex-col items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-xl border border-white/10">
+                        <button onClick={() => handleZoom('out')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomOut')}>
+                            <ZoomOutIcon className="w-6 h-6" />
+                        </button>
+                        <button onClick={resetView} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('resetZoom')}>
+                            <ArrowsPointingOutIcon className="w-6 h-6" />
+                        </button>
+                        <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomIn')}>
+                            <ZoomInIcon className="w-6 h-6" />
+                        </button>
+                         {canUndo && (
+                           <button 
+                              onClick={() => setIsComparing(prev => !prev)}
+                              className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
+                              aria-label={t('compareAria')}
+                              title={t('compareAria')}
+                           >
+                             {isComparing ? <EyeSlashIcon className="w-6 h-6 text-cyan-400" /> : <EyeIcon className="w-6 h-6" />}
+                           </button>
+                         )}
+                         {history.length > 1 && (
+                           <button 
+                              onClick={() => setIsHistoryPanelOpen(p => !p)}
+                              className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
+                              title={t('historyTitle')}
+                           >
+                             <ClockIcon className={`w-6 h-6 ${isHistoryPanelOpen ? 'text-cyan-400' : ''}`} />
+                           </button>
+                         )}
+                    </div>
+                </div>
+
+                <div className={`absolute z-20 transition-all duration-300 ease-in-out
+                    right-4 top-1/2 -translate-y-1/2
+                    ${isZoomControlsVisible
+                      ? 'opacity-100 translate-x-0'
+                      : 'opacity-0 pointer-events-none translate-x-4'
+                    }
+                `}>
+                    <div className="flex flex-col items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-xl border border-white/10">
+                        <button onClick={() => handleApplyTransform('rotate-ccw')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('adjustmentRotateLeft')}>
+                            <UndoIcon className="w-6 h-6" />
+                        </button>
+                        <button onClick={() => handleApplyTransform('rotate-cw')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('adjustmentRotateRight')}>
+                            <RedoIcon className="w-6 h-6" />
+                        </button>
+                        <button onClick={() => handleApplyTransform('flip-h')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('adjustmentFlipHorizontal')}>
+                            <FlipHorizontalIcon className="w-6 h-6" />
+                        </button>
+                        <button onClick={() => handleApplyTransform('flip-v')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('adjustmentFlipVertical')}>
+                            <FlipVerticalIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+              </>
             )}
         </div>
     );
@@ -1942,6 +2063,7 @@ const App: React.FC = () => {
         hasExpansion: hasExpansion,
         onApplyInsert: handleApplyInsert,
         onApplyProductScene: handleApplyProductScene,
+        onApplySwap: handleApplySwap,
         insertSubjectFiles: insertSubjectFiles,
         onInsertSubjectFilesChange: setInsertSubjectFiles,
         insertStyleFiles: insertStyleFiles,
@@ -1956,6 +2078,8 @@ const App: React.FC = () => {
         onApplyManualScan: handleApplyManualScan,
         onCancelManualMode: handleCancelManualMode,
         onEnterManualMode: handleEnterManualMode,
+        scanHistory: scanHistory,
+        onReviewScan: handleReviewScan,
         isMaskPresent: isMaskPresent(),
         clearMask: clearMask,
         retouchPrompt: retouchPrompt,
@@ -1982,6 +2106,7 @@ const App: React.FC = () => {
              {isScanModalOpen && (
               <ScanViewerModal
                 imageUrl={scannedImageUrl}
+                originalImageUrl={currentImageUrl}
                 onClose={handleCloseScanModal}
                 onSave={handleSaveScannedImage}
                 onAdjust={handleEnterManualMode}

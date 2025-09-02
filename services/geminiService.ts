@@ -379,47 +379,153 @@ export const generateProductImage = async (
     return handleApiResponse(response, 'product photography');
 };
 
+/**
+ * Swaps a face from a target image onto a person in the source image.
+ * @param sourceImage The original image with the person to be modified.
+ * @param targetFaceImage The image containing the face to be swapped in.
+ * @returns A promise that resolves to the data URL of the edited image.
+ */
+export const generateFaceSwap = async (
+    sourceImage: File,
+    targetFaceImage: File
+): Promise<string> => {
+    console.log(`Starting face swap...`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+    const sourceImagePart = await fileToPart(sourceImage);
+    const targetFacePart = await fileToPart(targetFaceImage);
+
+    const prompt = `You are a world-class AI digital artist specializing in hyper-realistic face swapping. Your task is to perform a perfect, seamless face swap.
+
+**INPUTS PROVIDED (in order):**
+1.  **[Source Image]:** This image contains the scene and at least one person whose face will be replaced.
+2.  **[Target Face Image]:** This image contains the face that will be used for the swap.
+
+**CRITICAL INSTRUCTIONS (NON-NEGOTIABLE):**
+
+1.  **IDENTIFY TARGET FACE:**
+    -   From the **[Target Face Image]**, locate the single most prominent face. "Most prominent" means the largest, clearest, and most centrally located face.
+    -   **IGNORE EVERYTHING ELSE** in the [Target Face Image]: ignore the background, body, hair, clothing, and any other people. Your ONLY goal is to extract the facial features and identity from this single prominent face.
+
+2.  **IDENTIFY SOURCE PERSON:**
+    -   From the **[Source Image]**, locate the single most prominent person. "Most prominent" means the person whose face is largest, clearest, or most central to the composition.
+    -   If there is only one person, they are the target.
+
+3.  **PERFORM THE SWAP:**
+    -   Take the **entire face** (eyes, nose, mouth, facial structure, skin texture) from the identified target face.
+    -   Perfectly transplant this face onto the head of the identified source person.
+    -   The final image **MUST** feature the person from the **[Target Face Image]** on the body of the person from the **[Source Image]**. Their identity must be perfectly preserved.
+
+4.  **SEAMLESS INTEGRATION & HARMONIZATION:**
+    -   **Lighting & Shadows:** The lighting on the new face MUST perfectly match the lighting of the [Source Image] scene. Cast shadows correctly.
+    -   **Skin Tone & Texture:** Blend the skin tones and textures at the seam (neckline, hairline) so the transition is completely undetectable.
+    -   **Perspective & Angle:** Adjust the angle and perspective of the target face to perfectly match the head position and orientation in the [Source Image].
+    -   **Hair:** Blend the hairline seamlessly. The hairstyle should primarily come from the [Source Image], but the hairline must match the new face naturally.
+
+5.  **PRESERVE EVERYTHING ELSE:**
+    -   The background, body, pose, and clothing from the [Source Image] **MUST remain completely unchanged**.
+    -   Any other people in the [Source Image] **MUST remain completely unchanged**.
+
+**OUTPUT:**
+-   Return ONLY the final, high-resolution, photorealistic image with the face swapped.
+-   Do not output any text, explanations, or apologies. If you cannot perform the swap, return the original source image.`;
+    const textPart = { text: prompt };
+
+    console.log('Sending source image, target face, and swap prompt to the model...');
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [sourceImagePart, targetFacePart, textPart] },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    console.log('Received response from model for face swap.', response);
+    
+    return handleApiResponse(response, 'face swap');
+};
+
 
 /**
  * Automatically scans a document from an image.
  * @param originalImage The original image file containing the document.
  * @param enhancement The desired color enhancement ('color', 'grayscale', 'bw').
  * @param removeShadows Whether to remove shadows from the document.
+ * @param restoreText Whether to attempt OCR-based text restoration.
  * @returns A promise that resolves to the data URL of the scanned document.
  */
 export const generateScannedDocument = async (
     originalImage: File,
     enhancement: Enhancement,
     removeShadows: boolean,
+    restoreText: boolean,
 ): Promise<string> => {
-    console.log(`Starting auto document scan: enhancement=${enhancement}, shadows=${removeShadows}`);
+    console.log(`Starting auto document scan: enhancement=${enhancement}, shadows=${removeShadows}, restoreText=${restoreText}`);
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
     
     const originalImagePart = await fileToPart(originalImage);
-    const prompt = `**AI TASK: DOCUMENT SCAN**
+    
+    let prompt: string;
 
-**INPUT:**
-- Image containing a document.
+    if (restoreText) {
+        prompt = `**AI TASK: Zero Deviation Document Protocol**
 
-**INSTRUCTIONS:**
-1.  **IDENTIFY DOCUMENT:** Analyze the image to find the primary document's four corners.
-2.  **EXECUTE PERSPECTIVE TRANSFORM:**
-    -   Input: The original image.
-    -   Source Quad: The four corners you identified.
-    -   Destination Quad: A perfect rectangle with the same aspect ratio as the detected document.
-    -   Action: Warp the source quad to fit the destination quad. This corrects any perspective distortion.
-3.  **CROP:** Crop the image to the bounds of the new rectangular document.
-4.  **ENHANCE:**
-    -   Mode: '${enhancement}'
-    -   Apply a filter to maximize contrast and readability.
-5.  **CLEANUP:**
-    -   Shadows: ${removeShadows ? 'REMOVE all shadows for even lighting.' : 'Preserve natural shadows.'}
+**CORE MANDATE:** This is a forensic-level recreation task. Your primary goal is to produce a perfect digital copy. Any creative alteration, hallucination, or deviation from the original's graphical content is a CRITICAL FAILURE of this task.
+
+**MANDATORY EXECUTION PLAN:**
+
+1.  **GEOMETRIC CORRECTION:**
+    - Perform a perfect perspective warp to make the document appear completely flat and rectangular.
+    - Crop precisely to the document's edges.
+
+2.  **CONTENT TRIAGE (CRITICAL ANALYSIS):**
+    - **Examine the entire document and classify ALL content into one of two categories:**
+        - **1. TYPED TEXT:** Machine-printed text.
+        - **2. GRAPHICAL & HANDWRITTEN ELEMENTS:** Includes all stamps, seals, logos, signatures, handwriting, diagrams, and photos.
+
+3.  **CONTENT HANDLING (NON-NEGOTIABLE RULES):**
+
+    - **A. For GRAPHICAL & HANDWRITTEN ELEMENTS (FORENSIC PRESERVATION MANDATE):**
+        - **A.1. ZERO HALLUCINATION & ALTERATION (ABSOLUTE PROHIBITION):** You are **STRICTLY FORBIDDEN** from re-drawing, replacing, generating, creating, or "cleaning up" any element in this category. A re-drawn seal or a generated signature is a CRITICAL FAILURE. Adding a seal that was not in the original is a CRITICAL FAILURE.
+        - **A.2. PERFECT PHOTOGRAPHIC TRANSFER:** These elements **MUST** be photographically "lifted" directly from the source image. Their original shape, color, texture, and internal details must be preserved with 100% accuracy.
+        - **A.3. PERFECT POSITIONAL INTEGRITY:** The lifted elements **MUST** be placed in the final document at their **EXACT original coordinates, size, and rotation**. A seal that is moved, even slightly, is a CRITICAL FAILURE.
+
+    - **B. For TYPED TEXT (HIGH-FIDELITY RECONSTRUCTION):**
+        - **B.1. Perfect Transcription & Language Integrity:** Perform a 100% accurate OCR.
+            - **UNIVERSAL LANGUAGE & DIACRITIC MANDATE:** 100% character and diacritic accuracy is NON-NEGOTIABLE for ALL languages. An incorrect diacritic (e.g., Vietnamese \`dấu\`, German \`umlaut\`) or a single wrong character is a COMPLETE FAILURE of the task. The language must be perfectly preserved.
+        - **B.2. Precise Layout & Font Matching:** The re-drawn text's font must be the **closest possible professional font match** to the original. The position, size, weight, kerning, and line spacing **MUST PERFECTLY MIRROR** the original layout.
+        - **B.3. Re-draw for Ultimate Clarity:** Using the perfect transcription and layout match, render new text. The final text must appear as if printed from a high-resolution laser printer—razor-sharp, with clean edges, and completely free of any digital artifacts, blurring, or pixelation.
+
+4.  **FINAL ASSEMBLY & QUALITY CHECK:**
+    - **Assemble:** Combine the re-drawn \`Typed Text\` and the preserved \`Graphical/Handwritten Elements\` onto a new, clean digital canvas, maintaining the perfect original layout.
+    - **Background & Enhancement:** Create a clean background based on the enhancement mode: '${enhancement}'.
+    - **Shadows:** ${removeShadows ? 'Completely remove all shadows for a perfectly uniform, flat-lit background.' : 'Preserve natural lighting and shadows.'}
+    - **Final Quality:** The resulting image must have ultra-sharp text and perfectly preserved graphics, looking like a flawless digital master of the original document.
+
+**OUTPUT REQUIREMENTS:**
+- Return ONLY the final, restored document as a high-resolution PNG file.
+- Do not output any text.`;
+    } else {
+        prompt = `**AI TASK: Professional Photo Correction for Documents**
+
+**PRIMARY OBJECTIVE:** Transform the input image into a perfect, head-on photograph of the document it contains. The result should look like a high-resolution, professional studio photo of the document, not a typical office scan.
+
+**CRITICAL RULES:**
+
+1.  **ABSOLUTE CONTENT PRESERVATION:**
+    - **DO NOT ALTER THE TEXT OR IMAGES ON THE DOCUMENT.** You are forbidden from redrawing, changing, or "correcting" any characters, words, or graphics. Your task is to enhance the *photograph*, not the *document's content*.
+    - **PRESERVE TEXTURE AND SHARPNESS:** The final output **MUST** maintain or even slightly enhance the original sharpness, paper texture, and ink detail. Do not blur, smudge, or over-smooth the image. The goal is maximum clarity while preserving photographic realism.
+
+2.  **GEOMETRIC & LIGHTING CORRECTION:**
+    - **PERSPECTIVE:** First, perform a perfect perspective warp to make the document appear completely flat and rectangular, as if photographed from directly above. Crop precisely to the document's edges.
+    - **LIGHTING & SHADOWS:** ${removeShadows ? 'Completely remove all shadows and lighting glare to create a perfectly even, flat-lit surface. The lighting should be uniform across the entire document.' : 'Preserve the natural lighting and shadows, but balance them to improve overall readability.'}
+    - **ENHANCEMENT:** Apply the requested enhancement mode: '${enhancement}'. Adjust contrast and clarity to make the content as readable as possible without sacrificing the photographic quality and texture.
 
 **OUTPUT:**
--   **FORMAT:** Image file (PNG).
--   **CONTENT:** ONLY the transformed, cropped, and enhanced document.
--   **DO NOT** return the original image.
--   **DO NOT** return any text.`;
+- Return ONLY the final, corrected image as a high-quality PNG.
+- The image must look like a professional, perfectly-lit photograph of the document.
+- Do not output text.`;
+    }
+
     const textPart = { text: prompt };
 
     console.log('Sending image and scan prompt to the model...');
@@ -442,6 +548,7 @@ export const generateScannedDocument = async (
  * @param corners The user-defined corners of the document.
  * @param enhancement The desired color enhancement.
  * @param removeShadows Whether to remove shadows.
+ * @param restoreText Whether to attempt OCR-based text restoration.
  * @returns A promise that resolves to the data URL of the scanned document.
  */
 export const generateScannedDocumentWithCorners = async (
@@ -449,39 +556,89 @@ export const generateScannedDocumentWithCorners = async (
     corners: Corners,
     enhancement: Enhancement,
     removeShadows: boolean,
+    restoreText: boolean,
 ): Promise<string> => {
-    console.log(`Starting manual document scan with corners: ${JSON.stringify(corners)}`);
+    console.log(`Starting manual document scan with corners: ${JSON.stringify(corners)}, restoreText=${restoreText}`);
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
     
     const originalImagePart = await fileToPart(originalImage);
-    const prompt = `**AI TASK: DOCUMENT PERSPECTIVE CROP**
+    let prompt: string;
+    
+    const sourceQuad = `- Top-Left: (${corners.tl.x}, ${corners.tl.y})
+- Top-Right: (${corners.tr.x}, ${corners.tr.y})
+- Bottom-Left: (${corners.bl.x}, ${corners.bl.y})
+- Bottom-Right: (${corners.br.x}, ${corners.br.y})`;
 
-**INPUT:**
--   Image containing a document.
--   Source Quad (corners of the document in pixels):
-    -   Top-Left: (${corners.tl.x}, ${corners.tl.y})
-    -   Top-Right: (${corners.tr.x}, ${corners.tr.y})
-    -   Bottom-Left: (${corners.bl.x}, ${corners.bl.y})
-    -   Bottom-Right: (${corners.br.x}, ${corners.br.y})
+    if (restoreText) {
+        prompt = `**AI TASK: Zero Deviation Document Protocol**
 
-**INSTRUCTIONS:**
-1.  **EXECUTE PERSPECTIVE TRANSFORM:**
-    -   Input: The original image.
-    -   Source Quad: The exact pixel coordinates provided above.
-    -   Destination Quad: A perfect rectangle with an aspect ratio derived from the source quad.
-    -   Action: Warp the source quad to fit the destination quad. This corrects any perspective distortion.
-2.  **CROP:** Crop the image to the bounds of the new rectangular document.
-3.  **ENHANCE:**
-    -   Mode: '${enhancement}'
-    -   Apply a filter to maximize contrast and readability.
-4.  **CLEANUP:**
-    -   Shadows: ${removeShadows ? 'REMOVE all shadows for even lighting.' : 'Preserve natural shadows.'}
+**CORE MANDATE:** This is a forensic-level recreation task. Your primary goal is to produce a perfect digital copy. Any creative alteration, hallucination, or deviation from the original's graphical content is a CRITICAL FAILURE of this task.
+
+**INPUTS:**
+- Image containing a document.
+- Source Quad (exact pixel coordinates of the document corners):
+${sourceQuad}
+
+**MANDATORY EXECUTION PLAN:**
+
+1.  **GEOMETRIC CORRECTION:**
+    - Use the provided Source Quad to perform a perfect perspective warp, making the document completely flat and rectangular.
+    - Crop precisely to the new edges.
+
+2.  **CONTENT TRIAGE (CRITICAL ANALYSIS):**
+    - **Examine the entire document and classify ALL content into one of two categories:**
+        - **1. TYPED TEXT:** Machine-printed text.
+        - **2. GRAPHICAL & HANDWRITTEN ELEMENTS:** Includes all stamps, seals, logos, signatures, handwriting, diagrams, and photos.
+
+3.  **CONTENT HANDLING (NON-NEGOTIABLE RULES):**
+
+    - **A. For GRAPHICAL & HANDWRITTEN ELEMENTS (FORENSIC PRESERVATION MANDATE):**
+        - **A.1. ZERO HALLUCINATION & ALTERATION (ABSOLUTE PROHIBITION):** You are **STRICTLY FORBIDDEN** from re-drawing, replacing, generating, creating, or "cleaning up" any element in this category. A re-drawn seal or a generated signature is a CRITICAL FAILURE. Adding a seal that was not in the original is a CRITICAL FAILURE.
+        - **A.2. PERFECT PHOTOGRAPHIC TRANSFER:** These elements **MUST** be photographically "lifted" directly from the source image. Their original shape, color, texture, and internal details must be preserved with 100% accuracy.
+        - **A.3. PERFECT POSITIONAL INTEGRITY:** The lifted elements **MUST** be placed in the final document at their **EXACT original coordinates, size, and rotation**. A seal that is moved, even slightly, is a CRITICAL FAILURE.
+
+    - **B. For TYPED TEXT (HIGH-FIDELITY RECONSTRUCTION):**
+        - **B.1. Perfect Transcription & Language Integrity:** Perform a 100% accurate OCR.
+            - **UNIVERSAL LANGUAGE & DIACRITIC MANDATE:** 100% character and diacritic accuracy is NON-NEGOTIABLE for ALL languages. An incorrect diacritic (e.g., Vietnamese \`dấu\`, German \`umlaut\`) or a single wrong character is a COMPLETE FAILURE of the task. The language must be perfectly preserved.
+        - **B.2. Precise Layout & Font Matching:** The re-drawn text's font must be the **closest possible professional font match** to the original. The position, size, weight, kerning, and line spacing **MUST PERFECTLY MIRROR** the original layout.
+        - **B.3. Re-draw for Ultimate Clarity:** Using the perfect transcription and layout match, render new text. The final text must appear as if printed from a high-resolution laser printer—razor-sharp, with clean edges, and completely free of any digital artifacts, blurring, or pixelation.
+
+4.  **FINAL ASSEMBLY & QUALITY CHECK:**
+    - **Assemble:** Combine the re-drawn \`Typed Text\` and the preserved \`Graphical/Handwritten Elements\` onto a new, clean digital canvas, maintaining the perfect original layout.
+    - **Background & Enhancement:** Create a clean background based on the enhancement mode: '${enhancement}'.
+    - **Shadows:** ${removeShadows ? 'Completely remove all shadows for a perfectly uniform, flat-lit background.' : 'Preserve natural lighting and shadows.'}
+    - **Final Quality:** The resulting image must have ultra-sharp text and perfectly preserved graphics, looking like a flawless digital master of the original document.
+
+**OUTPUT REQUIREMENTS:**
+- Return ONLY the final, restored document as a high-resolution PNG file.
+- Do not output any text.`;
+    } else {
+        prompt = `**AI TASK: Professional Photo Correction for Documents**
+
+**PRIMARY OBJECTIVE:** Transform the input image into a perfect, head-on photograph of the document it contains. The result should look like a high-resolution, professional studio photo of the document, not a typical office scan.
+
+**INPUTS:**
+- Image containing a document.
+- Source Quad (exact pixel coordinates of the document corners):
+${sourceQuad}
+
+**CRITICAL RULES:**
+
+1.  **ABSOLUTE CONTENT PRESERVATION:**
+    - **DO NOT ALTER THE TEXT OR IMAGES ON THE DOCUMENT.** You are forbidden from redrawing, changing, or "correcting" any characters, words, or graphics. Your task is to enhance the *photograph*, not the *document's content*.
+    - **PRESERVE TEXTURE AND SHARPNESS:** The final output **MUST** maintain or even slightly enhance the original sharpness, paper texture, and ink detail. Do not blur, smudge, or over-smooth the image. The goal is maximum clarity while preserving photographic realism.
+
+2.  **GEOMETRIC & LIGHTING CORRECTION:**
+    - **PERSPECTIVE:** Use the provided Source Quad to perform a perfect perspective warp, making the document appear completely flat and rectangular. Crop precisely to the new edges.
+    - **LIGHTING & SHADOWS:** ${removeShadows ? 'Completely remove all shadows and lighting glare to create a perfectly even, flat-lit surface. The lighting should be uniform across the entire document.' : 'Preserve the natural lighting and shadows, but balance them to improve overall readability.'}
+    - **ENHANCEMENT:** Apply the requested enhancement mode: '${enhancement}'. Adjust contrast and clarity to make the content as readable as possible without sacrificing the photographic quality and texture.
 
 **OUTPUT:**
--   **FORMAT:** Image file (PNG).
--   **CONTENT:** ONLY the transformed, cropped, and enhanced document.
--   **DO NOT** return the original image.
--   **DO NOT** return any text.`;
+- Return ONLY the final, corrected image as a high-quality PNG.
+- The image must look like a professional, perfectly-lit photograph of the document.
+- Do not output text.`;
+    }
+
     const textPart = { text: prompt };
 
     console.log('Sending image and manual scan prompt to the model...');

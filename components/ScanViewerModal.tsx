@@ -5,11 +5,12 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { ZoomInIcon, ZoomOutIcon, ArrowsPointingOutIcon, XMarkIcon } from './icons';
+import { ZoomInIcon, ZoomOutIcon, ArrowsPointingOutIcon, XMarkIcon, EyeIcon, EyeSlashIcon } from './icons';
 import Spinner from './Spinner';
 
 interface ScanViewerModalProps {
   imageUrl: string | null;
+  originalImageUrl: string | null;
   onClose: () => void;
   onSave: () => void;
   onAdjust: () => void;
@@ -18,11 +19,12 @@ interface ScanViewerModalProps {
   isDownloadingPdf: boolean;
 }
 
-const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose, onSave, onAdjust, isLoading, onDownloadPdf, isDownloadingPdf }) => {
+const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalImageUrl, onClose, onSave, onAdjust, isLoading, onDownloadPdf, isDownloadingPdf }) => {
   const { t } = useTranslation();
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [isComparing, setIsComparing] = useState(false);
   const viewerRef = useRef<HTMLDivElement>(null);
   const panStartRef = useRef({ x: 0, y: 0 });
 
@@ -70,7 +72,10 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose, on
 
   // Reset view when image changes
   useEffect(() => {
-    if(imageUrl) resetView();
+    if(imageUrl) {
+        resetView();
+        setIsComparing(false);
+    }
   }, [imageUrl, resetView]);
 
   // Keyboard shortcuts for the modal
@@ -103,17 +108,22 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose, on
         onWheel={handleWheel}
       >
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={t('scanModalTitle')}
-            className={`transition-transform duration-100 ease-out shadow-2xl border border-white/10 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-              maxWidth: '95vw',
-              maxHeight: '85vh',
-            }}
-            onMouseDown={handleMouseDown}
-          />
+            <>
+                <img
+                    src={(isComparing && originalImageUrl) ? originalImageUrl : imageUrl}
+                    alt={isComparing ? t('original') : t('scanModalTitle')}
+                    className={`transition-transform duration-100 ease-out shadow-2xl border border-white/10 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                    style={{
+                      transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                      maxWidth: '95vw',
+                      maxHeight: '85vh',
+                    }}
+                    onMouseDown={handleMouseDown}
+                />
+                <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md text-white text-sm font-bold py-1 px-3 rounded-md pointer-events-none z-[111]">
+                    {isComparing ? t('original') : t('scanModalTitle')}
+                </div>
+            </>
         ) : (
           <div className="flex flex-col items-center gap-4">
             <Spinner />
@@ -164,7 +174,7 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose, on
       </div>
       
       {imageUrl && (
-        <div className="absolute right-4 bottom-4 lg:bottom-auto lg:left-1/2 lg:-translate-x-1/2 lg:top-4 flex items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-md border border-white/10 z-[110]">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 p-1.5 bg-black/40 rounded-lg backdrop-blur-xl border border-white/10 z-[110]">
             <button onClick={() => handleZoom('out')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('scanModalZoomOut')}>
                 <ZoomOutIcon className="w-6 h-6" />
             </button>
@@ -174,6 +184,16 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, onClose, on
             <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('scanModalZoomIn')}>
                 <ZoomInIcon className="w-6 h-6" />
             </button>
+            {originalImageUrl && (
+                <button
+                    onClick={() => setIsComparing(p => !p)}
+                    className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
+                    aria-label={t('compareAria')}
+                    title={t('compareAria')}
+                >
+                    {isComparing ? <EyeSlashIcon className="w-6 h-6 text-cyan-400" /> : <EyeIcon className="w-6 h-6" />}
+                </button>
+            )}
         </div>
       )}
     </div>

@@ -54,6 +54,8 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
   const { t } = useTranslation();
   const [openSection, setOpenSection] = useState<string | null>('pro');
 
+  // Fix: Removed explicit type annotations to allow TypeScript to correctly infer icon component props,
+  // resolving the `React.cloneElement` type errors.
   const oneClickFixes = [
     { 
       name: t('oneClickAutoEnhance'), 
@@ -80,16 +82,10 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
   const adjustmentPresets = [
     { name: t('adjustmentPreset1'), prompt: 'Apply a realistic depth-of-field effect, making the background blurry while keeping the main subject in sharp focus.', icon: <BlurBackgroundIcon /> },
     { name: t('adjustmentPreset2'), prompt: 'Slightly enhance the sharpness and details of the image without making it look unnatural.', icon: <SharpenIcon /> },
-    { name: t('adjustmentPreset3'), prompt: 'Adjust the color temperature to give the image warmer, golden-hour style lighting.', icon: <TemperatureIcon /> },
+    { name: t('adjustmentPreset3'), prompt: 'Adjust the color temperature to give the image a warmer, golden-hour style lighting.', icon: <TemperatureIcon /> },
     { name: t('adjustmentPreset4'), prompt: 'Add dramatic, professional studio lighting to the main subject.', icon: <SpotlightIcon /> },
   ];
   
-  const portraitPresets = [
-    { name: t('adjustmentPortraitPreset1'), prompt: "Perform a subtle and photorealistic skin smoothing on any faces in the image. Reduce minor blemishes and wrinkles but preserve natural skin texture. Do not make the skin look plastic or artificial.", icon: <FaceRestoreIcon /> },
-    { name: t('adjustmentPortraitPreset2'), prompt: "Subtly and realistically alter the expression of the main person in the photo to show a gentle, closed-mouth smile. The change should be believable and natural.", icon: <SmileIcon /> },
-    { name: t('adjustmentPortraitPreset3'), prompt: "Slightly enhance the eyes of any person in the photo. Increase sharpness, brightness, and add a subtle sparkle to the pupils to make them more expressive, while keeping the result photorealistic.", icon: <EyeIcon /> }
-  ];
-
   const skyPresets = [
     { name: t('adjustmentSkyPreset1'), prompt: "Realistically replace the sky in the image with a beautiful, dramatic sunset sky. Ensure the lighting on the rest of the image is adjusted to match the new sunset lighting.", icon: <SunIcon /> },
     { name: t('adjustmentSkyPreset2'), prompt: "Realistically replace the sky in the image with a clear, bright blue sky with a few wispy clouds. Ensure the lighting on the rest of the image is adjusted to match the new daytime lighting.", icon: <CloudIcon /> },
@@ -177,7 +173,6 @@ Return only the restored image. It must be a crisp, clear, and visibly more deta
   
   const SECTIONS = [
     { id: 'pro', title: t('adjustmentProTitle'), icon: <MagicWandIcon className="w-5 h-5 text-cyan-400" />, presets: adjustmentPresets, columns: 4 },
-    { id: 'portrait', title: t('adjustmentPortraitTitle'), icon: <UserCircleIcon className="w-5 h-5 text-cyan-400" />, presets: portraitPresets, columns: 3 },
     { id: 'sky', title: t('adjustmentSkyTitle'), icon: <CloudIcon className="w-5 h-5 text-cyan-400" />, presets: skyPresets, columns: 3 },
     { id: 'background', title: t('adjustmentBackgroundTitle'), icon: <PhotoIcon className="w-5 h-5 text-cyan-400" />, presets: backgroundPresets, columns: 5 },
     { id: 'restoration', title: t('adjustmentRestorationTitle'), icon: <ArrowPathIcon className="w-5 h-5 text-cyan-400" />, presets: restorationPresets, columns: 4 },

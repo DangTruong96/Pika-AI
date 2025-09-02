@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BrushIcon, CropIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon, TagIcon } from './icons';
+import { BrushIcon, CropIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon, TagIcon, BeautyIcon, TransformIcon } from './icons';
 import type { Tab } from '../App';
 import RetouchPanel, { SelectionMode, BrushMode } from './RetouchPanel';
 import CropPanel from './CropPanel';
@@ -16,6 +16,8 @@ import CompositePanel from './CompositePanel';
 import ScanPanel from './ScanPanel';
 import ManualScanPanel from './ManualScanPanel';
 import ProductPanel from './ProductPanel';
+import BeautyPanel from './BeautyPanel';
+import SwapFacePanel from './SwapFacePanel';
 import type { Enhancement } from '../services/geminiService';
 
 interface EditorSidebarProps {
@@ -36,6 +38,7 @@ interface EditorSidebarProps {
   hasExpansion: boolean;
   onApplyInsert: () => void;
   onApplyProductScene: () => void;
+  onApplySwap: (targetFace: File) => void;
   insertSubjectFiles: File[];
   onInsertSubjectFilesChange: (files: File[]) => void;
   insertStyleFiles: File[];
@@ -46,10 +49,12 @@ interface EditorSidebarProps {
   onInsertPromptChange: (prompt: string) => void;
   productPrompt: string;
   onProductPromptChange: (prompt: string) => void;
-  onApplyScan: (enhancement: Enhancement, removeShadows: boolean) => void;
+  onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => void;
   onApplyManualScan: () => void;
   onEnterManualMode: () => boolean;
   onCancelManualMode: () => void;
+  scanHistory: string[];
+  onReviewScan: (url: string) => void;
   isMaskPresent: boolean;
   clearMask: () => void;
   retouchPrompt: string;
@@ -68,9 +73,11 @@ interface EditorSidebarProps {
 
 export const TABS_CONFIG = [
     { id: 'retouch', icon: BrushIcon, tooltip: 'tooltipRetouch' },
+    { id: 'beauty', icon: BeautyIcon, tooltip: 'tooltipBeauty' },
     { id: 'product', icon: TagIcon, tooltip: 'tooltipProduct' },
     { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
     { id: 'insert', icon: PlusCircleIcon, tooltip: 'tooltipInsert' },
+    { id: 'swap_face', icon: TransformIcon, tooltip: 'tooltipSwapFace' },
     { id: 'crop', icon: CropIcon, tooltip: 'tooltipCrop' },
     { id: 'adjust', icon: AdjustmentsIcon, tooltip: 'tooltipAdjust' },
     { id: 'filters', icon: MagicWandIcon, tooltip: 'tooltipFilters' },
@@ -104,6 +111,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                   prompt={props.retouchPrompt}
                   onPromptChange={props.onRetouchPromptChange}
                 />;
+      case 'beauty':
+        return <BeautyPanel onApplyAdjustment={props.onApplyAdjustment} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
       case 'crop':
         return <CropPanel onApplyCrop={props.onApplyCrop} onSetAspect={props.onSetAspect} isLoading={props.isLoading} isCropping={props.isCropping} isImageLoaded={props.isImageLoaded} />;
       case 'adjust':
@@ -144,7 +153,15 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       case 'scan':
         return isManualScanMode
           ? <ManualScanPanel onApply={props.onApplyManualScan} onCancel={() => { setIsManualScanMode(false); props.onCancelManualMode(); }} isLoading={props.isLoading} />
-          : <ScanPanel onApplyScan={(...args) => { props.onApplyScan(...args); setIsManualScanMode(false); }} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
+          : <ScanPanel
+              onApplyScan={(...args) => { props.onApplyScan(...args); setIsManualScanMode(false); }}
+              isLoading={props.isLoading}
+              isImageLoaded={props.isImageLoaded}
+              scanHistory={props.scanHistory}
+              onReviewScan={props.onReviewScan}
+            />;
+      case 'swap_face':
+        return <SwapFacePanel onApplySwap={props.onApplySwap} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
       default:
         return null;
     }
