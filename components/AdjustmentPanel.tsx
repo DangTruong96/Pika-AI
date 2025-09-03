@@ -9,7 +9,8 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { 
     MagicWandIcon, UserCircleIcon, CloudIcon, PhotoIcon, ArrowPathIcon, ChevronUpIcon,
     BlurBackgroundIcon, SharpenIcon, TemperatureIcon, SpotlightIcon, FaceRestoreIcon, 
-    SmileIcon, EyeIcon, SunIcon, MoonIcon, RemoveBgIcon, UpscaleIcon, SparklesIcon, PaletteIcon
+    SmileIcon, EyeIcon, SunIcon, MoonIcon, RemoveBgIcon, UpscaleIcon, SparklesIcon, PaletteIcon,
+    BlemishRemovalIcon, MakeupIcon, FaceSlimIcon
 } from './icons';
 
 interface AdjustmentPanelProps {
@@ -59,7 +60,7 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
   const oneClickFixes = [
     { 
       name: t('oneClickAutoEnhance'), 
-      prompt: "Perform a professional, automatic enhancement on this image. Your goal is to make it look as good as possible while maintaining photorealism. Adjust the following aspects as needed: \n- **Lighting & Contrast:** Balance brightness, contrast, shadows, and highlights to improve overall dynamic range. \n- **Color Correction:** Correct any color casts, enhance vibrancy and saturation naturally, and ensure accurate skin tones if people are present. \n- **Sharpness & Clarity:** Increase sharpness and local contrast to make details pop, but avoid over-sharpening or creating halos. \n- **Noise Reduction:** Subtly reduce any digital noise if present. \n The final result should be a clean, vibrant, and well-balanced version of the original image.", 
+      prompt: "Perform a professional, automatic enhancement on this image. Your goal is to make it look as good as possible while maintaining photorealism. Adjust the following aspects as needed: \n- **Lighting & Contrast:** Balance brightness, contrast, shadows, and highlights to improve overall dynamic range. \n- **Color Correction:** Correct any color casts, enhance vibrancy and saturation naturally, and ensure accurate skin tones if people are present. \n- **Sharpness & Clarity:** Increase sharpness and local contrast to make details pop, but avoid over-sharpening or creating halos. \n- **Noise Reduction:** Subtly reduce any digital noise if present. \n **CRITICAL:** The identity and facial structure of any person in the image must be perfectly preserved. The final result should be a clean, vibrant, and well-balanced version of the original image.", 
       icon: <SparklesIcon /> 
     },
     { 
@@ -86,6 +87,27 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
     { name: t('adjustmentPreset4'), prompt: 'Add dramatic, professional studio lighting to the main subject.', icon: <SpotlightIcon /> },
   ];
   
+  const portraitPresets = [
+    { name: t('adjustmentPortraitPreset1'), prompt: "You are an expert retoucher. Your task is to realistically and subtly smooth the skin on all faces in the image. Remove minor, temporary blemishes, but it is CRITICAL to preserve the natural skin texture, including pores and fine lines. The result must not look artificial, airbrushed, or 'plastic'. The person's identity and key features must be perfectly preserved.", icon: <BlemishRemovalIcon /> },
+    { name: t('adjustmentPortraitPreset2'), prompt: "You are a subtle digital artist. Your task is to realistically and very subtly adjust the person's mouth to create a gentle, natural-looking closed-mouth smile. The change must be minimal and believable, preserving the person's exact identity. Do not show teeth unless they are already slightly visible. The goal is a subtle shift in expression, not a dramatic change.", icon: <SmileIcon /> },
+    { name: t('adjustmentPortraitPreset3'), prompt: "You are an expert photo editor. Your task is to subtly enhance and brighten the eyes of the person in the image. Make them appear more vivid, clear, and focused. Increase the brightness and contrast of the iris slightly. Do not change the eye color. The effect should be subtle and make the eyes 'pop' naturally.", icon: <EyeIcon /> },
+    {
+      name: t('beautyApplyMakeup'),
+      prompt: "You are an expert, subtle makeup artist. Your task is to apply **extremely subtle, barely-there, 'no-makeup' makeup**. The goal is to enhance natural beauty without looking like makeup is being worn.\n- **Skin:** Very lightly even out the skin tone. Do NOT apply heavy foundation.\n- **Cheeks:** Add the faintest, most natural hint of a healthy flush.\n- **Eyes:** Do NOT apply noticeable eyeliner or mascara. You may very subtly define the lash line if needed.\n- **Lips:** Apply a sheer, natural color that is very close to the person's own lip shade.\n**CRITICAL:** The result must be extremely natural and light. The person's identity and facial structure MUST be perfectly preserved.",
+      icon: <MakeupIcon />
+    },
+    {
+      name: t('beautySlimFace'),
+      prompt: "Subtly and realistically slim the person's face and jawline. The change should be very slight and natural, preserving their identity and fundamental facial structure. Do not make any other changes.",
+      icon: <FaceSlimIcon />
+    },
+    {
+      name: t('beautyRemoveFreckles'),
+      prompt: "You are an expert retoucher. Your task is to completely remove all freckles from the person's skin. CRITICAL: You must preserve a completely natural skin texture and perfectly maintain the person's identity and facial structure. The result should be realistic and should not look airbrushed.",
+      icon: <SparklesIcon />
+    }
+  ];
+
   const skyPresets = [
     { name: t('adjustmentSkyPreset1'), prompt: "Realistically replace the sky in the image with a beautiful, dramatic sunset sky. Ensure the lighting on the rest of the image is adjusted to match the new sunset lighting.", icon: <SunIcon /> },
     { name: t('adjustmentSkyPreset2'), prompt: "Realistically replace the sky in the image with a clear, bright blue sky with a few wispy clouds. Ensure the lighting on the rest of the image is adjusted to match the new daytime lighting.", icon: <CloudIcon /> },
@@ -101,66 +123,66 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
   ];
   
   const restorationPresets = [
-      { name: t('adjustmentUpscale2x'), prompt: `**TASK: 2x AI Restoration & Detail Enhancement**
+      { name: t('adjustmentUpscale2x'), prompt: `**TASK: 2x Technical Upscale & Sharpening**
 
-**OBJECTIVE:** Perform a high-quality 2x upscale, focusing on restoring and enhancing fine details for a visibly clearer and sharper result. The output should look like a better, cleaner version of the original photograph.
-
-**CRITICAL RULE: PRESERVE CONTENT & IDENTITY**
-The final image content **MUST** be identical to the original. Do not add, remove, or change any objects or elements. If people are present, their facial structure, features, and identity **MUST BE PERFECTLY PRESERVED**. This is a technical restoration, not a creative alteration.
-
-**INSTRUCTIONS:**
-1.  **Analyze Image:** Identify areas with softness, blur, digital noise, or compression artifacts.
-2.  **Restore & Enhance Details:** Intelligently increase sharpness and local contrast to make the image noticeably crisper. **Your primary goal is to recover and clarify existing details.** Bring out fine textures like skin pores, hair strands, fabric weaves, and environmental surfaces.
-3.  **Clean Up:** Subtly remove digital noise and compression artifacts without over-smoothing or losing natural texture.
-4.  **Maintain Photorealism:** The result must look natural. Avoid any artificial, over-sharpened appearance or glowing halos.
-
-**OUTPUT:**
-Return only the restored image. It must be a visibly sharper, cleaner, and more detailed version of the original.`, icon: <UpscaleIcon /> },
-      { name: t('adjustmentUpscale4x'), prompt: `**TASK: 4x AI Super-Resolution & Restoration**
-
-**OBJECTIVE:** Perform an intense 4x upscale, pushing detail to its maximum realistic potential. The result should be dramatically sharper and clearer, as if shot with a much higher-resolution camera.
-
-**CRITICAL RULE: PRESERVE CONTENT & IDENTITY**
-The final image content **MUST** be identical to the original. Do not add, remove, or change any objects or elements. If people are present, their facial structure, features, and identity **MUST BE PERFECTLY PRESERVED**. This is a technical restoration, not a creative alteration.
+**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
+This is a technical image processing task, not a creative one. Your one and only job is to increase the resolution and clarity of the original image.
+- **CRITICAL FAILURE:** Any alteration, regeneration, addition, or removal of original content (objects, features, facial identity) is a critical failure of this task.
+- **IDENTITY PRESERVATION:** The face, features, and identity of any person in the image **MUST BE PRESERVED with 100% accuracy**. The output must be the exact same person, only clearer.
 
 **INSTRUCTIONS:**
-1.  **Deep Analysis:** Perform a deep analysis of the image to identify all areas with blur, softness, noise, or compression artifacts.
-2.  **Maximize & Reconstruct Details:** Aggressively increase sharpness and local contrast. Where detail is lost, **intelligently reconstruct plausible, fine-grained textures** that are consistent with the original image. The goal is to bring out the finest details possible, such as individual skin pores, fabric threads, and distant environmental textures. The result MUST be significantly sharper than the original.
-3.  **Pristine Cleanup:** Completely eliminate all digital noise and compression artifacts, resulting in a pristine image.
-4.  **Maintain Photorealism:** Despite the intense enhancement, the result must look like a real photograph. Avoid creating an overly digital, "fried," or artificial look with excessive halos.
+1.  **UPSAMPLE:** Increase the image resolution by a factor of 2x.
+2.  **ENHANCE EXISTING DETAIL:** Analyze the upsampled pixel data. Your task is to sharpen and clarify **only the details that are already present** in the original image. Refine existing edges, enhance latent textures (skin pores, fabric weaves), and increase local contrast.
+3.  **DO NOT INVENT:** You are strictly forbidden from generating or inventing new details or textures that are not directly derived from the source pixels.
+4.  **CLEANUP:** Subtly remove digital noise and compression artifacts without blurring or losing original texture.
 
 **OUTPUT:**
-Return only the restored image. It must be a maximally crisp, clear, and visibly superior version of the original.`, icon: <UpscaleIcon /> },
-      { name: t('adjustmentUpscale8x'), prompt: `**TASK: 8x Ultimate AI Gigapixel Restoration**
+Return only the upscaled and sharpened image. It must be a visibly clearer version of the original, with all content perfectly preserved.`, icon: <UpscaleIcon /> },
+      { name: t('adjustmentUpscale4x'), prompt: `**TASK: 4x Technical Super-Resolution**
 
-**OBJECTIVE:** Perform an EXTREME, MAXIMUM-EFFORT restoration to create a final image that appears to be at EIGHT TIMES its original resolution. The quality increase must be dramatic and immediately obvious. Your goal is to maximize sharpness, **creatively invent plausible, high-frequency details where none existed**, eliminate all digital artifacts, and define textures with unparalleled, hyper-realistic clarity.
-
-**CRITICAL RULE: PRESERVE CONTENT & IDENTITY**
-The final image content **MUST** be identical to the original. Do not add, remove, or change any objects or elements. If people are present, their facial structure, features, and identity **MUST BE PERFECTLY PRESERVED**. The output must be the same person, just in ultra-high definition. This is a technical restoration, not a creative alteration.
+**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
+This is a technical image processing task, not a creative one. Your one and only job is to increase the resolution and clarity of the original image.
+- **CRITICAL FAILURE:** Any alteration, regeneration, addition, or removal of original content (objects, features, facial identity) is a critical failure of this task.
+- **IDENTITY PRESERVATION:** The face, features, and identity of any person in the image **MUST BE PRESERVED with 100% accuracy**. The output must be the exact same person, only clearer.
 
 **INSTRUCTIONS:**
-1.  **Forensic Analysis:** Deeply analyze the image for any blur, softness, noise, or compression artifacts at a microscopic level.
-2.  **Invent & Maximize Details:** This goes beyond sharpening. You must intelligently **generate and invent realistic micro-details** that would be present in a higher-resolution photograph. Push sharpness and local contrast to their absolute maximum realistic potential. The result MUST be vastly sharper than the original. Bring out the finest details imaginable, such as individual threads on clothing, subtle skin imperfections, distant foliage textures, and complex material patterns.
-3.  **Eliminate All Artifacts:** Completely remove all digital noise, color banding, and compression artifacts. The output must be absolutely pristine.
-4.  **Maintain Hyper-Realism:** Despite the extreme enhancement, the result must look like a real photograph taken with a very high-end, large-format camera. Avoid any digital, "overcooked," or artificial appearance with excessive halos.
+1.  **UPSAMPLE:** Increase the image resolution by a factor of 4x.
+2.  **ENHANCE EXISTING DETAIL:** Perform an aggressive analysis of the upsampled pixel data. Your task is to sharpen and clarify **only the details that can be inferred from the original image**. Refine existing edges, enhance latent textures (skin pores, fabric weaves), and significantly increase local contrast for maximum clarity.
+3.  **STRICT PROHIBITION ON INVENTION:** You are strictly forbidden from generating or inventing new details or textures that are not directly derived from the source pixels. Do not "re-imagine" or "re-draw" any part of the image, especially faces.
+4.  **CLEANUP:** Remove digital noise and compression artifacts without blurring or losing original texture.
 
 **OUTPUT:**
-Return only the restored image. It must be a maximally crisp, clear, and vastly superior version of the original.`, icon: <UpscaleIcon /> },
-      { name: t('adjustmentFaceRestore'), prompt: `**TASK: High-Definition Face Restoration**
+Return only the upscaled and sharpened image. The result must be dramatically sharper than the original, with all content perfectly preserved.`, icon: <UpscaleIcon /> },
+      { name: t('adjustmentUpscale8x'), prompt: `**TASK: 8x Maximum-Fidelity Technical Upscale**
 
-**OBJECTIVE:** Restore all faces in the image to a dramatically higher quality. The goal is to make them look as if captured with a professional, high-resolution camera, making the result visibly superior to the original.
+**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
+This is a technical image processing task, not a creative one. Your one and only job is to increase the resolution and clarity of the original image.
+- **CRITICAL FAILURE:** Any alteration, regeneration, addition, or removal of original content (objects, features, facial identity) is a critical failure of this task.
+- **IDENTITY PRESERVATION:** The face, features, and identity of any person in the image **MUST BE PRESERVED with 100% accuracy**. The output must be the exact same person, only clearer.
 
-**CRITICAL RULE: ABSOLUTE IDENTITY PRESERVATION**
-The final image **MUST** feature the **EXACT SAME PERSON**. You are forbidden from altering their fundamental facial structure, features (eyes, nose, mouth), age, or ethnicity. This is a technical restoration, not a creative 'beautification' or alteration. The output must be the same person, just in high definition.
+**INSTRUCTIONS:**
+1.  **UPSAMPLE:** Increase the image resolution by a factor of 8x.
+2.  **MAXIMUM ENHANCEMENT OF EXISTING DETAIL:** Perform a forensic-level analysis of the upsampled pixel data. Your task is to apply maximum sharpening and clarity enhancement to **only the details that can be inferred from the original image**. Your goal is to make the existing information as clear as physically possible.
+3.  **ABSOLUTE PROHIBITION ON INVENTION:** You are strictly forbidden from generating, inventing, or hallucinating new details or textures. Do not "re-imagine" or "re-draw" any part of the image. Your process must be equivalent to a high-end software upscaler, not a generative artist.
+4.  **CLEANUP:** Aggressively remove all digital noise and compression artifacts, ensuring a pristine final image without losing original texture.
+
+**OUTPUT:**
+Return only the upscaled and sharpened image. The result must be vastly sharper than the original, with all content and identities perfectly preserved.`, icon: <UpscaleIcon /> },
+      { name: t('adjustmentFaceRestore'), prompt: `**TASK: High-Fidelity Face Restoration**
+
+**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
+This is a technical restoration task, not a creative beautification. Your one and only job is to increase the clarity and quality of the faces already present in the image.
+- **CRITICAL FAILURE:** Any alteration to a person's fundamental facial structure, features (eyes, nose, mouth), age, or ethnicity is a critical failure.
+- **IDENTITY PRESERVATION:** The final image **MUST** feature the **EXACT SAME PERSON**. The output must be the same person, just in high definition.
 
 **INSTRUCTIONS:**
 1.  **Analyze Faces:** Identify all faces in the image.
-2.  **Dramatically Enhance Detail:** Aggressively increase sharpness and local contrast. The final image should be noticeably sharper than the original. Bring out fine, realistic details like skin texture (pores, fine lines), hair strands, and eye definition.
-3.  **Deblur & Denoise:** Remove all motion blur, focus issues, pixelation, and compression artifacts to achieve a crisp, clean result.
-4.  **Maintain Realism:** The result must look natural and photorealistic. Avoid an artificial, 'airbrushed', or 'plastic' look. The original skin texture should be enhanced, not erased.
+2.  **Enhance Existing Detail:** Aggressively increase sharpness and local contrast on the facial features. Your goal is to clarify the details that are already there. Bring out fine, realistic textures like skin pores, fine lines, hair strands, and eye definition.
+3.  **Deblur & Denoise:** Remove all motion blur, focus issues, pixelation, and compression artifacts from the faces to achieve a crisp, clean result.
+4.  **Maintain Realism:** The result must look natural and photorealistic. The original skin texture should be enhanced, not erased. Avoid an artificial, 'airbrushed', or 'plastic' look.
 
 **OUTPUT:**
-Return only the restored image. It must be a crisp, clear, and visibly more detailed version of the original.`, icon: <FaceRestoreIcon /> }
+Return only the restored image. It must be a crisp, clear, and visibly more detailed version of the original, with all identities perfectly preserved.`, icon: <FaceRestoreIcon /> }
   ];
 
   const handlePresetClick = (prompt: string) => {
@@ -173,6 +195,7 @@ Return only the restored image. It must be a crisp, clear, and visibly more deta
   
   const SECTIONS = [
     { id: 'pro', title: t('adjustmentProTitle'), icon: <MagicWandIcon className="w-5 h-5 text-cyan-400" />, presets: adjustmentPresets, columns: 4 },
+    { id: 'portrait', title: t('adjustmentPortraitTitle'), icon: <UserCircleIcon className="w-5 h-5 text-cyan-400" />, presets: portraitPresets, columns: 3 },
     { id: 'sky', title: t('adjustmentSkyTitle'), icon: <CloudIcon className="w-5 h-5 text-cyan-400" />, presets: skyPresets, columns: 3 },
     { id: 'background', title: t('adjustmentBackgroundTitle'), icon: <PhotoIcon className="w-5 h-5 text-cyan-400" />, presets: backgroundPresets, columns: 5 },
     { id: 'restoration', title: t('adjustmentRestorationTitle'), icon: <ArrowPathIcon className="w-5 h-5 text-cyan-400" />, presets: restorationPresets, columns: 4 },

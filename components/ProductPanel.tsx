@@ -5,10 +5,9 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { RemoveBgIcon, SunIcon, PaletteIcon } from './icons';
+import { RemoveBgIcon, SunIcon, PaletteIcon, SparklesIcon } from './icons';
 
 interface ProductPanelProps {
-  onApplyAdjustment: (prompt: string) => void;
   onApplyScene: () => void;
   isLoading: boolean;
   isImageLoaded: boolean;
@@ -17,7 +16,6 @@ interface ProductPanelProps {
 }
 
 const ProductPanel: React.FC<ProductPanelProps> = ({ 
-    onApplyAdjustment, 
     onApplyScene,
     isLoading, 
     isImageLoaded,
@@ -28,19 +26,24 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
   const cleanupPresets = [
     { 
-      name: t('productBgRemove'), 
-      prompt: "Accurately segment the main product from the background and place it on a solid, clean white background, suitable for e-commerce.", 
+      name: t('productExtractTop'), 
+      prompt: "the shirt or top", 
       icon: <RemoveBgIcon /> 
     },
     { 
-      name: t('productImproveLighting'), 
-      prompt: "You are an expert product photographer. Your task is to automatically and realistically improve the lighting on this product. Analyze the brightness, contrast, shadows, and highlights. Adjust them to create a balanced, well-lit image with good dynamic range that makes the product look appealing. Do not alter colors or the background.", 
+      name: t('productExtractPants'), 
+      prompt: "the pants or shorts", 
       icon: <SunIcon /> 
     },
     { 
-      name: t('productEnhanceColors'), 
-      prompt: "You are an expert product photographer. Your task is to automatically and realistically enhance the colors of the product in this image. Improve the vibrancy and saturation to make the product's colors pop, but avoid oversaturation. Correct any minor color casts to achieve an accurate and appealing color balance. Do not alter lighting, contrast, or the background.", 
+      name: t('productExtractDress'), 
+      prompt: "the dress or skirt", 
       icon: <PaletteIcon /> 
+    },
+    { 
+      name: t('productExtractShoes'), 
+      prompt: "the shoes, sandals, or footwear", 
+      icon: <SparklesIcon /> 
     },
   ];
   
@@ -51,6 +54,15 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
     }
   };
 
+  const handlePresetClick = (presetPrompt: string) => {
+    onPromptChange(presetPrompt);
+    // Use timeout to ensure state is set before calling the submission handler
+    setTimeout(() => {
+        onApplyScene();
+    }, 0);
+  };
+
+
   return (
     <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
         <h3 className="text-lg font-semibold text-gray-200">{t('productTitle')}</h3>
@@ -59,17 +71,17 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
         {/* Product Cleanup Section */}
         <div className="w-full bg-black/30 border border-white/10 rounded-xl p-3 flex flex-col gap-3">
             <h4 className="font-semibold text-center text-gray-200">{t('productCleanupTitle')}</h4>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
             {cleanupPresets.map(preset => (
                 <button
                     key={preset.name}
-                    onClick={() => onApplyAdjustment(preset.prompt)}
+                    onClick={() => handlePresetClick(preset.prompt)}
                     disabled={isLoading || !isImageLoaded}
-                    className="w-full flex flex-col items-center justify-center text-center gap-2 bg-white/5 border border-white/10 text-gray-200 font-semibold py-3 px-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-white/10 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex flex-col items-center justify-center text-center gap-2 bg-white/5 border border-white/10 text-gray-200 font-semibold py-3 px-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-white/10 active:scale-95 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     title={preset.name}
                 >
-                {React.cloneElement(preset.icon, { className: 'w-8 h-8 text-gray-300' })}
-                <span className="leading-tight">{preset.name}</span>
+                {React.cloneElement(preset.icon, { className: 'w-7 h-7 text-gray-300' })}
+                <span className="leading-tight mt-1">{preset.name}</span>
                 </button>
             ))}
             </div>

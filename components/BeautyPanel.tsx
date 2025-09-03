@@ -19,22 +19,22 @@ const BeautyPanel: React.FC<BeautyPanelProps> = ({ onApplyAdjustment, isLoading,
   const beautyPresets = [
     {
       name: t('beautyApplyMakeup'),
-      prompt: "Analyze the person's face and apply natural, flattering makeup. Enhance the eyes with subtle eyeliner and mascara, add a touch of color to the cheeks, and apply a suitable lipstick color. The result should be realistic and enhance their features.",
+      prompt: "You are an expert, subtle makeup artist. Your task is to apply **extremely subtle, barely-there, 'no-makeup' makeup**. The goal is to enhance natural beauty without looking like makeup is being worn.\n- **Skin:** Very lightly even out the skin tone. Do NOT apply heavy foundation.\n- **Cheeks:** Add the faintest, most natural hint of a healthy flush.\n- **Eyes:** Do NOT apply noticeable eyeliner or mascara. You may very subtly define the lash line if needed.\n- **Lips:** Apply a sheer, natural color that is very close to the person's own lip shade.\n**CRITICAL:** The result must be extremely natural and light. The person's identity and facial structure MUST be perfectly preserved.",
       icon: <MakeupIcon />
     },
     {
       name: t('beautySlimFace'),
-      prompt: "Subtly and realistically slim the person's face and jawline. The change should be very slight and natural, preserving their identity. Do not make any other changes.",
+      prompt: "Subtly and realistically slim the person's face and jawline. The change should be very slight and natural, preserving their identity and fundamental facial structure. Do not make any other changes.",
       icon: <FaceSlimIcon />
     },
     {
       name: t('beautyRemoveBlemishes'),
-      prompt: "You are an expert retoucher. Your task is to remove any temporary skin blemishes, like pimples or acne, from the person's face. The result must be photorealistic. Preserve the natural skin texture, including pores and fine lines. Do not smooth the skin excessively or give it a plastic look.",
+      prompt: "You are an expert retoucher. Your task is to remove any temporary skin blemishes, like pimples or acne, from the person's face. The result must be photorealistic. CRITICAL: Preserve the natural skin texture, including pores and fine lines, and perfectly maintain the person's identity and facial structure. Do not smooth the skin excessively or give it a plastic look.",
       icon: <BlemishRemovalIcon />
     },
     {
       name: t('beautyRemoveFreckles'),
-      prompt: "You are an expert retoucher. Your task is to completely remove all freckles from the person's skin, while preserving a completely natural skin texture. The result should be realistic and should not look airbrushed.",
+      prompt: "You are an expert retoucher. Your task is to completely remove all freckles from the person's skin. CRITICAL: You must preserve a completely natural skin texture and perfectly maintain the person's identity and facial structure. The result should be realistic and should not look airbrushed.",
       icon: <SparklesIcon />
     }
   ];

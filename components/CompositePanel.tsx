@@ -167,7 +167,7 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
             onApplyInsert();
         }
     };
-
+    
     return (
         <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
             <h3 className="text-lg font-semibold text-gray-200">{t('insertTitle')}</h3>
@@ -244,27 +244,29 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
 
                 {/* Background Section */}
                 <div className="w-full flex flex-col gap-2">
-                    <span className="text-sm font-semibold text-gray-300">{t('insertBackground')}</span>
-                     <div>
-                         <label
+                    <span className="text-sm font-semibold text-gray-300">{t('insertBackgroundOptional')}</span>
+                    <div>
+                        <label
                             htmlFor="background-file-input"
                             {...backgroundDragProps}
-                            className={`relative w-full h-24 border-2 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer overflow-hidden
-                                ${isDraggingBackground ? 'border-cyan-400 bg-cyan-500/10' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50'}`
+                            className={`relative w-full h-24 border-2 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer overflow-hidden group
+                                ${isDraggingBackground ? 'border-cyan-400 bg-cyan-500/10' : (backgroundFile ? 'border-cyan-500/50' : 'border-dashed border-white/20 bg-black/20 hover:border-cyan-500/50')}`
                             }
                         >
                             {backgroundPreview ? (
-                               <>
+                                <>
                                     <img src={backgroundPreview} alt={t('insertBackground')} className="w-full h-full object-cover" />
-                                    {backgroundFile && (
-                                        <button
-                                            onClick={handleClearBackground}
-                                            className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white z-10 hover:bg-black/80"
-                                            aria-label={`Clear background image`}
-                                        >
-                                            <XMarkIcon className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <UploadIcon className="w-6 h-6 text-white" />
+                                        <span className="text-xs mt-1 text-white font-semibold">{t('insertClickToChange')}</span>
+                                    </div>
+                                    <button
+                                        onClick={handleClearBackground}
+                                        className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5 text-white z-10 hover:bg-red-500/80 transition-colors"
+                                        aria-label={`Clear background image`}
+                                    >
+                                        <XMarkIcon className="w-4 h-4" />
+                                    </button>
                                 </>
                             ) : (
                                 <div className="text-center text-gray-400 p-2">

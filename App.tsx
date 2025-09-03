@@ -8,7 +8,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateProductImage, generateFaceSwap, type Corners, type Enhancement } from './services/geminiService';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateProductImage, type Corners, type Enhancement } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
@@ -17,6 +17,7 @@ import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, ChevronsLeftRightIcon, 
 import { useTranslation } from './contexts/LanguageContext';
 import { SelectionMode, BrushMode } from './components/RetouchPanel';
 import HistoryPanel from './components/HistoryPanel';
+import type { TranslationKey } from './translations';
 
 
 // Helper to convert a data URL string to a File object
@@ -87,7 +88,7 @@ const MobileInputBar: React.FC<{
 };
 
 
-export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'product' | 'beauty' | 'swap_face';
+export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'product';
 export type TransformType = 'rotate-cw' | 'rotate-ccw' | 'flip-h' | 'flip-v';
 type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
 
@@ -505,7 +506,44 @@ const App: React.FC = () => {
             finalMaskUrl = pointCanvas.toDataURL('image/png');
         }
 
-        const editedImageUrl = await generateEditedImageWithMask(currentImage, retouchPrompt, finalMaskUrl);
+        let finalPrompt = retouchPrompt;
+        const lowerCasePrompt = retouchPrompt.toLowerCase().trim();
+
+        const commandMap: Record<string, TranslationKey> = {
+            'remove person': 'retouchRemovePersonPrompt',
+            'delete person': 'retouchRemovePersonPrompt',
+            'erase person': 'retouchRemovePersonPrompt',
+            'xoá người': 'retouchRemovePersonPrompt',
+            'xóa người': 'retouchRemovePersonPrompt',
+
+            'remove object': 'retouchRemoveObjectPrompt',
+            'delete object': 'retouchRemoveObjectPrompt',
+            'erase object': 'retouchRemoveObjectPrompt',
+            'xoá vật thể': 'retouchRemoveObjectPrompt',
+            'xóa vật thể': 'retouchRemoveObjectPrompt',
+            'remove it': 'retouchRemoveObjectPrompt',
+            'delete it': 'retouchRemoveObjectPrompt',
+            'erase it': 'retouchRemoveObjectPrompt',
+
+            'remove reflection': 'retouchRemoveReflectionPrompt',
+            'delete reflection': 'retouchRemoveReflectionPrompt',
+            'erase reflection': 'retouchRemoveReflectionPrompt',
+            'xoá phản chiếu': 'retouchRemoveReflectionPrompt',
+            'xóa phản chiếu': 'retouchRemoveReflectionPrompt',
+            'remove glare': 'retouchRemoveReflectionPrompt',
+            'delete glare': 'retouchRemoveReflectionPrompt',
+        };
+        
+        // New logic: Check if the prompt *includes* a command, making it more flexible.
+        for (const command in commandMap) {
+            if (lowerCasePrompt.includes(command)) {
+                const translationKey = commandMap[command];
+                finalPrompt = t(translationKey);
+                break; // Use the first command that matches
+            }
+        }
+
+        const editedImageUrl = await generateEditedImageWithMask(currentImage, finalPrompt, finalMaskUrl);
 
         const newImageFile = dataURLtoFile(editedImageUrl, `edited-${Date.now()}.png`);
         addImageToHistory(newImageFile);
@@ -741,9 +779,9 @@ const App: React.FC = () => {
 
     try {
         const insertedImageUrl = await generateCompositeImage(
+            insertBackgroundFile,
             insertSubjectFiles, 
             insertStyleFiles, 
-            insertBackgroundFile, 
             insertPrompt
         );
         const newImageFile = dataURLtoFile(insertedImageUrl, `inserted-${Date.now()}.png`);
@@ -777,7 +815,13 @@ const App: React.FC = () => {
     try {
         const adjustedImageUrl = await generateProductImage(currentImage, productPrompt);
         const newImageFile = dataURLtoFile(adjustedImageUrl, `product-${Date.now()}.png`);
+        
+        // Add to main history for viewing
         addImageToHistory(newImageFile);
+        
+        // Automatically add the extracted item to the Style References in the Insert panel
+        setInsertStyleFiles(prev => [...prev, newImageFile].slice(-3)); // Keep up to 3 style refs
+
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
@@ -786,29 +830,6 @@ const App: React.FC = () => {
         setIsLoading(false);
     }
   }, [currentImage, addImageToHistory, t, productPrompt]);
-
-  const handleApplySwap = useCallback(async (targetFaceFile: File) => {
-    if (!currentImage) {
-      setError(t('errorNoImageLoadedToAdjust'));
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-        const swappedImageUrl = await generateFaceSwap(currentImage, targetFaceFile);
-        const newImageFile = dataURLtoFile(swappedImageUrl, `swapped-${Date.now()}.png`);
-        addImageToHistory(newImageFile);
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
-        console.error(err);
-    } finally {
-        setIsLoading(false);
-    }
-  }, [currentImage, addImageToHistory, t]);
-
 
   // --- Scan Handlers ---
   const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => {
@@ -2047,6 +2068,7 @@ const App: React.FC = () => {
     );
     
     const editorSidebarProps = {
+        currentImage: currentImage,
         isImageLoaded: !!currentImage,
         isLoading: isLoading,
         activeTab: activeTab,
@@ -2063,7 +2085,6 @@ const App: React.FC = () => {
         hasExpansion: hasExpansion,
         onApplyInsert: handleApplyInsert,
         onApplyProductScene: handleApplyProductScene,
-        onApplySwap: handleApplySwap,
         insertSubjectFiles: insertSubjectFiles,
         onInsertSubjectFilesChange: setInsertSubjectFiles,
         insertStyleFiles: insertStyleFiles,
@@ -2205,6 +2226,7 @@ const App: React.FC = () => {
             onToggleToolbox={toggleToolbox}
             onStartOver={handleStartOver}
             isToolboxOpen={isToolboxOpen}
+            onUploadNew={handleRequestFileUpload}
         />
         <main className={`flex-grow w-full max-w-screen-2xl mx-auto p-2 md:p-4 flex flex-col justify-center items-stretch overflow-hidden`}>
             {renderContent()}

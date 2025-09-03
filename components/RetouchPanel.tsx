@@ -46,9 +46,9 @@ const RetouchPanel: React.FC<RetouchPanelProps> = ({
   const { t } = useTranslation();
 
   const removalPresets = [
-    { name: t('retouchRemoveObject'), prompt: "Completely remove the selected object and realistically fill in the background.", icon: <PhotoIcon /> },
-    { name: t('retouchRemovePerson'), prompt: "Completely remove the selected person and realistically fill in the background.", icon: <UserCircleIcon /> },
-    { name: t('retouchRemoveReflection'), prompt: "Completely remove the selected glare or reflection and reconstruct the surface underneath.", icon: <SparklesIcon /> }
+    { name: t('retouchRemoveObject'), prompt: t('retouchRemoveObjectPrompt'), icon: <PhotoIcon /> },
+    { name: t('retouchRemovePerson'), prompt: t('retouchRemovePersonPrompt'), icon: <UserCircleIcon /> },
+    { name: t('retouchRemoveReflection'), prompt: t('retouchRemoveReflectionPrompt'), icon: <SparklesIcon /> }
   ];
 
   const handlePresetClick = (presetPrompt: string) => {

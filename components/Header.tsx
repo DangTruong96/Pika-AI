@@ -5,7 +5,7 @@
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
-import { SparklesIcon, UndoIcon, RedoIcon, DownloadIcon, ArrowPathIcon } from './icons';
+import { SparklesIcon, UndoIcon, RedoIcon, DownloadIcon, ArrowPathIcon, UploadIcon } from './icons';
 
 interface HeaderProps {
     isImageLoaded: boolean;
@@ -21,6 +21,7 @@ interface HeaderProps {
     onToggleToolbox: () => void;
     onStartOver: () => void;
     isToolboxOpen: boolean;
+    onUploadNew: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -36,7 +37,8 @@ const Header: React.FC<HeaderProps> = ({
     isLoading,
     onToggleToolbox,
     onStartOver,
-    isToolboxOpen
+    isToolboxOpen,
+    onUploadNew,
 }) => {
   const { t } = useTranslation();
 
@@ -97,7 +99,15 @@ const Header: React.FC<HeaderProps> = ({
                     </button>
 
                     <div className="h-6 w-px bg-white/20 mx-1"></div>
-
+                    
+                    <button 
+                        onClick={onUploadNew}
+                        disabled={isLoading}
+                        className="sm:hidden flex items-center justify-center p-2.5 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10"
+                        title={t('uploadNew')}
+                    >
+                        <UploadIcon className="w-5 h-5" />
+                    </button>
                     <button 
                         onClick={onStartOver}
                         disabled={isLoading}

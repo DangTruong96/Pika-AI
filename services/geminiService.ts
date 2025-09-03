@@ -107,8 +107,9 @@ export const generateEditedImageWithMask = async (
 1.  **THE MASK IS THE *ONLY* EDIT ZONE:** The provided mask image dictates the one and only area you can change. White pixels in the mask are the 'edit zone'. Black pixels are 'protected zones'.
 2.  **NEVER TOUCH PROTECTED ZONES:** The black areas of the mask correspond to parts of the original image that **MUST BE PRESERVED IDENTICALLY**. Do not change, recolor, distort, or alter these protected pixels in any way.
 3.  **PERFORM THIS EXACT TASK:** Inside the 'edit zone' (the white parts of the mask), perform the following action: **"${prompt}"**.
-4.  **BLEND SEAMLESSLY:** The edit must integrate perfectly with the protected parts of the image. Match lighting, shadows, texture, grain, perspective, and color grading.
-5.  **MAINTAIN OVERALL QUALITY:** The final output image (including both edited and protected zones) MUST retain the same level of sharpness, detail, and texture as the original input image. Do not introduce blurriness or compression artifacts.
+4.  **IDENTITY PRESERVATION:** If the edit involves a person's face, you **MUST PRESERVE THEIR IDENTITY**. The final output must be the same person, only with the requested edit applied. Do not change their fundamental facial structure or features. This is a non-negotiable rule.
+5.  **BLEND SEAMLESSLY:** The edit must integrate perfectly with the protected parts of the image. Match lighting, shadows, texture, grain, perspective, and color grading.
+6.  **MAINTAIN OVERALL QUALITY:** The final output image (including both edited and protected zones) MUST retain the same level of sharpness, detail, and texture as the original input image. Do not introduce blurriness or compression artifacts.
 
 Output: Return ONLY the final, high-quality, edited image as a PNG file. Do not output text, explanations, or apologies.`;
     const textPart = { text: fullPrompt };
@@ -143,10 +144,11 @@ export const generateFilteredImage = async (
     const prompt = `You are an expert AI photo editor specializing in applying stylistic filters. Your task is to reinterpret the entire input image according to the user's filter request.
 
 **CRITICAL RULES:**
-1.  **APPLY THE STYLE:** The primary goal is to apply the requested filter or artistic style across the entire image. The visual characteristics of the output should match the description.
+1.  **IDENTITY PRESERVATION (NON-NEGOTIABLE):** The face, features, and identity of any person in the image **MUST BE PRESERVED with 100% accuracy**. The output must be the exact same person, just rendered in the new style.
 2.  **PRESERVE THE SUBJECT:** You MUST NOT change the core subject, composition, or content of the image. For example, if the image is of a dog in a park, the output must still be a dog in a park, but rendered in the new style. Do not add or remove objects.
-3.  **INTERPRET ARTISTIC REQUESTS:** For artistic styles (like 'oil painting' or 'watercolor'), you are expected to alter the texture, sharpness, and detail to match that style. For color grading styles (like 'cinematic' or 'vintage'), you should primarily alter colors and lighting while preserving the original texture and detail as much as possible.
-4.  **SAFETY & ETHICS:** Filters may subtly shift colors, but you MUST ensure they do not alter a person's fundamental race or ethnicity. Refuse any request that explicitly asks to change a person's race.
+3.  **APPLY THE STYLE:** The primary goal is to apply the requested filter or artistic style across the entire image. The visual characteristics of the output should match the description.
+4.  **INTERPRET ARTISTIC REQUESTS:** For artistic styles (like 'oil painting' or 'watercolor'), you are expected to alter the texture, sharpness, and detail to match that style. For color grading styles (like 'cinematic' or 'vintage'), you should primarily alter colors and lighting while preserving the original texture and detail as much as possible.
+5.  **SAFETY & ETHICS:** Filters may subtly shift colors, but you MUST ensure they do not alter a person's fundamental race or ethnicity. Refuse any request that explicitly asks to change a person's race.
 
 **User's Filter Request:** "${filterPrompt}"
 
@@ -181,6 +183,11 @@ export const generateAdjustedImage = async (
     
     const originalImagePart = await fileToPart(originalImage);
     const prompt = `You are an expert photo editor AI. Your task is to perform a natural, global adjustment to the entire image based on the user's request.
+
+**ZERO-DEVIATION MANDATE ON IDENTITY (NON-NEGOTIABLE):**
+- **CRITICAL FAILURE:** Any alteration to a person's fundamental facial structure, features (eyes, nose, mouth), age, or ethnicity that makes them unrecognizable as the same person is a critical failure of this task.
+- **IDENTITY PRESERVATION:** The final image **MUST** feature the **EXACT SAME PERSON**. The output must be the same person, just with the requested photo adjustment. This rule overrides any part of the user's prompt that could be misinterpreted as a request to change identity.
+
 User Request: "${adjustmentPrompt}"
 
 Editing Guidelines:
@@ -253,78 +260,140 @@ Output: Return ONLY the final, fully rendered image with the transparent areas f
 
 /**
  * Generates a composite image by combining subjects and optional style/background images.
+ * @param baseImage The main scene or background image. Can be null to generate a scene.
  * @param subjectImages The main subject images.
  * @param styleImages An array of optional images providing styles (e.g., clothing, textures).
- * @param backgroundImage An optional new background image.
  * @param prompt Text instructions for how to combine the images.
  * @returns A promise that resolves to the data URL of the composite image.
  */
 export const generateCompositeImage = async (
+    baseImage: File | null,
     subjectImages: File[],
     styleImages: File[],
-    backgroundImage: File | null,
     prompt: string
 ): Promise<string> => {
-    console.log(`Starting image composite generation with ${subjectImages.length} subjects and ${styleImages.length} styles: ${prompt}`);
+    console.log(`Starting image composite generation with base image: ${!!baseImage}, ${subjectImages.length} subjects, ${styleImages.length} styles: ${prompt}`);
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
     const parts: any[] = [];
+    let fullPrompt: string;
     
-    // Add all image parts in a specific order: Subjects -> Styles -> Background
-    const subjectParts = await Promise.all(subjectImages.map(file => fileToPart(file)));
-    parts.push(...subjectParts);
+    // Create an intelligent prompt if the user provides a style image but no text prompt.
+    let effectivePrompt = prompt;
+    if (styleImages.length > 0 && subjectImages.length > 0 && !prompt.trim()) {
+        if (baseImage) {
+            effectivePrompt = "Analyze the [STYLE REFERENCE] image(s) to understand their key visual elements (e.g., clothing, style, texture, color scheme). Apply these elements photorealistically to the [SUBJECT] image(s). The final image should seamlessly integrate the newly styled subject into the [BASE IMAGE].";
+        } else {
+            effectivePrompt = "Analyze the [STYLE REFERENCE] image(s) to understand their key visual elements (e.g., clothing, style, texture, color scheme). Apply these elements photorealistically to the [SUBJECT] image(s). Then, generate a new, suitable, and photorealistic background scene for the newly styled subject and place them in it.";
+        }
+    }
     
-    if (styleImages.length > 0) {
-        const styleParts = await Promise.all(styleImages.map(file => fileToPart(file)));
-        parts.push(...styleParts);
-    }
-    if (backgroundImage) {
-        parts.push(await fileToPart(backgroundImage));
-    }
+    // Conditionally add base image and construct prompt
+    if (baseImage) {
+        parts.push(await fileToPart(baseImage));
+        
+        const subjectParts = await Promise.all(subjectImages.map(file => fileToPart(file)));
+        parts.push(...subjectParts);
+        
+        if (styleImages.length > 0) {
+            const styleParts = await Promise.all(styleImages.map(file => fileToPart(file)));
+            parts.push(...styleParts);
+        }
 
-    // Dynamically build the prompt to explain the provided images to the AI
-    let imageInputsDescription = `**Input Images Provided (in order):**
-- The first ${subjectImages.length} image(s) are the **[Subject Images]**. Preserve their identities and key features.`;
-    
-    if (styleImages.length > 0) {
-        imageInputsDescription += `\n- The next ${styleImages.length} image(s) are the **[Style Reference Images]**. Their purpose is to provide a visual reference for an *item, texture, or clothing style*. **CRITICAL: The people, faces, and backgrounds in these style images MUST be IGNORED.** Only the *style element itself* (e.g., the jacket, the dress, the pattern) should be extracted and applied to the subjects from the **[Subject Images]**.`;
-    }
-    if (backgroundImage) {
-        imageInputsDescription += `\n- The final image is the **[Background Image]**. This is the new background scene.`;
-    }
+        fullPrompt = `**HIERARCHICAL MANDATE PROTOCOL**
 
-    let taskDescription = `**Your Task:**
-1.  **Analyze and Complete Subjects:** Intelligently isolate the main subjects from their original backgrounds in the [Subject Images].
-    - **CRITICAL IDENTITY PRESERVATION RULE:** **YOU MUST PRESERVE THE EXACT FACE AND IDENTITY of any person from the [Subject Images].** Do not change their facial features, ethnicity, or identity. The final output **MUST** feature the **EXACT SAME PERSON** from the subject image.
-    - If a subject appears cropped (e.g., a portrait missing legs) and the user's instructions or style images imply a full-body outcome (e.g., adding shoes), you MUST realistically generate the missing body parts to create a complete, coherent subject.`;
+**LEVEL 1 MANDATE (ABSOLUTE & NON-NEGOTIABLE PRIORITY): 100% IDENTITY PRESERVATION OF *ALL* SUBJECTS.**
 
-    let stepCounter = 1;
-    if (styleImages.length > 0) {
-        stepCounter++;
-        taskDescription += `\n${stepCounter}. **Extract and Apply Styles:** EXTRACT the key style elements (like clothing, objects, or textures) from the [Style Reference Images]. **DO NOT copy the people or faces from the style images.** Apply these extracted styles onto the subjects (including any newly generated parts) from the [Subject Images]. For example, if a subject image shows a person and a style image shows a different person wearing a leather jacket, your task is to put the *leather jacket* on the *person from the subject image*. You MUST NOT add the second person to the final image.`;
-    }
-    
-    stepCounter++;
-    if (backgroundImage) {
-        taskDescription += `\n${stepCounter}. **Composite Scene:** Place the modified subjects into the [Background Image] scene.`;
+This rule is absolute and overrides all other instructions, including the user's prompt and aesthetic considerations. Failure to comply is a complete failure of the task.
+
+1.  **IDENTIFY ALL SUBJECTS:** Analyze the [SUBJECT] image(s) and identify **every single person** present.
+2.  **TREAT EACH FACE AS A "PROTECTED ASSET":**
+    - Your first and most critical action is to perfectly preserve the head and face of **every person** identified in the [SUBJECT] image(s).
+    - You **MUST NOT** regenerate, redraw, alter, or "re-imagine" their facial features, structure, age, ethnicity, or expression. Treat their heads/faces as if they are high-resolution digital cutouts that must be used as-is.
+    - **SUCCESS CRITERIA:** Every person in the final image must be **IDENTICAL** and **INSTANTLY RECOGNIZABLE** as the person in their corresponding [SUBJECT] image.
+
+3.  **ABSOLUTE PROHIBITION:** You are **STRICTLY FORBIDDEN** from copying, learning from, or being influenced by any face present in the [STYLE REFERENCE] image(s).
+
+---
+
+**LEVEL 2 MANDATE (EXECUTE ONLY AFTER LEVEL 1 IS SATISFIED): SEAMLESS INTEGRATION & SCENE COMPOSITION**
+
+**INPUT ANALYSIS:**
+- **Image 1 is the [BASE IMAGE].** This is the background/scene.
+- **The next image(s) are the [SUBJECT(S)].** These are the assets to be integrated.
+- **Any subsequent image(s) are [STYLE REFERENCES] (optional).**
+
+**USER INSTRUCTIONS:**
+"${effectivePrompt || 'Combine the provided images into a cohesive, photorealistic scene. Use your best artistic judgment.'}"
+
+**EXECUTION PLAN:**
+1.  **STYLE APPLICATION (IF APPLICABLE):**
+    - Apply the style from the [STYLE REFERENCE] image(s) **ONLY to the body and clothing** of the [SUBJECTS].
+    - This styling must not affect the "Protected Assets" (the faces and heads) from the Level 1 Mandate.
+
+2.  **COMPOSITION:**
+    - Place the styled [SUBJECTS] (with their perfectly preserved heads/faces) into the [BASE IMAGE].
+
+3.  **FORENSIC BLENDING:**
+    - Perfectly blend the [SUBJECTS] into the scene by matching the lighting (direction, color, hardness), shadows, perspective, scale, grain, focus, and color grading of the background.
+    - **PRIORITY:** This blending must **NOT** compromise the Level 1 Mandate of identity preservation. If perfect blending would alter a face, prioritize preserving the face over perfect blending.
+
+**OUTPUT:**
+- Return ONLY the final, high-quality, composited image as a PNG.
+- Do not output any text.`;
+
     } else {
-        taskDescription += `\n${stepCounter}. **Create Scene:** Generate a suitable and photorealistic background scene that complements the subjects and the user's instructions, then place the subjects within it.`;
+        // No base image provided, generate it.
+        const subjectParts = await Promise.all(subjectImages.map(file => fileToPart(file)));
+        parts.push(...subjectParts);
+        
+        if (styleImages.length > 0) {
+            const styleParts = await Promise.all(styleImages.map(file => fileToPart(file)));
+            parts.push(...styleParts);
+        }
+        
+        fullPrompt = `**HIERARCHICAL MANDATE PROTOCOL**
+
+**LEVEL 1 MANDATE (ABSOLUTE & NON-NEGOTIABLE PRIORITY): 100% IDENTITY PRESERVATION OF *ALL* SUBJECTS.**
+
+This rule is absolute and overrides all other instructions, including the user's prompt and aesthetic considerations. Failure to comply is a complete failure of the task.
+
+1.  **IDENTIFY ALL SUBJECTS:** Analyze the [SUBJECT] image(s) and identify **every single person** present.
+2.  **TREAT EACH FACE AS A "PROTECTED ASSET":**
+    - Your first and most critical action is to perfectly preserve the head and face of **every person** identified in the [SUBJECT] image(s).
+    - You **MUST NOT** regenerate, redraw, alter, or "re-imagine" their facial features, structure, age, ethnicity, or expression. Treat their heads/faces as if they are high-resolution digital cutouts that must be used as-is.
+    - **SUCCESS CRITERIA:** Every person in the final image must be **IDENTICAL** and **INSTANTLY RECOGNIZABLE** as the person in their corresponding [SUBJECT] image.
+
+3.  **ABSOLUTE PROHIBITION:** You are **STRICTLY FORBIDDEN** from copying, learning from, or being influenced by any face present in the [STYLE REFERENCE] image(s).
+
+---
+
+**LEVEL 2 MANDATE (EXECUTE ONLY AFTER LEVEL 1 IS SATISFIED): SEAMLESS INTEGRATION & SCENE COMPOSITION**
+
+**INPUT ANALYSIS:**
+- **The first image(s) are the [SUBJECT(S)].** These are the assets to be integrated.
+- **Any subsequent image(s) are [STYLE REFERENCES] (optional).**
+
+**USER INSTRUCTIONS FOR SCENE GENERATION:**
+"${effectivePrompt || 'Create a suitable and photorealistic background for the subjects and place them in it.'}"
+
+**EXECUTION PLAN:**
+1.  **STYLE APPLICATION (IF APPLICABLE):**
+    - Apply the style from the [STYLE REFERENCE] image(s) **ONLY to the body and clothing** of the [SUBJECTS].
+    - This styling must not affect the "Protected Assets" (the faces and heads) from the Level 1 Mandate.
+
+2.  **COMPOSITION:**
+    - Generate a new, high-quality, photorealistic background scene based on the user instructions.
+    - Place the styled [SUBJECTS] (with their perfectly preserved heads/faces) into the newly generated scene.
+
+3.  **FORENSIC BLENDING:**
+    - Perfectly blend the [SUBJECTS] into the scene by creating realistic lighting (direction, color, hardness), shadows, perspective, scale, grain, focus, and color grading.
+    - **PRIORITY:** This blending must **NOT** compromise the Level 1 Mandate of identity preservation. If perfect blending would alter a face, prioritize preserving the face over perfect blending.
+
+**OUTPUT:**
+- Return ONLY the final, high-quality, composited image as a PNG.
+- Do not output any text.`;
     }
-    
-    stepCounter++;
-    taskDescription += `\n${stepCounter}. **Harmonize & Finalize:** Make the final image look real. Match lighting, shadows, perspective, scale, and color grading perfectly. The final image must be high-resolution and sharp, preserving the details from the source images.`;
-
-    const fullPrompt = `You are a master digital artist specializing in photorealistic image compositing. Your task is to combine the provided inputs into a single, cohesive, and believable image.
-
-${imageInputsDescription}
-
-**User's Instructions:**
-"${prompt || 'Combine the provided images into a cohesive, photorealistic scene. Analyze the inputs and make the best artistic choice.'}"
-
-${taskDescription}
-
-**Output:**
-Return ONLY the final, composited image. Do not output any text or explanations.`;
     
     const textPart = { text: fullPrompt };
     parts.push(textPart);
@@ -343,107 +412,42 @@ Return ONLY the final, composited image. Do not output any text or explanations.
 };
 
 /**
- * Generates a professional product photo by placing a product in a new scene.
- * @param productImage The original image of the product.
- * @param prompt A text prompt describing the desired scene.
+ * Extracts a fashion item from an image and places it on a white background.
+ * @param originalImage The original image of the product being worn.
+ * @param prompt A text prompt describing the item to extract.
  * @returns A promise that resolves to the data URL of the final product image.
  */
 export const generateProductImage = async (
-    productImage: File,
+    originalImage: File,
     prompt: string
 ): Promise<string> => {
-    console.log(`Starting product photography generation: ${prompt}`);
+    console.log(`Starting fashion item extraction: ${prompt}`);
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
     
-    const productImagePart = await fileToPart(productImage);
-    const fullPrompt = `You are a world-class AI product photographer. Your task is to take the provided product image and create a stunning, photorealistic lifestyle or studio shot based on the user's instructions.
+    const originalImagePart = await fileToPart(originalImage);
+    const fullPrompt = `You are an expert AI for e-commerce and fashion. Your task is to precisely isolate a specific fashion item from the person wearing it in the provided image. The goal is to create a clean product photo on a white background.
 
 **CRITICAL INSTRUCTIONS:**
-1.  **Isolate the Product:** First, perfectly identify and isolate the main product from its original background. The cutout must be clean and precise.
-2.  **Generate a New Scene:** Create a new, high-quality, and photorealistic background scene based on this description: **"${prompt}"**.
-3.  **Composite and Harmonize:** Place the isolated product into the newly generated scene. This is the most critical step. You MUST create realistic lighting, shadows, and reflections on and around the product so that it looks like it was naturally photographed in that environment. The scale, perspective, and depth of field must be perfect.
-4.  **Preserve Product Integrity:** The product itself (its shape, color, texture, and branding) must not be altered, unless specifically requested in the prompt.
-5.  **Output:** Return ONLY the final, composited image. Do not output any text.`;
+1.  **Identify the Item:** Analyze the image and the user's request to identify the target item. The user wants to extract: **"${prompt}"**.
+2.  **Precise Segmentation:** Perfectly and cleanly segment this item from the person and the background. The cutout must be exact, with clean edges.
+3.  **Reconstruct Occluded Parts:** This is crucial. If any part of the item is hidden (e.g., by an arm, hair, or another piece of clothing), you must realistically and logically reconstruct the hidden parts. The final item must look complete and whole, as if it were laid flat or on a mannequin.
+4.  **Place on White Background:** Place the fully extracted and reconstructed item onto a clean, solid, perfectly white background (#FFFFFF).
+5.  **Maintain Integrity:** The item's color, texture, shape, and details must be preserved perfectly. Do not change the item itself.
+6.  **Final Output:** Return ONLY the final image of the isolated item on the white background. Do not output text, explanations, or any other content.`;
     const textPart = { text: fullPrompt };
 
-    console.log('Sending product image and scene prompt to the model...');
+    console.log('Sending fashion extraction request to the model...');
     const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [productImagePart, textPart] },
+        contents: { parts: [originalImagePart, textPart] },
         config: {
             responseModalities: [Modality.IMAGE, Modality.TEXT],
         },
     });
-    console.log('Received response from model for product photography.', response);
+    console.log('Received response from model for fashion extraction.', response);
     
-    return handleApiResponse(response, 'product photography');
+    return handleApiResponse(response, 'fashion extraction');
 };
-
-/**
- * Swaps a face from a target image onto a person in the source image.
- * @param sourceImage The original image with the person to be modified.
- * @param targetFaceImage The image containing the face to be swapped in.
- * @returns A promise that resolves to the data URL of the edited image.
- */
-export const generateFaceSwap = async (
-    sourceImage: File,
-    targetFaceImage: File
-): Promise<string> => {
-    console.log(`Starting face swap...`);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-
-    const sourceImagePart = await fileToPart(sourceImage);
-    const targetFacePart = await fileToPart(targetFaceImage);
-
-    const prompt = `You are a world-class AI digital artist specializing in hyper-realistic face swapping. Your task is to perform a perfect, seamless face swap.
-
-**INPUTS PROVIDED (in order):**
-1.  **[Source Image]:** This image contains the scene and at least one person whose face will be replaced.
-2.  **[Target Face Image]:** This image contains the face that will be used for the swap.
-
-**CRITICAL INSTRUCTIONS (NON-NEGOTIABLE):**
-
-1.  **IDENTIFY TARGET FACE:**
-    -   From the **[Target Face Image]**, locate the single most prominent face. "Most prominent" means the largest, clearest, and most centrally located face.
-    -   **IGNORE EVERYTHING ELSE** in the [Target Face Image]: ignore the background, body, hair, clothing, and any other people. Your ONLY goal is to extract the facial features and identity from this single prominent face.
-
-2.  **IDENTIFY SOURCE PERSON:**
-    -   From the **[Source Image]**, locate the single most prominent person. "Most prominent" means the person whose face is largest, clearest, or most central to the composition.
-    -   If there is only one person, they are the target.
-
-3.  **PERFORM THE SWAP:**
-    -   Take the **entire face** (eyes, nose, mouth, facial structure, skin texture) from the identified target face.
-    -   Perfectly transplant this face onto the head of the identified source person.
-    -   The final image **MUST** feature the person from the **[Target Face Image]** on the body of the person from the **[Source Image]**. Their identity must be perfectly preserved.
-
-4.  **SEAMLESS INTEGRATION & HARMONIZATION:**
-    -   **Lighting & Shadows:** The lighting on the new face MUST perfectly match the lighting of the [Source Image] scene. Cast shadows correctly.
-    -   **Skin Tone & Texture:** Blend the skin tones and textures at the seam (neckline, hairline) so the transition is completely undetectable.
-    -   **Perspective & Angle:** Adjust the angle and perspective of the target face to perfectly match the head position and orientation in the [Source Image].
-    -   **Hair:** Blend the hairline seamlessly. The hairstyle should primarily come from the [Source Image], but the hairline must match the new face naturally.
-
-5.  **PRESERVE EVERYTHING ELSE:**
-    -   The background, body, pose, and clothing from the [Source Image] **MUST remain completely unchanged**.
-    -   Any other people in the [Source Image] **MUST remain completely unchanged**.
-
-**OUTPUT:**
--   Return ONLY the final, high-resolution, photorealistic image with the face swapped.
--   Do not output any text, explanations, or apologies. If you cannot perform the swap, return the original source image.`;
-    const textPart = { text: prompt };
-
-    console.log('Sending source image, target face, and swap prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [sourceImagePart, targetFacePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
-    console.log('Received response from model for face swap.', response);
-    
-    return handleApiResponse(response, 'face swap');
-};
-
 
 /**
  * Automatically scans a document from an image.
