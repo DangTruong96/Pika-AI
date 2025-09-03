@@ -30,6 +30,8 @@ const en = {
   errorSelectArea: 'Please select an area on the image to edit by clicking on it.',
   errorNoMask: 'Please draw a selection on the image with the brush tool.',
   errorFailedToGenerate: 'Failed to generate the edited image.',
+  errorFailedToExtract: 'Failed to extract the item.',
+  errorRateLimit: "You've made too many requests in a short time. Please wait a moment and try again.",
 
   startScreenTitle: 'AI-Powered Photo Editing, {simplified}.',
   startScreenTitleSimplified: 'Simplified',
@@ -51,7 +53,7 @@ const en = {
   tabExpand: 'Expand',
   tabInsert: 'Insert',
   tabScan: 'Scan',
-  tabProduct: 'Fashion',
+  tabExtract: 'Extract',
   
   tooltipRetouch: 'Retouch',
   tooltipCrop: 'Crop',
@@ -60,7 +62,7 @@ const en = {
   tooltipExpand: 'Expand',
   tooltipInsert: 'Insert',
   tooltipScan: 'Document Scanner',
-  tooltipProduct: 'Fashion Extractor',
+  tooltipExtract: 'Extract Item',
 
   retouchTitle: 'Generative Retouching',
   retouchDescription: "Select an area, then describe any change—from minor fixes to major object replacements.",
@@ -126,6 +128,9 @@ const en = {
   adjustmentSkyPreset1: 'Sunset',
   adjustmentSkyPreset2: 'Blue Sky',
   adjustmentSkyPreset3: 'Starry Night',
+
+  adjustmentOldPhotoRestorationTitle: 'Old Photo Restoration',
+  adjustmentOldPhotoAutoRestore: 'Auto Restore',
 
 // Fix: Add missing translation keys to resolve TypeScript errors in BeautyPanel.
   beautyTitle: 'Beauty Enhancements',
@@ -226,17 +231,12 @@ const en = {
   scanHistoryTitle: 'Recent Scans',
   scanHistoryReview: 'Review Scan',
 
-  productTitle: 'Fashion & Item Extractor',
-  productDescription: 'Automatically extract clothing, shoes, or any item from a person to create a product photo.',
-  productCleanupTitle: 'Quick Extract Common Items',
-  productExtractTop: 'Top',
-  productExtractPants: 'Pants',
-  productExtractDress: 'Dress',
-  productExtractShoes: 'Shoes',
-  productSceneGenTitle: 'Extract Custom Item',
-  productSceneGenDesc: 'Describe the item you want to extract from the image.',
-  productPlaceholder: 'e.g., "the red handbag" or "the sunglasses"',
-  productApply: 'Extract Item',
+  extractTitle: 'Extract Clothing or Product',
+  extractDescription: "Describe an item in the image (e.g., 'the blue jacket') to isolate it as a new style reference.",
+  extractPlaceholder: "e.g., 'the red handbag'",
+  extractApply: "Extract Item",
+  extractResultTitle: "Extracted Items",
+  extractUseAsStyle: "Use as Style Reference",
 
   editTools: 'Edit Tools',
   close: 'Close',
@@ -276,6 +276,8 @@ const vi = {
   errorSelectArea: 'Vui lòng chọn một khu vực trên ảnh để chỉnh sửa bằng cách nhấp vào đó.',
   errorNoMask: 'Vui lòng vẽ vùng chọn trên ảnh bằng công cụ cọ.',
   errorFailedToGenerate: 'Không thể tạo ảnh đã chỉnh sửa.',
+  errorFailedToExtract: 'Không thể tách vật phẩm.',
+  errorRateLimit: "Bạn đã thực hiện quá nhiều yêu cầu trong một thời gian ngắn. Vui lòng đợi một lát và thử lại.",
 
   startScreenTitle: 'Chỉnh sửa ảnh bằng AI, {simplified}.',
   startScreenTitleSimplified: 'Đơn giản hóa',
@@ -295,18 +297,18 @@ const vi = {
   tabAdjust: 'Điều chỉnh',
   tabFilters: 'Bộ lọc',
   tabExpand: 'Mở rộng',
-  tabInsert: 'Chèn',
+  tabInsert: 'Ghép ảnh',
   tabScan: 'Quét',
-  tabProduct: 'Tách đồ',
+  tabExtract: 'Tách',
 
   tooltipRetouch: 'Chỉnh sửa',
   tooltipCrop: 'Cắt',
   tooltipAdjust: 'Điều chỉnh',
   tooltipFilters: 'Bộ lọc',
   tooltipExpand: 'Mở rộng',
-  tooltipInsert: 'Chèn đối tượng',
+  tooltipInsert: 'Ghép ảnh',
   tooltipScan: 'Quét tài liệu',
-  tooltipProduct: 'Tách Trang Phục',
+  tooltipExtract: 'Tách vật phẩm',
 
   retouchTitle: 'Chỉnh sửa Sáng tạo',
   retouchDescription: "Chọn một vùng, sau đó mô tả bất kỳ thay đổi nào—từ sửa lỗi nhỏ đến thay thế toàn bộ vật thể.",
@@ -373,6 +375,9 @@ const vi = {
   adjustmentSkyPreset2: 'Trời xanh',
   adjustmentSkyPreset3: 'Đêm đầy sao',
   
+  adjustmentOldPhotoRestorationTitle: 'Phục chế ảnh cũ',
+  adjustmentOldPhotoAutoRestore: 'Tự động Phục chế',
+
 // Fix: Add missing translation keys to resolve TypeScript errors in BeautyPanel.
   beautyTitle: 'Làm đẹp Chân dung',
   beautyDescription: 'Áp dụng các cải tiến làm đẹp tinh tế, chân thực cho ảnh chân dung.',
@@ -433,16 +438,16 @@ const vi = {
   expandApply: 'Mở rộng',
   orSeparator: 'Hoặc',
   
-  insertTitle: 'Chèn ảnh',
-  insertDescription: 'Thêm các yếu tố mới vào ảnh của bạn, hoặc kết hợp nhiều ảnh để tạo một cảnh mới.',
-  insertSubject: 'Đối tượng cần chèn',
+  insertTitle: 'Ghép ảnh',
+  insertDescription: 'Kết hợp các chủ thể, phong cách, và nền để tạo ra một bức ảnh hoàn toàn mới.',
+  insertSubject: 'Chủ thể / Đối tượng',
   insertStyle: 'Tham khảo phong cách (Tùy chọn)',
   insertBackground: 'Nền',
   insertBackgroundOptional: 'Nền (Tùy chọn)',
   insertUploadPlaceholder: 'Tải lên / Thả vào',
   insertPromptPlaceholder: 'ví dụ: "thêm chú chó vào công viên"',
   insertPromptPlaceholderInitial: 'ví dụ: "Đặt các chủ thể vào một thành phố tương lai"',
-  insertApply: 'Tạo ảnh',
+  insertApply: 'Ghép ảnh',
   insertErrorNoSubjects: 'Vui lòng tải lên ít nhất một ảnh chủ thể.',
   insertClickToChange: '(Nhấp hoặc thả để thay đổi)',
 
@@ -472,17 +477,12 @@ const vi = {
   scanHistoryTitle: 'Các bản quét gần đây',
   scanHistoryReview: 'Xem lại bản quét',
 
-  productTitle: 'Tách Trang Phục & Vật Phẩm',
-  productDescription: 'Tự động tách quần áo, giày dép hoặc vật phẩm khỏi người mặc để tạo ảnh sản phẩm.',
-  productCleanupTitle: 'Tách nhanh Vật phẩm Phổ biến',
-  productExtractTop: 'Áo',
-  productExtractPants: 'Quần',
-  productExtractDress: 'Váy',
-  productExtractShoes: 'Giày/Dép',
-  productSceneGenTitle: 'Tách Vật phẩm Tùy chỉnh',
-  productSceneGenDesc: 'Mô tả vật phẩm bạn muốn tách khỏi ảnh.',
-  productPlaceholder: 'ví dụ: "chiếc túi xách màu đỏ" hoặc "cái kính râm"',
-  productApply: 'Tách Vật phẩm',
+  extractTitle: 'Tách Trang phục hoặc Sản phẩm',
+  extractDescription: "Mô tả một mục trong ảnh (ví dụ: 'áo khoác xanh') để tách nó ra làm một tham chiếu phong cách mới.",
+  extractPlaceholder: "ví dụ: 'túi xách màu đỏ'",
+  extractApply: "Tách Vật phẩm",
+  extractResultTitle: "Các vật phẩm đã tách",
+  extractUseAsStyle: "Dùng làm Tham chiếu Phong cách",
   
   editTools: 'Công cụ chỉnh sửa',
   close: 'Đóng',
@@ -522,6 +522,8 @@ const ja = {
   errorSelectArea: '画像をクリックして編集する領域を選択してください。',
   errorNoMask: 'ブラシツールで画像に選択範囲を描画してください。',
   errorFailedToGenerate: '編集された画像の生成に失敗しました。',
+  errorFailedToExtract: 'アイテムの抽出に失敗しました。',
+  errorRateLimit: "短時間でリクエストが多すぎます。しばらく待ってからもう一度お試しください。",
 
   startScreenTitle: 'AIによる写真編集を、{simplified}。',
   startScreenTitleSimplified: 'もっと簡単に',
@@ -543,7 +545,7 @@ const ja = {
   tabExpand: '拡張',
   tabInsert: '挿入',
   tabScan: 'スキャン',
-  tabProduct: 'ファッション',
+  tabExtract: '抽出',
 
   tooltipRetouch: 'レタッチ',
   tooltipCrop: 'トリミング',
@@ -552,7 +554,7 @@ const ja = {
   tooltipExpand: '拡張',
   tooltipInsert: 'オブジェクトを挿入',
   tooltipScan: 'ドキュメントスキャナー',
-  tooltipProduct: 'ファッション抽出',
+  tooltipExtract: 'アイテムを抽出',
 
   retouchTitle: '生成レタッチ',
   retouchDescription: "領域を選択し、小さな修正からオブジェクト全体の置き換えまで、あらゆる変更を記述します。",
@@ -618,6 +620,9 @@ const ja = {
   adjustmentSkyPreset1: '夕焼け',
   adjustmentSkyPreset2: '青空',
   adjustmentSkyPreset3: '星空',
+
+  adjustmentOldPhotoRestorationTitle: '古い写真の修復',
+  adjustmentOldPhotoAutoRestore: '自動修復',
   
 // Fix: Add missing translation keys to resolve TypeScript errors in BeautyPanel.
   beautyTitle: 'ビューティー補正',
@@ -717,19 +722,14 @@ const ja = {
   scanCancel: 'キャンセル',
   scanHistoryTitle: '最近のスキャン',
   scanHistoryReview: 'スキャンをレビュー',
-
-  productTitle: 'ファッション＆アイテム抽出',
-  productDescription: '人物から衣服、靴、または任意のアイテムを自動的に抽出し、商品写真を作成します。',
-  productCleanupTitle: '一般的なアイテムをクイック抽出',
-  productExtractTop: 'トップス',
-  productExtractPants: 'パンツ',
-  productExtractDress: 'ドレス',
-  productExtractShoes: '靴',
-  productSceneGenTitle: 'カスタムアイテムを抽出',
-  productSceneGenDesc: '画像から抽出したいアイテムを記述してください。',
-  productPlaceholder: '例：「赤いハンドバッグ」または「サングラス」',
-  productApply: 'アイテムを抽出',
   
+  extractTitle: '服や商品を抽出',
+  extractDescription: "画像内のアイテム（例：「青いジャケット」）を記述して、新しいスタイル参照として分離します。",
+  extractPlaceholder: "例：「赤いハンドバッグ」",
+  extractApply: "アイテムを抽出",
+  extractResultTitle: "抽出されたアイテム",
+  extractUseAsStyle: "スタイル参照として使用",
+
   editTools: '編集ツール',
   close: '閉じる',
   historyOriginal: 'オリジナル',

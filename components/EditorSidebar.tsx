@@ -15,7 +15,7 @@ import ExpandPanel from './ExpandPanel';
 import CompositePanel from './CompositePanel';
 import ScanPanel from './ScanPanel';
 import ManualScanPanel from './ManualScanPanel';
-import ProductPanel from './ProductPanel';
+import ExtractPanel from './ExtractPanel';
 import type { Enhancement } from '../services/geminiService';
 
 interface EditorSidebarProps {
@@ -35,7 +35,6 @@ interface EditorSidebarProps {
   onExpandPromptChange: (prompt: string) => void;
   hasExpansion: boolean;
   onApplyInsert: () => void;
-  onApplyProductScene: () => void;
   currentImage: File | null;
   insertSubjectFiles: File[];
   onInsertSubjectFilesChange: (files: File[]) => void;
@@ -45,14 +44,17 @@ interface EditorSidebarProps {
   onInsertBackgroundFileChange: (file: File | null) => void;
   insertPrompt: string;
   onInsertPromptChange: (prompt: string) => void;
-  productPrompt: string;
-  onProductPromptChange: (prompt: string) => void;
   onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => void;
   onApplyManualScan: () => void;
   onEnterManualMode: () => boolean;
   onCancelManualMode: () => void;
   scanHistory: string[];
   onReviewScan: (url: string) => void;
+  onApplyExtract: () => void;
+  extractPrompt: string;
+  onExtractPromptChange: (prompt: string) => void;
+  extractedItemUrls: string[];
+  onUseExtractedAsStyle: (index: number) => void;
   isMaskPresent: boolean;
   clearMask: () => void;
   retouchPrompt: string;
@@ -71,13 +73,13 @@ interface EditorSidebarProps {
 
 export const TABS_CONFIG = [
     { id: 'retouch', icon: BrushIcon, tooltip: 'tooltipRetouch' },
-    { id: 'product', icon: TagIcon, tooltip: 'tooltipProduct' },
-    { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
     { id: 'insert', icon: PlusCircleIcon, tooltip: 'tooltipInsert' },
-    { id: 'crop', icon: CropIcon, tooltip: 'tooltipCrop' },
+    { id: 'extract', icon: TagIcon, tooltip: 'tooltipExtract' },
     { id: 'adjust', icon: AdjustmentsIcon, tooltip: 'tooltipAdjust' },
     { id: 'filters', icon: MagicWandIcon, tooltip: 'tooltipFilters' },
+    { id: 'crop', icon: CropIcon, tooltip: 'tooltipCrop' },
     { id: 'expand', icon: ExpandIcon, tooltip: 'tooltipExpand' },
+    { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
 ];
 
 const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
@@ -135,14 +137,6 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                     prompt={props.insertPrompt}
                     onPromptChange={props.onInsertPromptChange}
                 />;
-      case 'product':
-        return <ProductPanel
-                  onApplyScene={props.onApplyProductScene}
-                  isLoading={props.isLoading}
-                  isImageLoaded={props.isImageLoaded}
-                  prompt={props.productPrompt}
-                  onPromptChange={props.onProductPromptChange}
-                />;
       case 'scan':
         return isManualScanMode
           ? <ManualScanPanel onApply={props.onApplyManualScan} onCancel={() => { setIsManualScanMode(false); props.onCancelManualMode(); }} isLoading={props.isLoading} />
@@ -153,6 +147,16 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
               scanHistory={props.scanHistory}
               onReviewScan={props.onReviewScan}
             />;
+      case 'extract':
+        return <ExtractPanel
+                  isImageLoaded={props.isImageLoaded}
+                  isLoading={props.isLoading}
+                  onApplyExtract={props.onApplyExtract}
+                  prompt={props.extractPrompt}
+                  onPromptChange={props.onExtractPromptChange}
+                  extractedItemUrls={props.extractedItemUrls}
+                  onUseAsStyle={props.onUseExtractedAsStyle}
+                />;
       default:
         return null;
     }

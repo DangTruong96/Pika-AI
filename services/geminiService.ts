@@ -5,6 +5,14 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 
+// Custom error for rate limiting
+export class RateLimitError extends Error {
+    constructor(message: string = 'Rate limit exceeded after retries.') {
+        super(message);
+        this.name = 'RateLimitError';
+    }
+}
+
 export type Enhancement = 'color' | 'grayscale' | 'bw';
 export type Corners = {
     tl: { x: number; y: number };
@@ -83,6 +91,37 @@ const handleApiResponse = (
     throw new Error(errorMessage);
 };
 
+// Helper function to handle API calls with retry logic for rate limiting.
+const callGeminiWithRetry = async (
+    apiCall: () => Promise<GenerateContentResponse>,
+    maxAttempts = 4,
+    initialDelay = 2000
+): Promise<GenerateContentResponse> => {
+    let delay = initialDelay;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await apiCall();
+        } catch (error: any) {
+            const isRateLimitError = error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED');
+            if (isRateLimitError) {
+                if (attempt < maxAttempts) {
+                    console.warn(`Rate limit hit. Retrying in ${delay / 1000}s... (Attempt ${attempt + 1}/${maxAttempts})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
+                } else {
+                    console.error("API call failed after max attempts due to rate limiting.", error);
+                    throw new RateLimitError();
+                }
+            } else {
+                console.error(`API call failed on attempt ${attempt} with a non-retriable error.`, error);
+                throw error;
+            }
+        }
+    }
+    // This should be unreachable due to the throw in the loop.
+    throw new Error('Exhausted retries without success.');
+};
+
 /**
  * Generates an image with a localized edit applied using generative AI, based on a mask.
  * @param originalImage The original image file.
@@ -115,13 +154,15 @@ Output: Return ONLY the final, high-quality, edited image as a PNG file. Do not 
     const textPart = { text: fullPrompt };
 
     console.log('Sending image, mask, and edit prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [originalImagePart, maskImagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, maskImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for masked edit.', response);
     
     return handleApiResponse(response, 'edit (mask)');
@@ -156,13 +197,15 @@ export const generateFilteredImage = async (
     const textPart = { text: prompt };
 
     console.log('Sending image and filter prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [originalImagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for filter.', response);
     
     return handleApiResponse(response, 'filter');
@@ -203,13 +246,15 @@ Output: Return ONLY the final adjusted image. Do not return text.`;
     const textPart = { text: prompt };
 
     console.log('Sending image and adjustment prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [originalImagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for adjustment.', response);
     
     return handleApiResponse(response, 'adjustment');
@@ -246,13 +291,15 @@ Output: Return ONLY the final, fully rendered image with the transparent areas f
     const textPart = { text: fullPrompt };
     
     console.log('Sending padded image and prompt to the model for outpainting...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [imagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [imagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for expansion.', response);
 
     return handleApiResponse(response, 'expansion');
@@ -278,7 +325,6 @@ export const generateCompositeImage = async (
     const parts: any[] = [];
     let fullPrompt: string;
     
-    // Create an intelligent prompt if the user provides a style image but no text prompt.
     let effectivePrompt = prompt;
     if (styleImages.length > 0 && subjectImages.length > 0 && !prompt.trim()) {
         if (baseImage) {
@@ -300,46 +346,56 @@ export const generateCompositeImage = async (
             parts.push(...styleParts);
         }
 
-        fullPrompt = `**HIERARCHICAL MANDATE PROTOCOL**
+        fullPrompt = `**AI TASK: Flawless Photorealistic Composition**
 
-**LEVEL 1 MANDATE (ABSOLUTE & NON-NEGOTIABLE PRIORITY): 100% IDENTITY PRESERVATION OF *ALL* SUBJECTS.**
+You are a world-class digital artist AI with a specialization in forensic-level image analysis and composition. Your task is to create a single, flawless, photorealistic photograph by deeply understanding and intelligently combining user-provided assets. The final result must be utterly indistinguishable from a real, single-shot photograph.
 
-This rule is absolute and overrides all other instructions, including the user's prompt and aesthetic considerations. Failure to comply is a complete failure of the task.
+**HIERARCHICAL MANDATES (NON-NEGOTIABLE):**
 
-1.  **IDENTIFY ALL SUBJECTS:** Analyze the [SUBJECT] image(s) and identify **every single person** present.
-2.  **TREAT EACH FACE AS A "PROTECTED ASSET":**
-    - Your first and most critical action is to perfectly preserve the head and face of **every person** identified in the [SUBJECT] image(s).
-    - You **MUST NOT** regenerate, redraw, alter, or "re-imagine" their facial features, structure, age, ethnicity, or expression. Treat their heads/faces as if they are high-resolution digital cutouts that must be used as-is.
-    - **SUCCESS CRITERIA:** Every person in the final image must be **IDENTICAL** and **INSTANTLY RECOGNIZABLE** as the person in their corresponding [SUBJECT] image.
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY & TEXTURE PRESERVATION.**
+- Your primary, non-negotiable task is to preserve the **identity, facial structure, and original facial texture** of the person in the [SUBJECT] image.
+- The final face must be **instantly recognizable** as the **EXACT SAME PERSON**.
+- Altering their identity, features, or fundamental skin/facial texture is a CRITICAL FAILURE.
 
-3.  **ABSOLUTE PROHIBITION:** You are **STRICTLY FORBIDDEN** from copying, learning from, or being influenced by any face present in the [STYLE REFERENCE] image(s).
+**LEVEL 2 MANDATE (INTELLIGENT RECONSTRUCTION): CREATE A COMPLETE HUMAN.**
+- The user's goal is a **complete person**, not just a floating head.
+- **If the [SUBJECT] is only a face/headshot, you MUST generate a full, correctly-proportioned, and natural-looking body, including arms, hands, legs, and feet.**
+- The generated body must plausibly connect to the subject's head.
+- **Deeply analyze** the [STYLE REFERENCE] image(s) for clothing (e.g., an 'áo dài'), accessories (e.g., shoes, hats), and overall aesthetic.
+- **You MUST intelligently and correctly DRESS the generated body with the clothing and accessories from the [STYLE REFERENCE].**
+    - **Clothes must be worn naturally, following the body's contours and pose.**
+    - **Shoes MUST be placed on the generated feet.**
+    - **Accessories must be placed in their correct locations (e.g., hat on head).**
+
+**LEVEL 3 MANDATE (FORENSIC-LEVEL SCENE INTEGRATION):**
+- The final composed person must exist believably within the [BASE IMAGE] scene.
+- **Posing:** The generated body's pose must be natural and appropriate for the scene.
+- **Grounding & Environmental Interaction (CRITICAL FOR REALISM):** The subject must appear physically present and grounded in the scene.
+    - **1. Forensic Lighting Analysis:** Perform a **deep and forensic-level analysis** of the direction, color, and hardness/softness of all light sources and shadows in the [BASE IMAGE]. Apply this lighting flawlessly to the entire generated person.
+    - **2. MANDATORY: Realistic Contact Shadows:** You MUST generate small, dark, and accurate contact shadows directly beneath any part of the subject's feet or shoes that touch the ground. This is non-negotiable and is the most important step to prevent a "floating" look.
+    - **3. Accurate Cast Shadows:** The main shadow cast by the person must perfectly match the direction, length, and softness of other shadows in the scene.
+    - **4. Plausible Surface Interaction:** The feet/shoes must interact with the surface. Examples: they should create slight indentations in sand, have blades of grass overlapping them on a lawn, or cast subtle reflections on wet or polished surfaces.
+    - **5. Reflected Light:** Subtly bounce a small amount of light and color from the ground surface onto the lower parts of the subject (e.g., shoes, bottom of pants).
+- **Environmental Interaction (Clothing):** The clothing must also interact with the environment. If the scene is outdoors, a long dress like an 'áo dài' should show subtle movement or folds as if affected by a breeze. It should not look stiff or flat.
+- **Consistency:** Ensure perfect matching of perspective, scale, focus, and image grain.
+
+**LEVEL 4 MANDATE (CRITICAL: REFERENCE ONLY):**
+- The [STYLE REFERENCE] image(s) are **for visual reference only**. Their purpose is to show you *what* clothes/accessories to apply to the [SUBJECT].
+- **DO NOT include the standalone, original objects from the [STYLE REFERENCE] images in the final output.** The final image must NOT contain the original reference item floating separately.
+- The final image should ONLY contain the [SUBJECT] person, now wearing the items *from* the [STYLE REFERENCE], fully integrated into the [BASE IMAGE].
 
 ---
-
-**LEVEL 2 MANDATE (EXECUTE ONLY AFTER LEVEL 1 IS SATISFIED): SEAMLESS INTEGRATION & SCENE COMPOSITION**
-
 **INPUT ANALYSIS:**
-- **Image 1 is the [BASE IMAGE].** This is the background/scene.
-- **The next image(s) are the [SUBJECT(S)].** These are the assets to be integrated.
-- **Any subsequent image(s) are [STYLE REFERENCES] (optional).**
+- **Image 1 is the [BASE IMAGE].**
+- **The next image(s) are the [SUBJECT(S)].** (The face/person to preserve).
+- **Any subsequent image(s) are [STYLE REFERENCES].** (The clothing/look to apply).
 
 **USER INSTRUCTIONS:**
-"${effectivePrompt || 'Combine the provided images into a cohesive, photorealistic scene. Use your best artistic judgment.'}"
+"${effectivePrompt || 'Combine the provided images into a cohesive, photorealistic scene featuring a complete person dressed in the style reference, placed believably in the background.'}"
 
-**EXECUTION PLAN:**
-1.  **STYLE APPLICATION (IF APPLICABLE):**
-    - Apply the style from the [STYLE REFERENCE] image(s) **ONLY to the body and clothing** of the [SUBJECTS].
-    - This styling must not affect the "Protected Assets" (the faces and heads) from the Level 1 Mandate.
-
-2.  **COMPOSITION:**
-    - Place the styled [SUBJECTS] (with their perfectly preserved heads/faces) into the [BASE IMAGE].
-
-3.  **FORENSIC BLENDING:**
-    - Perfectly blend the [SUBJECTS] into the scene by matching the lighting (direction, color, hardness), shadows, perspective, scale, grain, focus, and color grading of the background.
-    - **PRIORITY:** This blending must **NOT** compromise the Level 1 Mandate of identity preservation. If perfect blending would alter a face, prioritize preserving the face over perfect blending.
-
+---
 **OUTPUT:**
-- Return ONLY the final, high-quality, composited image as a PNG.
+- Return ONLY the final, high-quality, perfectly blended composite image as a PNG.
 - Do not output any text.`;
 
     } else {
@@ -352,46 +408,55 @@ This rule is absolute and overrides all other instructions, including the user's
             parts.push(...styleParts);
         }
         
-        fullPrompt = `**HIERARCHICAL MANDATE PROTOCOL**
+        fullPrompt = `**AI TASK: Flawless Photorealistic Composition with Scene Generation**
 
-**LEVEL 1 MANDATE (ABSOLUTE & NON-NEGOTIABLE PRIORITY): 100% IDENTITY PRESERVATION OF *ALL* SUBJECTS.**
+You are a world-class digital artist AI with a specialization in forensic-level image analysis and composition. Your task is to create a single, flawless, photorealistic photograph by deeply understanding and intelligently combining user-provided assets. The final result must be utterly indistinguishable from a real, single-shot photograph.
 
-This rule is absolute and overrides all other instructions, including the user's prompt and aesthetic considerations. Failure to comply is a complete failure of the task.
+**HIERARCHICAL MANDATES (NON-NEGOTIABLE):**
 
-1.  **IDENTIFY ALL SUBJECTS:** Analyze the [SUBJECT] image(s) and identify **every single person** present.
-2.  **TREAT EACH FACE AS A "PROTECTED ASSET":**
-    - Your first and most critical action is to perfectly preserve the head and face of **every person** identified in the [SUBJECT] image(s).
-    - You **MUST NOT** regenerate, redraw, alter, or "re-imagine" their facial features, structure, age, ethnicity, or expression. Treat their heads/faces as if they are high-resolution digital cutouts that must be used as-is.
-    - **SUCCESS CRITERIA:** Every person in the final image must be **IDENTICAL** and **INSTANTLY RECOGNIZABLE** as the person in their corresponding [SUBJECT] image.
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY & TEXTURE PRESERVATION.**
+- Your primary, non-negotiable task is to preserve the **identity, facial structure, and original facial texture** of the person in the [SUBJECT] image.
+- The final face must be **instantly recognizable** as the **EXACT SAME PERSON**.
+- Altering their identity, features, or fundamental skin/facial texture is a CRITICAL FAILURE.
 
-3.  **ABSOLUTE PROHIBITION:** You are **STRICTLY FORBIDDEN** from copying, learning from, or being influenced by any face present in the [STYLE REFERENCE] image(s).
+**LEVEL 2 MANDATE (INTELLIGENT RECONSTRUCTION): CREATE A COMPLETE HUMAN.**
+- The user's goal is a **complete person**, not just a floating head.
+- **If the [SUBJECT] is only a face/headshot, you MUST generate a full, correctly-proportioned, and natural-looking body, including arms, hands, legs, and feet.**
+- The generated body must plausibly connect to the subject's head.
+- **Deeply analyze** the [STYLE REFERENCE] image(s) for clothing (e.g., an 'áo dài'), accessories (e.g., shoes, hats), and overall aesthetic.
+- **You MUST intelligently and correctly DRESS the generated body with the clothing and accessories from the [STYLE REFERENCE].**
+    - **Clothes must be worn naturally, following the body's contours and pose.**
+    - **Shoes MUST be placed on the generated feet.**
+    - **Accessories must be placed in their correct locations (e.g., hat on head).**
+
+**LEVEL 3 MANDATE (FORENSIC-LEVEL SCENE INTEGRATION):**
+- The final composed person must exist believably within the generated scene.
+- **Posing:** The generated body's pose must be natural and appropriate for the scene.
+- **Grounding & Environmental Interaction (CRITICAL FOR REALISM):** The subject must appear physically present and grounded in the scene.
+    - **1. Forensic Lighting Analysis:** As you generate the scene, you define its lighting. Apply this lighting flawlessly to the entire generated person.
+    - **2. MANDATORY: Realistic Contact Shadows:** You MUST generate small, dark, and accurate contact shadows directly beneath any part of the subject's feet or shoes that touch the ground. This is non-negotiable and is the most important step to prevent a "floating" look.
+    - **3. Accurate Cast Shadows:** The main shadow cast by the person must perfectly match the direction, length, and softness of other shadows in the generated scene.
+    - **4. Plausible Surface Interaction:** The feet/shoes must interact with the surface. Examples: they should create slight indentations in sand, have blades of grass overlapping them on a lawn, or cast subtle reflections on wet or polished surfaces.
+    - **5. Reflected Light:** Subtly bounce a small amount of light and color from the ground surface onto the lower parts of the subject (e.g., shoes, bottom of pants).
+- **Environmental Interaction (Clothing):** The clothing must also interact with the environment. If the scene is outdoors, a long dress like an 'áo dài' should show subtle movement or folds as if affected by a breeze. It should not look stiff or flat.
+- **Consistency:** Ensure perfect matching of perspective, scale, focus, and image grain.
+
+**LEVEL 4 MANDATE (CRITICAL: REFERENCE ONLY):**
+- The [STYLE REFERENCE] image(s) are **for visual reference only**. Their purpose is to show you *what* clothes/accessories to apply to the [SUBJECT].
+- **DO NOT include the standalone, original objects from the [STYLE REFERENCE] images in the final output.** The final image must NOT contain the original reference item floating separately.
+- The final image should ONLY contain the [SUBJECT] person, now wearing the items *from* the [STYLE REFERENCE], fully integrated into the generated scene.
 
 ---
-
-**LEVEL 2 MANDATE (EXECUTE ONLY AFTER LEVEL 1 IS SATISFIED): SEAMLESS INTEGRATION & SCENE COMPOSITION**
-
 **INPUT ANALYSIS:**
-- **The first image(s) are the [SUBJECT(S)].** These are the assets to be integrated.
-- **Any subsequent image(s) are [STYLE REFERENCES] (optional).**
+- **The first image(s) are the [SUBJECT(S)].** (The face/person to preserve).
+- **Any subsequent image(s) are [STYLE REFERENCES].** (The clothing/look to apply).
 
 **USER INSTRUCTIONS FOR SCENE GENERATION:**
 "${effectivePrompt || 'Create a suitable and photorealistic background for the subjects and place them in it.'}"
 
-**EXECUTION PLAN:**
-1.  **STYLE APPLICATION (IF APPLICABLE):**
-    - Apply the style from the [STYLE REFERENCE] image(s) **ONLY to the body and clothing** of the [SUBJECTS].
-    - This styling must not affect the "Protected Assets" (the faces and heads) from the Level 1 Mandate.
-
-2.  **COMPOSITION:**
-    - Generate a new, high-quality, photorealistic background scene based on the user instructions.
-    - Place the styled [SUBJECTS] (with their perfectly preserved heads/faces) into the newly generated scene.
-
-3.  **FORENSIC BLENDING:**
-    - Perfectly blend the [SUBJECTS] into the scene by creating realistic lighting (direction, color, hardness), shadows, perspective, scale, grain, focus, and color grading.
-    - **PRIORITY:** This blending must **NOT** compromise the Level 1 Mandate of identity preservation. If perfect blending would alter a face, prioritize preserving the face over perfect blending.
-
+---
 **OUTPUT:**
-- Return ONLY the final, high-quality, composited image as a PNG.
+- Return ONLY the final, high-quality, perfectly blended composite image as a PNG.
 - Do not output any text.`;
     }
     
@@ -399,54 +464,18 @@ This rule is absolute and overrides all other instructions, including the user's
     parts.push(textPart);
 
     console.log('Sending composite request to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for composite.', response);
     
     return handleApiResponse(response, 'composite');
-};
-
-/**
- * Extracts a fashion item from an image and places it on a white background.
- * @param originalImage The original image of the product being worn.
- * @param prompt A text prompt describing the item to extract.
- * @returns A promise that resolves to the data URL of the final product image.
- */
-export const generateProductImage = async (
-    originalImage: File,
-    prompt: string
-): Promise<string> => {
-    console.log(`Starting fashion item extraction: ${prompt}`);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-    
-    const originalImagePart = await fileToPart(originalImage);
-    const fullPrompt = `You are an expert AI for e-commerce and fashion. Your task is to precisely isolate a specific fashion item from the person wearing it in the provided image. The goal is to create a clean product photo on a white background.
-
-**CRITICAL INSTRUCTIONS:**
-1.  **Identify the Item:** Analyze the image and the user's request to identify the target item. The user wants to extract: **"${prompt}"**.
-2.  **Precise Segmentation:** Perfectly and cleanly segment this item from the person and the background. The cutout must be exact, with clean edges.
-3.  **Reconstruct Occluded Parts:** This is crucial. If any part of the item is hidden (e.g., by an arm, hair, or another piece of clothing), you must realistically and logically reconstruct the hidden parts. The final item must look complete and whole, as if it were laid flat or on a mannequin.
-4.  **Place on White Background:** Place the fully extracted and reconstructed item onto a clean, solid, perfectly white background (#FFFFFF).
-5.  **Maintain Integrity:** The item's color, texture, shape, and details must be preserved perfectly. Do not change the item itself.
-6.  **Final Output:** Return ONLY the final image of the isolated item on the white background. Do not output text, explanations, or any other content.`;
-    const textPart = { text: fullPrompt };
-
-    console.log('Sending fashion extraction request to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [originalImagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
-    console.log('Received response from model for fashion extraction.', response);
-    
-    return handleApiResponse(response, 'fashion extraction');
 };
 
 /**
@@ -533,13 +562,15 @@ export const generateScannedDocument = async (
     const textPart = { text: prompt };
 
     console.log('Sending image and scan prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [originalImagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for auto scan.', response);
     
     return handleApiResponse(response, 'scan');
@@ -646,14 +677,104 @@ ${sourceQuad}
     const textPart = { text: prompt };
 
     console.log('Sending image and manual scan prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
-        contents: { parts: [originalImagePart, textPart] },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
     console.log('Received response from model for manual scan.', response);
     
     return handleApiResponse(response, 'manual scan');
+};
+
+/**
+ * Extracts a clothing item or accessory from an image.
+ * @param originalImage The original image file.
+ * @param prompt The text prompt describing the item to extract.
+ * @returns A promise that resolves to the data URL of the extracted item on a transparent background.
+ */
+export const generateExtractedItem = async (
+    originalImage: File,
+    prompt: string
+): Promise<string[]> => {
+    console.log(`Starting item extraction: ${prompt}`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+    const originalImagePart = await fileToPart(originalImage);
+
+    const fullPrompt = `You are an expert AI for fashion and e-commerce. Your task is to perform a perfect 'product lift' from the provided image, extracting one or more specified items.
+
+**NON-NEGOTIABLE CORE MANDATE (CRITICAL FAILURE IF VIOLATED):**
+- **ZERO HUMAN ELEMENTS:** The final output **MUST NOT** contain any part of a human model. This includes, but is not limited to: **face, hair, skin, hands, feet, or any other body part.** Your job is to extract the *product only*. The presence of any human element in the final output is a complete failure of the task.
+
+**CRITICAL INSTRUCTIONS:**
+
+1.  **IDENTIFY TARGETS:**
+    - Read the user's prompt carefully to identify all clothing items, accessories, or objects they want to extract.
+    - **The user may list multiple items (e.g., "hat, shoes, bag").** You MUST treat each item in the list as a separate target for extraction.
+    - **User Prompt:** "${prompt}"
+
+2.  **FOR EACH IDENTIFIED TARGET ITEM, INDIVIDUALLY PERFORM THE FOLLOWING:**
+    a. **PERFECT SEGMENTATION & HUMAN REMOVAL:** Isolate and segment the complete item with pixel-perfect, clean edges. Detach it entirely from its original context, **especially the person wearing it**, and the background.
+    b. **RECONSTRUCT & INPAINT:** The item might be partially obscured (e.g., by an arm, another object). You MUST intelligently reconstruct any missing parts to create a complete, standalone, "flattened" product image, as if it were laid flat or on an invisible mannequin.
+    c. **TRANSPARENT BACKGROUND:** Place the final, fully reconstructed item on a transparent background.
+    d. **PRESERVE DETAILS:** The final extracted item must retain its original texture, color, details, and quality.
+
+**OUTPUT REQUIREMENTS:**
+- For **each** item you successfully extract, you MUST return it as a **separate image part**. If the user asks for 3 items, you must return 3 separate image parts.
+- Each image part MUST be a high-quality PNG file with a transparent background.
+- **DO NOT** return the original image, the model, or any background elements.
+- **DO NOT** return any text, explanations, or apologies. Only return the image parts.`;
+
+    const textPart = { text: fullPrompt };
+
+    console.log('Sending image and extract prompt to the model...');
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
+    console.log('Received response from model for item extraction.', response);
+    
+    // Custom response handling for multiple images
+    if (response.promptFeedback?.blockReason) {
+        const { blockReason, blockReasonMessage } = response.promptFeedback;
+        const errorMessage = `Request was blocked. Reason: ${blockReason}. ${blockReasonMessage || ''}`;
+        console.error(errorMessage, { response });
+        throw new Error(errorMessage);
+    }
+
+    const imageParts = response.candidates?.[0]?.content?.parts?.filter(part => part.inlineData);
+
+    if (imageParts && imageParts.length > 0) {
+        console.log(`Received ${imageParts.length} image(s) for extraction`);
+        return imageParts.map(part => {
+            const { mimeType, data } = part.inlineData!;
+            return `data:${mimeType};base64,${data}`;
+        });
+    }
+
+    const finishReason = response.candidates?.[0]?.finishReason;
+    if (finishReason && finishReason !== 'STOP') {
+        const errorMessage = `Image generation for extraction stopped unexpectedly. Reason: ${finishReason}. This often relates to safety settings.`;
+        console.error(errorMessage, { response });
+        throw new Error(errorMessage);
+    }
+    
+    const textFeedback = response.text?.trim();
+    const errorMessage = `The AI model did not return an image for the extraction. ` + 
+        (textFeedback 
+            ? `The model responded with text: "${textFeedback}"`
+            : "This can happen due to safety filters or if the request is too complex. Please try rephrasing your prompt to be more direct.");
+
+    console.error(`Model response did not contain an image part for extraction.`, { response });
+    throw new Error(errorMessage);
 };

@@ -8,7 +8,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateProductImage, type Corners, type Enhancement } from './services/geminiService';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, type Corners, type Enhancement, RateLimitError } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
@@ -88,7 +88,7 @@ const MobileInputBar: React.FC<{
 };
 
 
-export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'product';
+export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'extract';
 export type TransformType = 'rotate-cw' | 'rotate-ccw' | 'flip-h' | 'flip-v';
 type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
 
@@ -160,9 +160,6 @@ const App: React.FC = () => {
   const [insertBackgroundFile, setInsertBackgroundFile] = useState<File | null>(null);
   const [insertPrompt, setInsertPrompt] = useState('');
   
-  // Product state
-  const [productPrompt, setProductPrompt] = useState('');
-  
   // Expand state
   const [expandPrompt, setExpandPrompt] = useState('');
   const [expansionPadding, setExpansionPadding] = useState({ top: 0, right: 0, bottom: 0, left: 0 });
@@ -170,6 +167,10 @@ const App: React.FC = () => {
   const [dragStart, setDragStart] = useState<{ x: number, y: number, initialPadding: typeof expansionPadding } | null>(null);
   const hasExpansion = Object.values(expansionPadding).some(p => p > 0);
 
+  // Extract state
+  const [extractPrompt, setExtractPrompt] = useState('');
+  const [extractedItems, setExtractedItems] = useState<File[]>([]);
+  const [extractedItemUrls, setExtractedItemUrls] = useState<string[]>([]);
 
   // Scan state
   const [isManualScanMode, setIsManualScanMode] = useState(false);
@@ -328,7 +329,7 @@ const App: React.FC = () => {
   }, [currentImageUrl, clearMask]);
 
 
-  // Effect to create and revoke object URLs safely
+  // Effect to create and revoke object URLs safely for main images
   useEffect(() => {
     let currentUrl: string | null = null;
     let originalUrl: string | null = null;
@@ -352,6 +353,13 @@ const App: React.FC = () => {
       if (originalUrl) URL.revokeObjectURL(originalUrl);
     };
   }, [currentImage, originalImage]);
+
+  // Effect to create/revoke object URLs for the extracted items
+  useEffect(() => {
+    const urls = extractedItems.map(item => URL.createObjectURL(item));
+    setExtractedItemUrls(urls);
+    return () => { urls.forEach(url => URL.revokeObjectURL(url)); };
+  }, [extractedItems]);
   
 
   // Function to show controls and set a timeout to hide them
@@ -417,6 +425,8 @@ const App: React.FC = () => {
     setInsertBackgroundFile(null);
     setInsertPrompt('');
     setScanHistory([]);
+    setExtractPrompt('');
+    setExtractedItems([]);
   }, [clearMask]);
   
   const handleStartOver = useCallback(() => {
@@ -434,6 +444,8 @@ const App: React.FC = () => {
     setInsertBackgroundFile(null);
     setInsertPrompt('');
     setScanHistory([]);
+    setExtractPrompt('');
+    setExtractedItems([]);
   }, [clearMask]);
 
   const handleHistorySelect = (index: number) => {
@@ -458,6 +470,21 @@ const App: React.FC = () => {
     }
     return false;
   }, []);
+
+  const handleApiError = useCallback((err: unknown, contextKey: TranslationKey) => {
+    let errorMessage: string;
+    if (err instanceof RateLimitError) {
+        errorMessage = t('errorRateLimit');
+    } else if (err instanceof Error) {
+        const context = t(contextKey);
+        errorMessage = `${context} ${err.message}`;
+    } else {
+        const context = t(contextKey);
+        errorMessage = `${context} An unknown error occurred.`;
+    }
+    setError(errorMessage);
+    console.error(err);
+  }, [t]);
 
   const handleGenerate = useCallback(async () => {
     if (!currentImage) {
@@ -548,13 +575,11 @@ const App: React.FC = () => {
         const newImageFile = dataURLtoFile(editedImageUrl, `edited-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToGenerate');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, isMaskPresent, t, selectionMode, editHotspot, retouchPrompt]);
+  }, [currentImage, addImageToHistory, isMaskPresent, t, selectionMode, editHotspot, retouchPrompt, handleApiError]);
   
   const handleApplyFilter = useCallback(async (filterPrompt: string) => {
     if (!currentImage) {
@@ -570,13 +595,11 @@ const App: React.FC = () => {
         const newImageFile = dataURLtoFile(filteredImageUrl, `filtered-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToApplyFilter')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToApplyFilter');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t]);
+  }, [currentImage, addImageToHistory, t, handleApiError]);
   
   const handleApplyAdjustment = useCallback(async (adjustmentPrompt: string) => {
     if (!currentImage) {
@@ -592,13 +615,11 @@ const App: React.FC = () => {
         const newImageFile = dataURLtoFile(adjustedImageUrl, `adjusted-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToApplyAdjustment')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToApplyAdjustment');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t]);
+  }, [currentImage, addImageToHistory, t, handleApiError]);
 
   const handleApplyTransform = useCallback(async (transform: TransformType) => {
     if (!currentImage) {
@@ -760,13 +781,11 @@ const App: React.FC = () => {
         setExpandPrompt('');
         
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToExpandImage')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToExpandImage');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t, expansionPadding, hasExpansion]);
+  }, [currentImage, addImageToHistory, t, expansionPadding, hasExpansion, handleApiError]);
 
   const handleApplyInsert = useCallback(async () => {
     if (insertSubjectFiles.length === 0) {
@@ -795,41 +814,48 @@ const App: React.FC = () => {
         }
 
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToGenerate');
     } finally {
         setIsLoading(false);
     }
-  }, [addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, insertStyleFiles, insertBackgroundFile, insertPrompt]);
+  }, [addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, insertStyleFiles, insertBackgroundFile, insertPrompt, handleApiError]);
 
-  const handleApplyProductScene = useCallback(async () => {
+  // --- Extract Handlers ---
+  const handleApplyExtract = useCallback(async () => {
     if (!currentImage) {
-      setError(t('errorNoImageLoadedToAdjust'));
-      return;
+        setError(t('errorNoImageLoaded'));
+        return;
     }
-    
+    if (!extractPrompt.trim()) {
+        setError(t('errorEnterDescription'));
+        return;
+    }
     setIsLoading(true);
     setError(null);
-    
+    setExtractedItems([]);
     try {
-        const adjustedImageUrl = await generateProductImage(currentImage, productPrompt);
-        const newImageFile = dataURLtoFile(adjustedImageUrl, `product-${Date.now()}.png`);
-        
-        // Add to main history for viewing
-        addImageToHistory(newImageFile);
-        
-        // Automatically add the extracted item to the Style References in the Insert panel
-        setInsertStyleFiles(prev => [...prev, newImageFile].slice(-3)); // Keep up to 3 style refs
-
+        const extractedDataUrls = await generateExtractedItem(currentImage, extractPrompt);
+        const extractedFiles = extractedDataUrls.map((dataUrl, index) => 
+            dataURLtoFile(dataUrl, `extracted-${Date.now()}-${index}.png`)
+        );
+        setExtractedItems(extractedFiles);
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToExtract');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t, productPrompt]);
+  }, [currentImage, extractPrompt, t, handleApiError]);
+
+  const handleUseExtractedAsStyle = useCallback((index: number) => {
+    const item = extractedItems[index];
+    if (item) {
+        setInsertStyleFiles(prev => [...prev, item]);
+        setActiveTab('insert');
+        // Reset extract panel state after use
+        setExtractPrompt('');
+        setExtractedItems([]);
+    }
+  }, [extractedItems]);
 
   // --- Scan Handlers ---
   const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => {
@@ -849,14 +875,12 @@ const App: React.FC = () => {
         setScannedImageUrl(resultUrl);
         setScanHistory(prev => [resultUrl, ...prev].slice(0, 5));
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToGenerate');
         setIsScanModalOpen(false);
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, t]);
+  }, [currentImage, t, handleApiError]);
 
   const handleApplyManualScan = useCallback(async () => {
     if (!currentImage || !corners || !scanParams) return;
@@ -873,14 +897,12 @@ const App: React.FC = () => {
       setScannedImageUrl(resultUrl);
       setScanHistory(prev => [resultUrl, ...prev].slice(0, 5));
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToGenerate')} ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'errorFailedToGenerate');
         setIsScanModalOpen(false); // Close modal on error
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, corners, scanParams, t]);
+  }, [currentImage, corners, scanParams, t, handleApiError]);
 
   const handleCloseScanModal = useCallback(() => {
     setIsScanModalOpen(false);
@@ -2084,7 +2106,6 @@ const App: React.FC = () => {
         onExpandPromptChange: setExpandPrompt,
         hasExpansion: hasExpansion,
         onApplyInsert: handleApplyInsert,
-        onApplyProductScene: handleApplyProductScene,
         insertSubjectFiles: insertSubjectFiles,
         onInsertSubjectFilesChange: setInsertSubjectFiles,
         insertStyleFiles: insertStyleFiles,
@@ -2093,14 +2114,17 @@ const App: React.FC = () => {
         onInsertBackgroundFileChange: setInsertBackgroundFile,
         insertPrompt: insertPrompt,
         onInsertPromptChange: setInsertPrompt,
-        productPrompt: productPrompt,
-        onProductPromptChange: setProductPrompt,
         onApplyScan: handleApplyScan,
         onApplyManualScan: handleApplyManualScan,
         onCancelManualMode: handleCancelManualMode,
         onEnterManualMode: handleEnterManualMode,
         scanHistory: scanHistory,
         onReviewScan: handleReviewScan,
+        onApplyExtract: handleApplyExtract,
+        extractPrompt: extractPrompt,
+        onExtractPromptChange: setExtractPrompt,
+        extractedItemUrls: extractedItemUrls,
+        onUseExtractedAsStyle: handleUseExtractedAsStyle,
         isMaskPresent: isMaskPresent(),
         clearMask: clearMask,
         retouchPrompt: retouchPrompt,
@@ -2228,7 +2252,7 @@ const App: React.FC = () => {
             isToolboxOpen={isToolboxOpen}
             onUploadNew={handleRequestFileUpload}
         />
-        <main className={`flex-grow w-full max-w-screen-2xl mx-auto p-2 md:p-4 flex flex-col justify-center items-stretch overflow-hidden`}>
+        <main className={`flex-grow w-full p-2 md:p-4 flex flex-col justify-center items-stretch overflow-hidden`}>
             {renderContent()}
         </main>
         {activeTab === 'retouch' && selectionMode === 'point' && !!editHotspot && !isLoading && (
