@@ -13,7 +13,7 @@ import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
 import ScanViewerModal from './components/ScanViewerModal';
-import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, ChevronsLeftRightIcon, UploadIcon, EyeIcon, EyeSlashIcon, PaperAirplaneIcon, ClockIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon } from './components/icons';
+import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, UploadIcon, PaperAirplaneIcon, ClockIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon, ChevronsLeftRightIcon, EyeIcon, EyeSlashIcon } from './components/icons';
 import { useTranslation } from './contexts/LanguageContext';
 import { SelectionMode, BrushMode } from './components/RetouchPanel';
 import HistoryPanel from './components/HistoryPanel';
@@ -171,6 +171,13 @@ const App: React.FC = () => {
   const [scanParams, setScanParams] = useState<{ enhancement: Enhancement, removeShadows: boolean, restoreText: boolean } | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  // Comparison Slider State
+  const [isComparing, setIsComparing] = useState(false);
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const [isSliding, setIsSliding] = useState(false);
+  const [beforeImageUrl, setBeforeImageUrl] = useState<string | null>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
 
   // Main image viewer refs
   const imgRef = useRef<HTMLImageElement>(null);
@@ -192,11 +199,6 @@ const App: React.FC = () => {
   const swipeStartRef = useRef<{ x: number, y: number, time: number } | null>(null);
   const gestureLockRef = useRef<'horizontal' | 'vertical' | null>(null);
   
-  // Slider state
-  const [sliderPosition, setSliderPosition] = useState(50);
-  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
-  const [isComparing, setIsComparing] = useState(false);
-  
   // Image Info State
   const [imageDimensions, setImageDimensions] = useState<{ width: number, height: number } | null>(null);
 
@@ -211,10 +213,8 @@ const App: React.FC = () => {
   const interactionTimeoutRef = useRef<number | null>(null);
 
   const currentImage = history[historyIndex] ?? null;
-  const originalImage = history[0] ?? null;
 
   const [currentImageUrl, setImageUrl] = useState<string | null>(null);
-  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
 
   // Effect to track window resizing
   useEffect(() => {
@@ -241,7 +241,6 @@ const App: React.FC = () => {
   const resetView = useCallback(() => {
       setScale(1);
       setPosition({ x: 0, y: 0 });
-      setSliderPosition(50);
   }, []);
 
   // Effect to handle shrinking the image viewer when the tool panel is scrolled
@@ -298,10 +297,10 @@ const App: React.FC = () => {
     clearMask();
     setExpansionPadding({ top: 0, right: 0, bottom: 0, left: 0 });
     // When switching to a mode that needs a clean view, reset zoom/pan.
-    if (activeTab === 'crop') {
+    if (activeTab === 'crop' || isComparing) {
         resetView();
     }
-  }, [activeTab, clearMask, resetView]);
+  }, [activeTab, clearMask, resetView, isComparing]);
 
 
   // Effect to sync mask canvas size with image and clear it
@@ -379,7 +378,6 @@ const App: React.FC = () => {
   // Effect to create and revoke object URLs safely for main images
   useEffect(() => {
     let currentUrl: string | null = null;
-    let originalUrl: string | null = null;
     
     if (currentImage) {
       currentUrl = URL.createObjectURL(currentImage);
@@ -387,19 +385,33 @@ const App: React.FC = () => {
     } else {
       setImageUrl(null);
     }
-    
-    if (originalImage) {
-      originalUrl = URL.createObjectURL(originalImage);
-      setOriginalImageUrl(originalUrl);
-    } else {
-      setOriginalImageUrl(null);
-    }
   
     return () => {
       if (currentUrl) URL.revokeObjectURL(currentUrl);
-      if (originalUrl) URL.revokeObjectURL(originalUrl);
     };
-  }, [currentImage, originalImage]);
+  }, [currentImage]);
+  
+  const canUndo = historyIndex > 0;
+  
+  // Effect for comparison slider's "before" image
+  useEffect(() => {
+    let beforeUrl: string | null = null;
+    if (canUndo) {
+        const beforeImageFile = history[historyIndex - 1];
+        if (beforeImageFile) {
+            beforeUrl = URL.createObjectURL(beforeImageFile);
+            setBeforeImageUrl(beforeUrl);
+        }
+    } else {
+        setBeforeImageUrl(null);
+    }
+    return () => {
+        if (beforeUrl) {
+            URL.revokeObjectURL(beforeUrl);
+        }
+    };
+  }, [history, historyIndex, canUndo]);
+
 
   // Effect to create/revoke object URLs for the extracted items
   useEffect(() => {
@@ -453,7 +465,6 @@ const App: React.FC = () => {
   }, []);
 
 
-  const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
   const addImageToHistory = useCallback((newImageFile: File) => {
@@ -488,6 +499,7 @@ const App: React.FC = () => {
     setExtractPrompt('');
     setExtractedItems([]);
     setExtractHistory([]);
+    setIsComparing(false);
   }, [clearMask]);
   
   const handleStartOver = useCallback(() => {
@@ -508,6 +520,7 @@ const App: React.FC = () => {
     setExtractPrompt('');
     setExtractedItems([]);
     setExtractHistory([]);
+    setIsComparing(false);
   }, [clearMask]);
 
   const handleHistorySelect = (index: number) => {
@@ -685,67 +698,65 @@ const App: React.FC = () => {
     }
   }, [currentImage, addImageToHistory, t, handleApiError]);
 
-  const handleApplyTransform = useCallback(async (transform: TransformType) => {
+  const handleApplyTransform = useCallback((transform: TransformType) => {
     if (!currentImage) {
         setError(t('errorNoImageLoadedToAdjust'));
         return;
     }
-    setIsLoading(true);
     setError(null);
-    try {
-        const image = new Image();
-        image.crossOrigin = 'anonymous';
-        const imageUrl = URL.createObjectURL(currentImage);
-        
-        await new Promise<void>((resolve, reject) => {
-            image.onload = () => {
-                URL.revokeObjectURL(imageUrl);
-                resolve();
-            };
-            image.onerror = (err) => {
-                URL.revokeObjectURL(imageUrl);
-                reject(err);
-            };
-            image.src = imageUrl;
-        });
+    
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    const imageUrl = URL.createObjectURL(currentImage);
+    
+    image.onload = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('Could not get canvas context');
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not get canvas context');
+            const { naturalWidth: w, naturalHeight: h } = image;
 
-        let { naturalWidth: w, naturalHeight: h } = image;
+            if (transform === 'rotate-cw' || transform === 'rotate-ccw') {
+                canvas.width = h;
+                canvas.height = w;
+                ctx.translate(h / 2, w / 2);
+                ctx.rotate(transform === 'rotate-cw' ? 90 * Math.PI / 180 : -90 * Math.PI / 180);
+                ctx.drawImage(image, -w / 2, -h / 2);
+            } else if (transform === 'flip-h') {
+                canvas.width = w;
+                canvas.height = h;
+                ctx.translate(w, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(image, 0, 0);
+            } else if (transform === 'flip-v') {
+                canvas.width = w;
+                canvas.height = h;
+                ctx.translate(0, h);
+                ctx.scale(1, -1);
+                ctx.drawImage(image, 0, 0);
+            }
 
-        if (transform === 'rotate-cw' || transform === 'rotate-ccw') {
-            canvas.width = h;
-            canvas.height = w;
-            ctx.translate(h / 2, w / 2);
-            ctx.rotate(transform === 'rotate-cw' ? 90 * Math.PI / 180 : -90 * Math.PI / 180);
-            ctx.drawImage(image, -w / 2, -h / 2);
-        } else if (transform === 'flip-h') {
-            canvas.width = w;
-            canvas.height = h;
-            ctx.translate(w, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(image, 0, 0);
-        } else if (transform === 'flip-v') {
-            canvas.width = w;
-            canvas.height = h;
-            ctx.translate(0, h);
-            ctx.scale(1, -1);
-            ctx.drawImage(image, 0, 0);
+            const transformedDataUrl = canvas.toDataURL('image/png');
+            const newImageFile = dataURLtoFile(transformedDataUrl, `transformed-${Date.now()}.png`);
+            addImageToHistory(newImageFile);
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+            setError(`${t('errorFailedToApplyAdjustment')} ${errorMessage}`);
+            console.error(err);
+        } finally {
+            URL.revokeObjectURL(imageUrl);
         }
+    };
+    
+    image.onerror = (err) => {
+        URL.revokeObjectURL(imageUrl);
+        setError(`${t('errorFailedToApplyAdjustment')} Could not load image for transform.`);
+        console.error("Image transform load error:", err);
+    };
 
-        const transformedDataUrl = canvas.toDataURL('image/png');
-        const newImageFile = dataURLtoFile(transformedDataUrl, `transformed-${Date.now()}.png`);
-        addImageToHistory(newImageFile);
-
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`${t('errorFailedToApplyAdjustment')} ${errorMessage}`);
-        console.error(err);
-    } finally {
-        setIsLoading(false);
-    }
+    image.src = imageUrl;
   }, [currentImage, addImageToHistory, t]);
 
   const handleApplyCrop = useCallback(() => {
@@ -1198,11 +1209,11 @@ const App: React.FC = () => {
 };
 
   const handleViewerMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0 || (e.target as HTMLElement).closest('.slider-handle') || (e.target as HTMLElement).closest('.corner-handle')) return;
+      if (e.button !== 0 || (e.target as HTMLElement).closest('.corner-handle') || (e.target as HTMLElement).closest('[data-slider-handle="true"]')) return;
       if (activeTab === 'retouch' && selectionMode === 'brush') return; // Let canvas handle it
       if (activeTab === 'scan' && isManualScanMode) return; // Let corner handles manage clicks
       if (activeTab === 'crop') return; // Disable panning in crop mode
-      if (scale <= 1) return; // Don't pan if not zoomed
+      if (scale <= 1 && !isComparing) return; // Don't pan if not zoomed (allow in compare mode)
 
       e.preventDefault();
       setIsPanning(true);
@@ -1212,7 +1223,7 @@ const App: React.FC = () => {
           initialPosition: position,
       };
 
-  }, [activeTab, selectionMode, isManualScanMode, position, scale]);
+  }, [activeTab, selectionMode, isManualScanMode, position, scale, isComparing]);
 
   const handleViewerMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
       showZoomControls();
@@ -1266,7 +1277,7 @@ const App: React.FC = () => {
   
   const handleViewerTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     showZoomControls();
-    if ((e.target as HTMLElement).closest('.slider-handle') || (e.target as HTMLElement).closest('.corner-handle')) return;
+    if ((e.target as HTMLElement).closest('.corner-handle') || (e.target as HTMLElement).closest('[data-slider-handle="true"]')) return;
     if (activeTab === 'retouch' && selectionMode === 'brush') return;
     if (activeTab === 'scan' && isManualScanMode) return;
     if (activeTab === 'crop') return;
@@ -1279,7 +1290,7 @@ const App: React.FC = () => {
         panStartRef.current = null;
         pinchStartDistRef.current = getDistanceBetweenTouches(e.touches);
         pinchStartScaleRef.current = scale;
-    } else if (e.touches.length === 1 && scale > 1) {
+    } else if (e.touches.length === 1 && (scale > 1 || isComparing)) {
         // Pan start
         setIsPanning(true);
         panStartRef.current = {
@@ -1288,7 +1299,7 @@ const App: React.FC = () => {
             initialPosition: position,
         };
     }
-  }, [scale, showZoomControls, activeTab, selectionMode, isManualScanMode, position]);
+  }, [scale, showZoomControls, activeTab, selectionMode, isManualScanMode, position, isComparing]);
 
   const handleViewerTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     showZoomControls();
@@ -1591,32 +1602,8 @@ const App: React.FC = () => {
   }, [activeTab, selectionMode, isDrawing, brushMode, brushSize]);
 
 
-  // --- Slider Handlers ---
-  const handleSliderMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDraggingSlider(true);
-  };
-
-  const handleSliderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDraggingSlider(true);
-  };
-
-  const updateSliderPosition = useCallback((clientX: number) => {
-      if (!imageViewerRef.current) return;
-      const rect = imageViewerRef.current.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const viewerWidth = rect.width;
-      const newSliderPosition = Math.max(0, Math.min(100, (x / viewerWidth) * 100));
-      setSliderPosition(newSliderPosition);
-  }, []);
-
   const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
-      if (isDraggingSlider) {
-          updateSliderPosition(e.clientX);
-      } else if (activeCorner) {
+      if (activeCorner) {
           handleCornerDrag(e.clientX, e.clientY);
       } else if (activeExpansionHandle && dragStart) {
         const deltaX = (e.clientX - dragStart.x) / scale;
@@ -1645,13 +1632,11 @@ const App: React.FC = () => {
               y: panStartRef.current.initialPosition.y + dy,
           });
       }
-  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning, activeExpansionHandle, dragStart, scale]);
+  }, [activeCorner, isPanning, activeExpansionHandle, dragStart, scale]);
 
   const handleGlobalTouchMove = useCallback((e: TouchEvent) => {
       if (e.touches.length === 0) return;
-      if (isDraggingSlider) {
-          updateSliderPosition(e.touches[0].clientX);
-      } else if (activeCorner) {
+      if (activeCorner) {
           handleCornerDrag(e.touches[0].clientX, e.touches[0].clientY);
       } else if (activeExpansionHandle && dragStart && e.touches.length === 1) {
           const deltaX = (e.touches[0].clientX - dragStart.x) / scale;
@@ -1679,11 +1664,10 @@ const App: React.FC = () => {
               y: panStartRef.current.initialPosition.y + dy,
           });
       }
-  }, [isDraggingSlider, updateSliderPosition, activeCorner, isPanning, activeExpansionHandle, dragStart, scale]);
+  }, [activeCorner, isPanning, activeExpansionHandle, dragStart, scale]);
 
 
   const handleGlobalMouseUp = useCallback(() => {
-      setIsDraggingSlider(false);
       setActiveCorner(null);
       setIsPanning(false);
       panStartRef.current = null;
@@ -1692,7 +1676,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-      const isDragging = isDraggingSlider || !!activeCorner || isPanning || !!activeExpansionHandle;
+      const isDragging = !!activeCorner || isPanning || !!activeExpansionHandle;
       if (isDragging) {
           window.addEventListener('mousemove', handleGlobalMouseMove);
           window.addEventListener('mouseup', handleGlobalMouseUp);
@@ -1711,7 +1695,7 @@ const App: React.FC = () => {
           window.removeEventListener('touchend', handleGlobalMouseUp);
           window.removeEventListener('touchcancel', handleGlobalMouseUp);
       };
-  }, [isDraggingSlider, activeCorner, isPanning, activeExpansionHandle, handleGlobalMouseMove, handleGlobalTouchMove, handleGlobalMouseUp]);
+  }, [activeCorner, isPanning, activeExpansionHandle, handleGlobalMouseMove, handleGlobalTouchMove, handleGlobalMouseUp]);
   
   // --- Corner Drag Handlers ---
   const handleCornerDrag = (clientX: number, clientY: number) => {
@@ -1798,12 +1782,66 @@ const App: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleUndo, handleRedo]);
+  
+  const handleToggleCompare = () => {
+    setIsComparing(prev => {
+        if (!prev) { // Entering compare mode
+            resetView();
+        }
+        return !prev;
+    });
+  };
 
-  // Conditionally attach pan/zoom handlers only when an image is loaded
+  // --- Comparison Slider Handlers ---
+  const handleSliderMouseDown = (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsSliding(true);
+  };
+
+  const handleSliderTouchStart = (e: React.TouchEvent) => {
+      e.preventDefault();
+      setIsSliding(true);
+  };
+  
+  const handleSliderMove = useCallback((clientX: number) => {
+      if (!isSliding || !imageViewerRef.current) return;
+      
+      const rect = imageViewerRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      setSliderPosition(percent);
+  }, [isSliding]);
+
+  const handleSliderMouseUp = useCallback(() => {
+      setIsSliding(false);
+  }, []);
+
+  useEffect(() => {
+      const handleMouseMove = (e: MouseEvent) => handleSliderMove(e.clientX);
+      const handleTouchMove = (e: TouchEvent) => {
+          if (e.touches[0]) handleSliderMove(e.touches[0].clientX);
+      };
+
+      if (isSliding) {
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleSliderMouseUp);
+          window.addEventListener('touchmove', handleTouchMove);
+          window.addEventListener('touchend', handleSliderMouseUp);
+      }
+
+      return () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          window.removeEventListener('mouseup', handleSliderMouseUp);
+          window.removeEventListener('touchmove', handleTouchMove);
+          window.removeEventListener('touchend', handleSliderMouseUp);
+      };
+  }, [isSliding, handleSliderMove, handleSliderMouseUp]);
+
+  // Attach pan/zoom handlers only when an image is loaded
   const viewerEventHandlers = currentImage ? {
       onMouseDown: handleViewerMouseDown,
       onMouseMove: handleViewerMouseMove,
-      onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => {
+      onMouseLeave: () => {
           setIsMouseOverViewer(false);
       },
       onMouseEnter: () => {
@@ -1852,256 +1890,270 @@ const App: React.FC = () => {
                 ${currentImage ? 'touch-none' : ''}
                 ${isPanning ? 'cursor-grabbing' : ''}
                 ${!isPanning && scale > 1 && (activeTab !== 'crop') ? 'cursor-grab' : ''}
-                ${activeTab === 'retouch' && selectionMode === 'point' && currentImage ? 'cursor-crosshair' : ''}
-                ${activeTab === 'retouch' && selectionMode === 'brush' && currentImage ? 'cursor-none' : ''}
+                ${activeTab === 'retouch' && selectionMode === 'point' && currentImage && !isComparing ? 'cursor-crosshair' : ''}
+                ${activeTab === 'retouch' && selectionMode === 'brush' && currentImage && !isComparing ? 'cursor-none' : ''}
                 ${(isPanning || isInteracting) ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/25' : ''}
             `}
             {...viewerEventHandlers}
         >
-            <div
-                className="transition-transform duration-100 ease-out"
-                style={{
-                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                    transformOrigin: 'center center',
-                    width: '100%', height: '100%',
-                }}
-            >
-                <div 
-                  className="relative w-full h-full flex items-center justify-center"
-                >
-                    {/* Placeholder when no image is loaded */}
-                    {!currentImageUrl && (
-                      <div className="w-full h-full max-h-[70vh] flex items-center justify-center">
-                          <ImagePlaceholder onFileSelect={handleFileSelect} />
-                      </div>
-                    )}
-
-                    {/* Original Image (bottom layer) */}
-                    {originalImageUrl && (
-                        <img
-                            src={originalImageUrl}
-                            alt={t('original')}
-                            crossOrigin="anonymous"
-                            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                        />
-                    )}
-                    {/* Edited Image (top layer, clipped or hidden) */}
-                    {currentImageUrl && (
+             {/* Placeholder when no image is loaded */}
+             {!currentImageUrl && (
+                <div className="w-full h-full max-h-[70vh] flex items-center justify-center">
+                    <ImagePlaceholder onFileSelect={handleFileSelect} />
+                </div>
+            )}
+            
+            {/* --- RENDER LOGIC WITH IMAGE --- */}
+            {currentImageUrl && (
+                isComparing && canUndo && beforeImageUrl ? (
+                    // --- COMPARING VIEW ---
+                    <>
+                        {/* Background Image (Original/Before) */}
                         <div
-                            className="absolute inset-0 w-full h-full"
-                            style={{ 
-                                clipPath: (historyIndex > 0 && !isComparing) ? `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` : 'none',
-                                opacity: isComparing ? 1 : 1 // Changed to always be 1, comparison is now handled by hiding the element
+                            className="absolute inset-0 w-full h-full transition-transform duration-100 ease-out"
+                            style={{
+                                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                transformOrigin: 'center center',
                             }}
                         >
+                            <div className="relative w-full h-full flex items-center justify-center">
+                                <img
+                                    src={beforeImageUrl}
+                                    alt={t('original')}
+                                    crossOrigin="anonymous"
+                                    className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                                />
+                            </div>
+                        </div>
+                    
+                        {/* Foreground Image (Edited/After) - This one gets clipped */}
+                        <div
+                            className="absolute inset-0 w-full h-full"
+                            style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+                        >
+                            <div
+                                className="absolute inset-0 w-full h-full transition-transform duration-100 ease-out"
+                                style={{
+                                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                    transformOrigin: 'center center',
+                                }}
+                            >
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                    <img
+                                        ref={imgRef} // Keep ref on the visible "main" image
+                                        key={historyIndex}
+                                        src={currentImageUrl}
+                                        alt={t('edited')}
+                                        crossOrigin="anonymous"
+                                        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Slider Handle - Overlay on viewer */}
+                        <div
+                            ref={sliderRef}
+                            className="absolute top-0 bottom-0 w-1 bg-white/80 cursor-ew-resize group z-30"
+                            style={{ left: `calc(${sliderPosition}% - 2px)` }}
+                            onMouseDown={handleSliderMouseDown}
+                            onTouchStart={handleSliderTouchStart}
+                            aria-label={t('compareSliderAria')}
+                            data-slider-handle="true"
+                        >
+                            <div className="absolute top-1/2 -translate-y-1/2 -left-3 bg-white rounded-full p-1.5 shadow-lg border-2 border-cyan-400 transition-transform group-hover:scale-110">
+                                <ChevronsLeftRightIcon className="w-5 h-5 text-black"/>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    // --- NORMAL VIEW ---
+                    <div
+                        className="transition-transform duration-100 ease-out w-full h-full"
+                        style={{
+                            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                            transformOrigin: 'center center',
+                        }}
+                    >
+                        <div className="relative w-full h-full flex items-center justify-center">
                             <img
                                 ref={imgRef}
                                 key={historyIndex}
                                 src={currentImageUrl}
                                 alt={t('edited')}
                                 crossOrigin="anonymous"
-                                className={`absolute inset-0 w-full h-full object-contain pointer-events-none transition-opacity ${isComparing ? 'opacity-0' : 'opacity-100'}`}
+                                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                             />
-                        </div>
-                    )}
-                    
-                    {/* Mask Canvas for brushing */}
-                    <canvas
-                        ref={maskCanvasRef}
-                        className="absolute inset-0 w-full h-full object-contain opacity-40"
-                        style={{
-                            pointerEvents: activeTab === 'retouch' && selectionMode === 'brush' && currentImage ? 'auto' : 'none',
-                            cursor: 'none'
-                        }}
-                    />
-
-                    {/* Manual Scan UI Layer */}
-                    {activeTab === 'scan' && isManualScanMode && corners && imgRef.current && (
-                        <div className="absolute inset-0 w-full h-full object-contain pointer-events-none">
-                            <svg 
-                                className="absolute inset-0 w-full h-full"
-                                viewBox={`0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}`}
-                                preserveAspectRatio="xMidYMid meet"
-                            >
-                                <polygon
-                                    points={`${corners.tl.x},${corners.tl.y} ${corners.tr.x},${corners.tr.y} ${corners.br.x},${corners.br.y} ${corners.bl.x},${corners.bl.y}`}
-                                    className="fill-cyan-500/20 stroke-cyan-400"
-                                    style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: '2px' }}
-                                />
-                            </svg>
-                            {Object.keys(corners).map((key) => {
-                                const cornerKey = key as keyof Corners;
-                                return (
-                                    <div
-                                        key={cornerKey}
-                                        className="corner-handle absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-2 border-cyan-500 cursor-move pointer-events-auto shadow-lg"
-                                        style={{
-                                            left: `${(corners[cornerKey].x / imgRef.current!.naturalWidth) * 100}%`,
-                                            top: `${(corners[cornerKey].y / imgRef.current!.naturalHeight) * 100}%`,
-                                        }}
-                                        onMouseDown={(e) => handleCornerMouseDown(e, cornerKey)}
-                                        onTouchStart={(e) => handleCornerTouchStart(e, cornerKey)}
-                                    />
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Slider Handle (only shown after first edit) - MOVED OUTSIDE OF TRANSFORM CONTAINER */}
-            {historyIndex > 0 && !isComparing && (
-              <div
-                  className="slider-handle absolute top-0 bottom-0 -translate-x-1/2 w-1 bg-cyan-300 cursor-col-resize group z-30"
-                  style={{ left: `${sliderPosition}%` }}
-                  onMouseDown={handleSliderMouseDown}
-                  onTouchStart={handleSliderTouchStart}
-                  role="separator"
-                  aria-label={t('compareSliderAria')}
-                  aria-valuenow={sliderPosition}
-                  aria-orientation="vertical"
-              >
-                  <div className="absolute top-1/2 -translate-y-1/2 bg-cyan-400/80 backdrop-blur-sm rounded-full p-2 shadow-lg group-hover:scale-110 transition-transform -left-4 ring-1 ring-white/10">
-                      <ChevronsLeftRightIcon className="w-5 h-5 text-white" />
-                  </div>
-              </div>
-            )}
-            
-            {/* Labels (only shown after first edit) - MOVED OUTSIDE OF TRANSFORM CONTAINER */}
-            {historyIndex > 0 && !isComparing && (
-              <>
-                <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20">
-                    {t('original')}
-                </div>
-                {/* Clipping container for the "Edited" label */}
-                <div
-                    className="absolute inset-0 pointer-events-none z-20"
-                    style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}
-                >
-                    <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md">
-                        {t('edited')}
-                    </div>
-                </div>
-              </>
-            )}
-
-             {/* Interactive Expansion UI v2 */}
-             {currentImage && activeTab === 'expand' && imgRef.current && imageViewerRef.current && (() => {
-                const img = imgRef.current;
-                const viewer = imageViewerRef.current;
-
-                const imgRect = img.getBoundingClientRect();
-                const viewerRect = viewer.getBoundingClientRect();
-                if (imgRect.width === 0) return null;
-
-                const imgTop = imgRect.top - viewerRect.top;
-                const imgLeft = imgRect.left - viewerRect.left;
-
-                const newLeft = imgLeft - expansionPadding.left;
-                const newTop = imgTop - expansionPadding.top;
-                const newWidth = imgRect.width + expansionPadding.left + expansionPadding.right;
-                const newHeight = imgRect.height + expansionPadding.top + expansionPadding.bottom;
-                
-                const handles: { id: ExpansionHandle, cursor: string, positionStyle: React.CSSProperties, shapeClass: string }[] = [
-                    // Corners
-                    { id: 'tl', cursor: 'nwse-resize', positionStyle: { top: 0, left: 0 }, shapeClass: 'w-3 h-3' },
-                    { id: 'tr', cursor: 'nesw-resize', positionStyle: { top: 0, right: 0 }, shapeClass: 'w-3 h-3' },
-                    { id: 'bl', cursor: 'nesw-resize', positionStyle: { bottom: 0, left: 0 }, shapeClass: 'w-3 h-3' },
-                    { id: 'br', cursor: 'nwse-resize', positionStyle: { bottom: 0, right: 0 }, shapeClass: 'w-3 h-3' },
-                    // Edges
-                    { id: 'top', cursor: 'ns-resize', positionStyle: { top: 0, left: '50%', transform: 'translateX(-50%)' }, shapeClass: 'w-6 h-1.5' },
-                    { id: 'bottom', cursor: 'ns-resize', positionStyle: { bottom: 0, left: '50%', transform: 'translateX(-50%)' }, shapeClass: 'w-6 h-1.5' },
-                    { id: 'left', cursor: 'ew-resize', positionStyle: { left: 0, top: '50%', transform: 'translateY(-50%)' }, shapeClass: 'w-1.5 h-6' },
-                    { id: 'right', cursor: 'ew-resize', positionStyle: { right: 0, top: '50%', transform: 'translateY(-50%)' }, shapeClass: 'w-1.5 h-6' },
-                ];
-                
-                return (
-                    <>
-                        {/* Overlay to dim outside area */}
-                        <div className="absolute pointer-events-none" style={{ top: newTop, left: newLeft, width: newWidth, height: newHeight, boxShadow: '0 0 0 9999px rgba(0,0,0,0.7)' }} />
-
-                        {/* Bounding box with handles */}
-                        <div
-                            className="absolute pointer-events-none"
-                            style={{
-                                top: newTop,
-                                left: newLeft,
-                                width: newWidth,
-                                height: newHeight,
-                            }}
-                        >
-                            {/* Border and rule-of-thirds lines */}
-                            <div className="absolute inset-0 border-2 border-white pointer-events-none">
-                                <div className="absolute top-1/3 w-full h-px bg-white/50"></div>
-                                <div className="absolute top-2/3 w-full h-px bg-white/50"></div>
-                                <div className="absolute left-1/3 h-full w-px bg-white/50"></div>
-                                <div className="absolute left-2/3 h-full w-px bg-white/50"></div>
-                            </div>
                             
-                            {/* Render Handles */}
-                            {handles.map(({ id, cursor, positionStyle, shapeClass }) => (
-                                <div
-                                    key={id}
-                                    className="absolute pointer-events-auto"
-                                    style={{ ...positionStyle, cursor }}
-                                    onMouseDown={(e) => handleExpansionHandleMouseDown(e, id)}
-                                    onTouchStart={(e) => handleExpansionHandleTouchStart(e, id)}
-                                >
-                                    {/* Visual handle element with larger invisible touch area */}
-                                    <div className="absolute p-2" style={{ transform: 'translate(-50%, -50%)' }}>
-                                        <div className={`bg-white rounded-full border-2 border-cyan-500 shadow-lg ${shapeClass}`}></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </>
-                );
-            })()}
+                            {/* Overlays that transform with image */}
+                             {/* Mask Canvas for brushing */}
+                            <canvas
+                                ref={maskCanvasRef}
+                                className="absolute inset-0 w-full h-full object-contain opacity-40"
+                                style={{
+                                    pointerEvents: activeTab === 'retouch' && selectionMode === 'brush' && currentImage ? 'auto' : 'none',
+                                    cursor: 'none'
+                                }}
+                            />
 
-            {/* Hotspot Indicator - Use pre-calculated position from state */}
-            {hotspotDisplayPosition && !isLoading && (
-              <div 
-                  className="absolute rounded-full w-5 h-5 bg-cyan-500/70 border-2 border-white pointer-events-none -translate-x-1/2 -translate-y-1/2 z-40"
-                  style={{ left: `${hotspotDisplayPosition.left}px`, top: `${hotspotDisplayPosition.top}px` }}
-              >
-                  <div className="absolute inset-[-4px] rounded-full w-7 h-7 animate-ping bg-cyan-400 opacity-80"></div>
-              </div>
+                            {/* Manual Scan UI Layer */}
+                            {activeTab === 'scan' && isManualScanMode && corners && imgRef.current && (
+                                <div className="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                                    <svg 
+                                        className="absolute inset-0 w-full h-full"
+                                        viewBox={`0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}`}
+                                        preserveAspectRatio="xMidYMid meet"
+                                    >
+                                        <polygon
+                                            points={`${corners.tl.x},${corners.tl.y} ${corners.tr.x},${corners.tr.y} ${corners.br.x},${corners.br.y} ${corners.bl.x},${corners.bl.y}`}
+                                            className="fill-cyan-500/20 stroke-cyan-400"
+                                            style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: '2px' }}
+                                        />
+                                    </svg>
+                                    {Object.keys(corners).map((key) => {
+                                        const cornerKey = key as keyof Corners;
+                                        return (
+                                            <div
+                                                key={cornerKey}
+                                                className="corner-handle absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-2 border-cyan-500 cursor-move pointer-events-auto shadow-lg"
+                                                style={{
+                                                    left: `${(corners[cornerKey].x / imgRef.current!.naturalWidth) * 100}%`,
+                                                    top: `${(corners[cornerKey].y / imgRef.current!.naturalHeight) * 100}%`,
+                                                }}
+                                                onMouseDown={(e) => handleCornerMouseDown(e, cornerKey)}
+                                                onTouchStart={(e) => handleCornerTouchStart(e, cornerKey)}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
             )}
             
-            {/* Custom Brush Cursor */}
-            {isMouseOverViewer && activeTab === 'retouch' && selectionMode === 'brush' && mousePosition && imgRef.current && (
-                (() => {
-                    const img = imgRef.current;
-                    const canvasRect = maskCanvasRef.current?.getBoundingClientRect();
-                    if (!canvasRect || canvasRect.width === 0) return null;
+             {/* Fixed Overlays (on top of viewer, don't transform) */}
+             {!isComparing && (
+                <>
+                    {/* Interactive Expansion UI v2 */}
+                    {currentImage && activeTab === 'expand' && imgRef.current && imageViewerRef.current && (() => {
+                        const img = imgRef.current;
+                        const viewer = imageViewerRef.current;
+
+                        const imgRect = img.getBoundingClientRect();
+                        const viewerRect = viewer.getBoundingClientRect();
+                        if (imgRect.width === 0) return null;
+
+                        const imgTop = imgRect.top - viewerRect.top;
+                        const imgLeft = imgRect.left - viewerRect.left;
+
+                        const newLeft = imgLeft - expansionPadding.left;
+                        const newTop = imgTop - expansionPadding.top;
+                        const newWidth = imgRect.width + expansionPadding.left + expansionPadding.right;
+                        const newHeight = imgRect.height + expansionPadding.top + expansionPadding.bottom;
+                        
+                        const handles: { id: ExpansionHandle, cursor: string, positionStyle: React.CSSProperties, shapeClass: string }[] = [
+                            // Corners
+                            { id: 'tl', cursor: 'nwse-resize', positionStyle: { top: 0, left: 0 }, shapeClass: 'w-3 h-3' },
+                            { id: 'tr', cursor: 'nesw-resize', positionStyle: { top: 0, right: 0 }, shapeClass: 'w-3 h-3' },
+                            { id: 'bl', cursor: 'nesw-resize', positionStyle: { bottom: 0, left: 0 }, shapeClass: 'w-3 h-3' },
+                            { id: 'br', cursor: 'nwse-resize', positionStyle: { bottom: 0, right: 0 }, shapeClass: 'w-3 h-3' },
+                            // Edges
+                            { id: 'top', cursor: 'ns-resize', positionStyle: { top: 0, left: '50%', transform: 'translateX(-50%)' }, shapeClass: 'w-6 h-1.5' },
+                            { id: 'bottom', cursor: 'ns-resize', positionStyle: { bottom: 0, left: '50%', transform: 'translateX(-50%)' }, shapeClass: 'w-6 h-1.5' },
+                            { id: 'left', cursor: 'ew-resize', positionStyle: { left: 0, top: '50%', transform: 'translateY(-50%)' }, shapeClass: 'w-1.5 h-6' },
+                            { id: 'right', cursor: 'ew-resize', positionStyle: { right: 0, top: '50%', transform: 'translateY(-50%)' }, shapeClass: 'w-1.5 h-6' },
+                        ];
+                        
+                        return (
+                            <>
+                                {/* Overlay to dim outside area */}
+                                <div className="absolute pointer-events-none" style={{ top: newTop, left: newLeft, width: newWidth, height: newHeight, boxShadow: '0 0 0 9999px rgba(0,0,0,0.7)' }} />
+
+                                {/* Bounding box with handles */}
+                                <div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        top: newTop,
+                                        left: newLeft,
+                                        width: newWidth,
+                                        height: newHeight,
+                                    }}
+                                >
+                                    {/* Border and rule-of-thirds lines */}
+                                    <div className="absolute inset-0 border-2 border-white pointer-events-none">
+                                        <div className="absolute top-1/3 w-full h-px bg-white/50"></div>
+                                        <div className="absolute top-2/3 w-full h-px bg-white/50"></div>
+                                        <div className="absolute left-1/3 h-full w-px bg-white/50"></div>
+                                        <div className="absolute left-2/3 h-full w-px bg-white/50"></div>
+                                    </div>
+                                    
+                                    {/* Render Handles */}
+                                    {handles.map(({ id, cursor, positionStyle, shapeClass }) => (
+                                        <div
+                                            key={id}
+                                            className="absolute pointer-events-auto"
+                                            style={{ ...positionStyle, cursor }}
+                                            onMouseDown={(e) => handleExpansionHandleMouseDown(e, id)}
+                                            onTouchStart={(e) => handleExpansionHandleTouchStart(e, id)}
+                                        >
+                                            {/* Visual handle element with larger invisible touch area */}
+                                            <div className="absolute p-2" style={{ transform: 'translate(-50%, -50%)' }}>
+                                                <div className={`bg-white rounded-full border-2 border-cyan-500 shadow-lg ${shapeClass}`}></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        );
+                    })()}
+
+                    {/* Hotspot Indicator - Use pre-calculated position from state */}
+                    {hotspotDisplayPosition && !isLoading && (
+                      <div 
+                          className="absolute rounded-full w-5 h-5 bg-cyan-500/70 border-2 border-white pointer-events-none -translate-x-1/2 -translate-y-1/2 z-40"
+                          style={{ left: `${hotspotDisplayPosition.left}px`, top: `${hotspotDisplayPosition.top}px` }}
+                      >
+                          <div className="absolute inset-[-4px] rounded-full w-7 h-7 animate-ping bg-cyan-400 opacity-80"></div>
+                      </div>
+                    )}
                     
-                    const pixelToScreenRatio = img.naturalWidth / canvasRect.width; 
-                    const cursorSize = brushSize / pixelToScreenRatio;
-                    
-                    return (
-                        <div
-                            className={`absolute pointer-events-none rounded-full z-50 transition-all duration-75 flex items-center justify-center ${brushMode === 'draw' ? 'cursor-draw-pulse' : 'cursor-erase-pulse'}`}
-                            style={{
-                                left: `${mousePosition.x}px`,
-                                top: `${mousePosition.y}px`,
-                                width: `${cursorSize}px`,
-                                height: `${cursorSize}px`,
-                                transform: 'translate(-50%, -50%)',
-                                border: `2px solid ${brushMode === 'draw' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 50, 50, 0.9)'}`,
-                                backgroundColor: brushMode === 'draw' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 50, 50, 0.2)'
-                            }}
-                        >
-                             <div className="w-1 h-1 bg-white rounded-full"></div>
-                        </div>
-                    );
-                })()
-            )}
+                    {/* Custom Brush Cursor */}
+                    {isMouseOverViewer && activeTab === 'retouch' && selectionMode === 'brush' && mousePosition && imgRef.current && (
+                        (() => {
+                            const img = imgRef.current;
+                            const canvasRect = maskCanvasRef.current?.getBoundingClientRect();
+                            if (!canvasRect || canvasRect.width === 0) return null;
+                            
+                            const pixelToScreenRatio = img.naturalWidth / canvasRect.width; 
+                            const cursorSize = brushSize / pixelToScreenRatio;
+                            
+                            return (
+                                <div
+                                    className={`absolute pointer-events-none rounded-full z-50 transition-all duration-75 flex items-center justify-center ${brushMode === 'draw' ? 'cursor-draw-pulse' : 'cursor-erase-pulse'}`}
+                                    style={{
+                                        left: `${mousePosition.x}px`,
+                                        top: `${mousePosition.y}px`,
+                                        width: `${cursorSize}px`,
+                                        height: `${cursorSize}px`,
+                                        transform: 'translate(-50%, -50%)',
+                                        border: `2px solid ${brushMode === 'draw' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 50, 50, 0.9)'}`,
+                                        backgroundColor: brushMode === 'draw' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 50, 50, 0.2)'
+                                    }}
+                                >
+                                     <div className="w-1 h-1 bg-white rounded-full"></div>
+                                </div>
+                            );
+                        })()
+                    )}
+                </>
+             )}
 
             {currentImage && (
               <>
                 <div className={`absolute z-20 transition-all duration-300 ease-in-out
                     left-4 top-1/2 -translate-y-1/2
-                    ${isZoomControlsVisible
+                    ${isZoomControlsVisible && !isSliding
                       ? 'opacity-100 translate-x-0'
                       : 'opacity-0 pointer-events-none -translate-x-4'
                     }
@@ -2116,16 +2168,6 @@ const App: React.FC = () => {
                         <button onClick={() => handleZoom('in')} className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95" title={t('zoomIn')}>
                             <ZoomInIcon className="w-6 h-6" />
                         </button>
-                         {canUndo && (
-                           <button 
-                              onClick={() => setIsComparing(prev => !prev)}
-                              className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
-                              aria-label={t('compareAria')}
-                              title={t('compareAria')}
-                           >
-                             {isComparing ? <EyeSlashIcon className="w-6 h-6 text-cyan-400" /> : <EyeIcon className="w-6 h-6" />}
-                           </button>
-                         )}
                          {history.length > 1 && (
                            <button 
                               onClick={() => setIsHistoryPanelOpen(p => !p)}
@@ -2135,12 +2177,25 @@ const App: React.FC = () => {
                              <ClockIcon className={`w-6 h-6 ${isHistoryPanelOpen ? 'text-cyan-400' : ''}`} />
                            </button>
                          )}
+                         {canUndo && (
+                            <button
+                                onClick={handleToggleCompare}
+                                className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
+                                title={isComparing ? t('viewEdited') : t('viewOriginal')}
+                            >
+                                {isComparing ? (
+                                    <EyeSlashIcon className="w-6 h-6 text-cyan-400" />
+                                ) : (
+                                    <EyeIcon className="w-6 h-6" />
+                                )}
+                            </button>
+                         )}
                     </div>
                 </div>
 
                 <div className={`absolute z-20 transition-all duration-300 ease-in-out
                     right-4 top-1/2 -translate-y-1/2
-                    ${isZoomControlsVisible
+                    ${isZoomControlsVisible && !isComparing && !isSliding
                       ? 'opacity-100 translate-x-0'
                       : 'opacity-0 pointer-events-none translate-x-4'
                     }

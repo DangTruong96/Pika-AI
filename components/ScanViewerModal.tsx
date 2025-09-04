@@ -188,8 +188,9 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalIma
                 <button
                     onClick={() => setIsComparing(p => !p)}
                     className="p-2.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95"
-                    aria-label={t('compareAria')}
-                    title={t('compareAria')}
+                    // Fix: Use existing translation keys for better accessibility and to resolve TS error.
+                    aria-label={isComparing ? t('viewEdited') : t('viewOriginal')}
+                    title={isComparing ? t('viewEdited') : t('viewOriginal')}
                 >
                     {isComparing ? <EyeSlashIcon className="w-6 h-6 text-cyan-400" /> : <EyeIcon className="w-6 h-6" />}
                 </button>
