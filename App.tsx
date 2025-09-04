@@ -1946,41 +1946,44 @@ const App: React.FC = () => {
                             })}
                         </div>
                     )}
-
-                    
-                    {/* Slider Handle (only shown after first edit) */}
-                    {historyIndex > 0 && !isComparing && (
-                      <div
-                          className="slider-handle absolute top-0 bottom-0 -translate-x-1/2 w-1 bg-cyan-300 cursor-col-resize group z-30"
-                          style={{ left: `${sliderPosition}%` }}
-                          onMouseDown={handleSliderMouseDown}
-                          onTouchStart={handleSliderTouchStart}
-                          role="separator"
-                          aria-label={t('compareSliderAria')}
-                          aria-valuenow={sliderPosition}
-                          aria-orientation="vertical"
-                      >
-                          <div className="absolute top-1/2 -translate-y-1/2 bg-cyan-400/80 backdrop-blur-sm rounded-full p-2 shadow-lg group-hover:scale-110 transition-transform -left-4 ring-1 ring-white/10">
-                              <ChevronsLeftRightIcon className="w-5 h-5 text-white" />
-                          </div>
-                      </div>
-                    )}
-                    
-                    {/* Labels (only shown after first edit) */}
-                    {historyIndex > 0 && !isComparing && (
-                      <>
-                        <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20">
-                            {t('original')}
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20"
-                          style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}
-                        >
-                            {t('edited')}
-                        </div>
-                      </>
-                    )}
                 </div>
             </div>
+
+            {/* Slider Handle (only shown after first edit) - MOVED OUTSIDE OF TRANSFORM CONTAINER */}
+            {historyIndex > 0 && !isComparing && (
+              <div
+                  className="slider-handle absolute top-0 bottom-0 -translate-x-1/2 w-1 bg-cyan-300 cursor-col-resize group z-30"
+                  style={{ left: `${sliderPosition}%` }}
+                  onMouseDown={handleSliderMouseDown}
+                  onTouchStart={handleSliderTouchStart}
+                  role="separator"
+                  aria-label={t('compareSliderAria')}
+                  aria-valuenow={sliderPosition}
+                  aria-orientation="vertical"
+              >
+                  <div className="absolute top-1/2 -translate-y-1/2 bg-cyan-400/80 backdrop-blur-sm rounded-full p-2 shadow-lg group-hover:scale-110 transition-transform -left-4 ring-1 ring-white/10">
+                      <ChevronsLeftRightIcon className="w-5 h-5 text-white" />
+                  </div>
+              </div>
+            )}
+            
+            {/* Labels (only shown after first edit) - MOVED OUTSIDE OF TRANSFORM CONTAINER */}
+            {historyIndex > 0 && !isComparing && (
+              <>
+                <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-20">
+                    {t('original')}
+                </div>
+                {/* Clipping container for the "Edited" label */}
+                <div
+                    className="absolute inset-0 pointer-events-none z-20"
+                    style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}
+                >
+                    <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-md text-white text-xs font-bold py-1 px-2 rounded-md">
+                        {t('edited')}
+                    </div>
+                </div>
+              </>
+            )}
 
              {/* Interactive Expansion UI v2 */}
              {currentImage && activeTab === 'expand' && imgRef.current && imageViewerRef.current && (() => {
