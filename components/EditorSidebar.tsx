@@ -24,7 +24,7 @@ interface EditorSidebarProps {
   isLoading: boolean;
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
-  onApplyRetouch: () => void;
+  onApplyRetouch: (promptOverride?: string) => void;
   onApplyCrop: () => void;
   onSetAspect: (aspect: number | undefined) => void;
   isCropping: boolean;
@@ -53,12 +53,16 @@ interface EditorSidebarProps {
   onApplyExtract: () => void;
   extractPrompt: string;
   onExtractPromptChange: (prompt: string) => void;
+  extractedItemsFiles: File[];
   extractedItemUrls: string[];
-  onUseExtractedAsStyle: (index: number) => void;
+  extractHistoryFiles: File[][];
+  extractedHistoryItemUrls: string[][];
+  onUseExtractedAsStyle: (file: File) => void;
   isMaskPresent: boolean;
   clearMask: () => void;
   retouchPrompt: string;
   onRetouchPromptChange: (prompt: string) => void;
+  retouchPromptInputRef: React.RefObject<HTMLInputElement>;
   selectionMode: SelectionMode;
   setSelectionMode: (mode: SelectionMode) => void;
   brushMode: BrushMode;
@@ -108,6 +112,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                   isMaskPresent={props.isMaskPresent}
                   prompt={props.retouchPrompt}
                   onPromptChange={props.onRetouchPromptChange}
+                  promptInputRef={props.retouchPromptInputRef}
                 />;
       case 'crop':
         return <CropPanel onApplyCrop={props.onApplyCrop} onSetAspect={props.onSetAspect} isLoading={props.isLoading} isCropping={props.isCropping} isImageLoaded={props.isImageLoaded} />;
@@ -154,7 +159,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                   onApplyExtract={props.onApplyExtract}
                   prompt={props.extractPrompt}
                   onPromptChange={props.onExtractPromptChange}
+                  extractedItemsFiles={props.extractedItemsFiles}
                   extractedItemUrls={props.extractedItemUrls}
+                  extractHistoryFiles={props.extractHistoryFiles}
+                  extractedHistoryItemUrls={props.extractedHistoryItemUrls}
                   onUseAsStyle={props.onUseExtractedAsStyle}
                 />;
       default:

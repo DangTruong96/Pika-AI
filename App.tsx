@@ -5,10 +5,10 @@
 
 
 // Fix: Corrected syntax error in import statement to correctly import React hooks.
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, type Corners, type Enhancement, RateLimitError } from './services/geminiService';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, removePeopleFromImage, type Corners, type Enhancement, RateLimitError, dataURLtoFile } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
@@ -20,30 +20,14 @@ import HistoryPanel from './components/HistoryPanel';
 import type { TranslationKey } from './translations';
 
 
-// Helper to convert a data URL string to a File object
-const dataURLtoFile = (dataurl: string, filename: string): File => {
-    const arr = dataurl.split(',');
-    if (arr.length < 2) throw new Error("Invalid data URL");
-    const mimeMatch = arr[0].match(/:(.*?);/);
-    if (!mimeMatch || !mimeMatch[1]) throw new Error("Could not parse MIME type from data URL");
-
-    const mime = mimeMatch[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, {type:mime});
-}
-
 // Mobile-specific input bar for a better UX with on-screen keyboards
 const MobileInputBar: React.FC<{
     prompt: string;
     onPromptChange: (value: string) => void;
     onSubmit: () => void;
     isLoading: boolean;
-}> = ({ prompt, onPromptChange, onSubmit, isLoading }) => {
+    hotspot: { x: number, y: number } | null;
+}> = ({ prompt, onPromptChange, onSubmit, isLoading, hotspot }) => {
     const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,7 +36,7 @@ const MobileInputBar: React.FC<{
             inputRef.current?.focus();
         }, 100);
         return () => clearTimeout(timer);
-    }, []);
+    }, [hotspot]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,12 +131,14 @@ const App: React.FC = () => {
   const [retouchPrompt, setRetouchPrompt] = useState('');
   const [selectionMode, setSelectionMode] = useState<SelectionMode>('point');
   const [editHotspot, setEditHotspot] = useState<{ x: number, y: number } | null>(null);
+  const [hotspotDisplayPosition, setHotspotDisplayPosition] = useState<{ left: number, top: number } | null>(null);
   const [brushMode, setBrushMode] = useState<BrushMode>('draw');
   const [brushSize, setBrushSize] = useState(30);
   const [isDrawing, setIsDrawing] = useState(false);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   const [isMouseOverViewer, setIsMouseOverViewer] = useState(false);
   const lastDrawPointRef = useRef<{ x: number; y: number } | null>(null);
+  const retouchPromptInputRef = useRef<HTMLInputElement>(null);
 
   // Insert state
   const [insertSubjectFiles, setInsertSubjectFiles] = useState<File[]>([]);
@@ -171,6 +157,9 @@ const App: React.FC = () => {
   const [extractPrompt, setExtractPrompt] = useState('');
   const [extractedItems, setExtractedItems] = useState<File[]>([]);
   const [extractedItemUrls, setExtractedItemUrls] = useState<string[]>([]);
+  const [extractHistory, setExtractHistory] = useState<File[][]>([]);
+  const [extractedHistoryItemUrls, setExtractedHistoryItemUrls] = useState<string[][]>([]);
+
 
   // Scan state
   const [isManualScanMode, setIsManualScanMode] = useState(false);
@@ -213,6 +202,9 @@ const App: React.FC = () => {
 
   // Scroll-based UI state
   const [imageScale, setImageScale] = useState(1);
+  
+  // Window size state to react to resizes (e.g., mobile keyboard)
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
   // Interaction State for visual feedback on zoom
   const [isInteracting, setIsInteracting] = useState(false);
@@ -223,6 +215,15 @@ const App: React.FC = () => {
 
   const [currentImageUrl, setImageUrl] = useState<string | null>(null);
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+
+  // Effect to track window resizing
+  useEffect(() => {
+    const handleResize = () => {
+        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Helper to provide temporary visual feedback on interactions like zoom
   const reportInteraction = useCallback(() => {
@@ -328,6 +329,52 @@ const App: React.FC = () => {
     }
   }, [currentImageUrl, clearMask]);
 
+  // Effect to calculate and set the display position of the hotspot.
+  // This runs after layout has been updated, fixing issues with mobile keyboards resizing the view.
+  useLayoutEffect(() => {
+    if (editHotspot && activeTab === 'retouch' && selectionMode === 'point' && imgRef.current && imageViewerRef.current) {
+        const img = imgRef.current;
+        const viewer = imageViewerRef.current;
+        const { naturalWidth, naturalHeight } = img;
+
+        if (naturalWidth === 0 || naturalHeight === 0) {
+            setHotspotDisplayPosition(null);
+            return;
+        }
+
+        const viewerRect = viewer.getBoundingClientRect();
+        const imgRect = img.getBoundingClientRect();
+
+        const percentX = editHotspot.x / naturalWidth;
+        const percentY = editHotspot.y / naturalHeight;
+
+        const hotspotOnImgX = percentX * imgRect.width;
+        const hotspotOnImgY = percentY * imgRect.height;
+        
+        const finalX = (imgRect.left - viewerRect.left) + hotspotOnImgX;
+        const finalY = (imgRect.top - viewerRect.top) + hotspotOnImgY;
+
+        setHotspotDisplayPosition({ left: finalX, top: finalY });
+    } else {
+        setHotspotDisplayPosition(null);
+    }
+  }, [editHotspot, activeTab, selectionMode, scale, position, imageScale, currentImageUrl, isToolboxOpen, windowSize]);
+
+
+  // Effect to focus the desktop input when a point is selected
+  useEffect(() => {
+    if (activeTab === 'retouch' && selectionMode === 'point' && editHotspot) {
+      // Small timeout to allow the UI to update and the input to become visible/focusable
+      const timer = setTimeout(() => {
+        // Only focus the desktop input; the mobile bar handles its own focus.
+        if (window.innerWidth >= 768) { // md breakpoint
+            retouchPromptInputRef.current?.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [editHotspot, activeTab, selectionMode]);
+
 
   // Effect to create and revoke object URLs safely for main images
   useEffect(() => {
@@ -361,6 +408,19 @@ const App: React.FC = () => {
     return () => { urls.forEach(url => URL.revokeObjectURL(url)); };
   }, [extractedItems]);
   
+  // Effect to create/revoke object URLs for the extraction history
+  useEffect(() => {
+    const allUrls = extractHistory.map(set => 
+        set.map(item => URL.createObjectURL(item))
+    );
+    setExtractedHistoryItemUrls(allUrls);
+    
+    return () => { 
+        allUrls.forEach(urlSet => 
+            urlSet.forEach(url => URL.revokeObjectURL(url))
+        ); 
+    };
+  }, [extractHistory]);
 
   // Function to show controls and set a timeout to hide them
   const showZoomControls = useCallback(() => {
@@ -427,6 +487,7 @@ const App: React.FC = () => {
     setScanHistory([]);
     setExtractPrompt('');
     setExtractedItems([]);
+    setExtractHistory([]);
   }, [clearMask]);
   
   const handleStartOver = useCallback(() => {
@@ -446,6 +507,7 @@ const App: React.FC = () => {
     setScanHistory([]);
     setExtractPrompt('');
     setExtractedItems([]);
+    setExtractHistory([]);
   }, [clearMask]);
 
   const handleHistorySelect = (index: number) => {
@@ -486,13 +548,15 @@ const App: React.FC = () => {
     console.error(err);
   }, [t]);
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (promptOverride?: string) => {
     if (!currentImage) {
       setError(t('errorNoImageLoaded'));
       return;
     }
     
-    if (!retouchPrompt.trim()) {
+    const finalPromptToUse = promptOverride || retouchPrompt;
+
+    if (!finalPromptToUse.trim()) {
         setError(t('errorEnterDescription'));
         return;
     }
@@ -533,8 +597,8 @@ const App: React.FC = () => {
             finalMaskUrl = pointCanvas.toDataURL('image/png');
         }
 
-        let finalPrompt = retouchPrompt;
-        const lowerCasePrompt = retouchPrompt.toLowerCase().trim();
+        let finalPrompt = finalPromptToUse;
+        const lowerCasePrompt = finalPromptToUse.toLowerCase().trim();
 
         const commandMap: Record<string, TranslationKey> = {
             'remove person': 'retouchRemovePersonPrompt',
@@ -820,6 +884,27 @@ const App: React.FC = () => {
     }
   }, [addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, insertStyleFiles, insertBackgroundFile, insertPrompt, handleApiError]);
 
+  // --- Background Handler for Insert Panel ---
+  const handleInsertBackgroundFileChange = useCallback(async (file: File | null) => {
+    if (!file) {
+      setInsertBackgroundFile(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const cleanedImageUrl = await removePeopleFromImage(file);
+      const cleanedImageFile = dataURLtoFile(cleanedImageUrl, `bg-cleaned-${Date.now()}.png`);
+      setInsertBackgroundFile(cleanedImageFile);
+    } catch (err) {
+      handleApiError(err, 'errorFailedToCleanBackground');
+      setInsertBackgroundFile(file); // Fallback to original on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleApiError]);
+
   // --- Extract Handlers ---
   const handleApplyExtract = useCallback(async () => {
     if (!currentImage) {
@@ -838,24 +923,32 @@ const App: React.FC = () => {
         const extractedFiles = extractedDataUrls.map((dataUrl, index) => 
             dataURLtoFile(dataUrl, `extracted-${Date.now()}-${index}.png`)
         );
+        
+        // Add the PREVIOUS result to history, then set the NEW one.
+        if (extractedItems.length > 0) {
+            setExtractHistory(prev => [extractedItems, ...prev]);
+        }
         setExtractedItems(extractedFiles);
+
     } catch (err) {
         handleApiError(err, 'errorFailedToExtract');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, extractPrompt, t, handleApiError]);
+  }, [currentImage, extractPrompt, t, handleApiError, extractedItems]);
 
-  const handleUseExtractedAsStyle = useCallback((index: number) => {
-    const item = extractedItems[index];
-    if (item) {
-        setInsertStyleFiles(prev => [...prev, item]);
-        setActiveTab('insert');
-        // Reset extract panel state after use
-        setExtractPrompt('');
-        setExtractedItems([]);
+  const handleUseExtractedAsStyle = useCallback((itemFile: File) => {
+    if (itemFile) {
+        // Add to style files, preventing duplicates
+        setInsertStyleFiles(prev => {
+            const alreadyExists = prev.some(file => file.name === itemFile.name && file.size === itemFile.size && file.lastModified === itemFile.lastModified);
+            if (alreadyExists) {
+                return prev;
+            }
+            return [...prev, itemFile];
+        });
     }
-  }, [extractedItems]);
+  }, []);
 
   // --- Scan Handlers ---
   const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => {
@@ -1962,35 +2055,15 @@ const App: React.FC = () => {
                 );
             })()}
 
-            {/* Hotspot Indicator - Logic is now dynamic to handle resizes */}
-            {editHotspot && !isLoading && activeTab === 'retouch' && selectionMode === 'point' && imgRef.current && imageViewerRef.current && (() => {
-                const img = imgRef.current;
-                const viewer = imageViewerRef.current;
-
-                const { naturalWidth, naturalHeight } = img;
-                if (naturalWidth === 0 || naturalHeight === 0) return null;
-
-                const viewerRect = viewer.getBoundingClientRect();
-                const imgRect = img.getBoundingClientRect();
-
-                const percentX = editHotspot.x / naturalWidth;
-                const percentY = editHotspot.y / naturalHeight;
-
-                const hotspotOnImgX = percentX * imgRect.width;
-                const hotspotOnImgY = percentY * imgRect.height;
-                
-                const finalX = (imgRect.left - viewerRect.left) + hotspotOnImgX;
-                const finalY = (imgRect.top - viewerRect.top) + hotspotOnImgY;
-
-                return (
-                    <div 
-                        className="absolute rounded-full w-5 h-5 bg-cyan-500/70 border-2 border-white pointer-events-none -translate-x-1/2 -translate-y-1/2 z-40"
-                        style={{ left: `${finalX}px`, top: `${finalY}px` }}
-                    >
-                        <div className="absolute inset-[-4px] rounded-full w-7 h-7 animate-ping bg-cyan-400 opacity-80"></div>
-                    </div>
-                );
-            })()}
+            {/* Hotspot Indicator - Use pre-calculated position from state */}
+            {hotspotDisplayPosition && !isLoading && (
+              <div 
+                  className="absolute rounded-full w-5 h-5 bg-cyan-500/70 border-2 border-white pointer-events-none -translate-x-1/2 -translate-y-1/2 z-40"
+                  style={{ left: `${hotspotDisplayPosition.left}px`, top: `${hotspotDisplayPosition.top}px` }}
+              >
+                  <div className="absolute inset-[-4px] rounded-full w-7 h-7 animate-ping bg-cyan-400 opacity-80"></div>
+              </div>
+            )}
             
             {/* Custom Brush Cursor */}
             {isMouseOverViewer && activeTab === 'retouch' && selectionMode === 'brush' && mousePosition && imgRef.current && (
@@ -2111,7 +2184,7 @@ const App: React.FC = () => {
         insertStyleFiles: insertStyleFiles,
         onInsertStyleFilesChange: setInsertStyleFiles,
         insertBackgroundFile: insertBackgroundFile,
-        onInsertBackgroundFileChange: setInsertBackgroundFile,
+        onInsertBackgroundFileChange: handleInsertBackgroundFileChange,
         insertPrompt: insertPrompt,
         onInsertPromptChange: setInsertPrompt,
         onApplyScan: handleApplyScan,
@@ -2123,12 +2196,16 @@ const App: React.FC = () => {
         onApplyExtract: handleApplyExtract,
         extractPrompt: extractPrompt,
         onExtractPromptChange: setExtractPrompt,
+        extractedItemsFiles: extractedItems,
         extractedItemUrls: extractedItemUrls,
+        extractHistoryFiles: extractHistory,
+        extractedHistoryItemUrls: extractedHistoryItemUrls,
         onUseExtractedAsStyle: handleUseExtractedAsStyle,
         isMaskPresent: isMaskPresent(),
         clearMask: clearMask,
         retouchPrompt: retouchPrompt,
         onRetouchPromptChange: setRetouchPrompt,
+        retouchPromptInputRef: retouchPromptInputRef,
         selectionMode: selectionMode,
         setSelectionMode: (mode: SelectionMode) => {
             setSelectionMode(mode);
@@ -2259,8 +2336,9 @@ const App: React.FC = () => {
             <MobileInputBar 
                 prompt={retouchPrompt}
                 onPromptChange={setRetouchPrompt}
-                onSubmit={handleGenerate}
+                onSubmit={() => handleGenerate()}
                 isLoading={isLoading}
+                hotspot={editHotspot}
             />
         )}
     </div>

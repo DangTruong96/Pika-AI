@@ -66,9 +66,8 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
     }, [styleFiles]);
 
     const handleAddSubjectFile = (file: File) => {
-        if (subjectFiles.length < 4) {
-            onSubjectFilesChange([...subjectFiles, file]);
-        }
+        if (subjectFiles.length >= 4) return;
+        onSubjectFilesChange([...subjectFiles, file]);
     };
 
     const handleSubjectFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,7 +179,7 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
                     <div className="grid grid-cols-4 gap-2">
                         {subjectPreviews.map((preview, index) => (
                             <div key={index} className="relative aspect-square rounded-lg overflow-hidden group bg-black/20">
-                                <img src={preview} alt={`Subject ${index + 1}`} className="w-full h-full object-contain" />
+                                <img src={preview} alt={`Subject ${index + 1}`} className="w-full h-full object-cover" />
                                 <button
                                     onClick={() => handleRemoveSubject(index)}
                                     className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
@@ -191,7 +190,7 @@ const CompositePanel: React.FC<InsertPanelProps> = ({
                             </div>
                         ))}
                         {subjectFiles.length < 4 && (
-                            <div>
+                            <div className="relative aspect-square">
                                 <label
                                     htmlFor="subject-file-input"
                                     {...subjectDragProps}

@@ -11,7 +11,7 @@ export type SelectionMode = 'point' | 'brush';
 export type BrushMode = 'draw' | 'erase';
 
 interface RetouchPanelProps {
-  onApplyRetouch: () => void;
+  onApplyRetouch: (promptOverride?: string) => void;
   isLoading: boolean;
   isHotspotSelected: boolean;
   selectionMode: SelectionMode;
@@ -25,6 +25,7 @@ interface RetouchPanelProps {
   isMaskPresent: boolean;
   prompt: string;
   onPromptChange: (prompt: string) => void;
+  promptInputRef: React.RefObject<HTMLInputElement>;
 }
 
 const RetouchPanel: React.FC<RetouchPanelProps> = ({ 
@@ -42,6 +43,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = ({
   isMaskPresent,
   prompt,
   onPromptChange,
+  promptInputRef,
 }) => {
   const { t } = useTranslation();
 
@@ -52,10 +54,10 @@ const RetouchPanel: React.FC<RetouchPanelProps> = ({
   ];
 
   const handlePresetClick = (presetPrompt: string) => {
-    // Set the prompt and immediately trigger generation
+    // Update the prompt in the UI for user feedback
     onPromptChange(presetPrompt);
-    // Use a timeout to ensure the state updates before calling the generation function
-    setTimeout(() => onApplyRetouch(), 0);
+    // Immediately trigger generation with the correct prompt to avoid state-based race conditions
+    onApplyRetouch(presetPrompt);
   };
 
   const isPointModeReady = selectionMode === 'point' && isHotspotSelected;
@@ -128,6 +130,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = ({
       <form onSubmit={(e) => { e.preventDefault(); onApplyRetouch(); }} className={`w-full flex-col items-center gap-3 ${selectionMode === 'point' ? 'hidden md:flex' : 'flex'}`}>
         <div className="w-full flex items-center gap-2">
             <input
+              ref={promptInputRef}
               type="text"
               value={prompt}
               onChange={(e) => onPromptChange(e.target.value)}

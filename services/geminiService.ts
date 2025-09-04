@@ -21,6 +21,23 @@ export type Corners = {
     br: { x: number; y: number };
 };
 
+// Helper to convert a data URL string to a File object
+export const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',');
+    if (arr.length < 2) throw new Error("Invalid data URL");
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch || !mimeMatch[1]) throw new Error("Could not parse MIME type from data URL");
+
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, {type:mime});
+}
+
 // Helper function to convert a File object to a Gemini API Part
 const fileToPart = async (file: File): Promise<{ inlineData: { mimeType: string; data: string; } }> => {
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -500,62 +517,78 @@ export const generateScannedDocument = async (
     let prompt: string;
 
     if (restoreText) {
-        prompt = `**AI TASK: Zero Deviation Document Protocol**
+        prompt = `**AI TASK: Forensic Document Recreation Protocol v3.0**
 
-**CORE MANDATE:** This is a forensic-level recreation task. Your primary goal is to produce a perfect digital copy. Any creative alteration, hallucination, or deviation from the original's graphical content is a CRITICAL FAILURE of this task.
+**CORE MISSION:** Your ONLY task is to create a perfect, 1:1 digital replica of the document in the user's image. This is a technical task demanding absolute precision. Creativity is forbidden.
 
-**MANDATORY EXECUTION PLAN:**
+**NON-NEGOTIABLE DIRECTIVE & DEFINITION OF CRITICAL FAILURE:**
+- **THE SINGLE BIGGEST FAILURE you can make is to HALLUCINATE (add, invent, create) a stamp or seal that is NOT VISIBLY PRESENT in the original image.**
+- If the original has no red stamp, the output MUST have no red stamp.
+- **Adding a non-existent stamp is a CRITICAL MISSION FAILURE.**
 
-1.  **GEOMETRIC CORRECTION:**
-    - Perform a perfect perspective warp to make the document appear completely flat and rectangular.
-    - Crop precisely to the document's edges.
+**MANDATORY AI EXECUTION WORKFLOW:**
 
-2.  **CONTENT TRIAGE (CRITICAL ANALYSIS):**
-    - **Examine the entire document and classify ALL content into one of two categories:**
-        - **1. TYPED TEXT:** Machine-printed text.
-        - **2. GRAPHICAL & HANDWRITTEN ELEMENTS:** Includes all stamps, seals, logos, signatures, handwriting, diagrams, and photos.
+**STEP 1: GEOMETRIC CORRECTION & BACKGROUND ELIMINATION**
+- **Identify Document Edges:** First, precisely identify the four corners of the document within the image.
+- **Flatten & Crop:** Perform a perfect perspective warp to make the document perfectly rectangular. CROP EXACTLY to these edges.
+- **CRITICAL:** **ALL of the original image background MUST be completely removed and discarded.** The final output must only contain the document itself on a new, clean digital background.
 
-3.  **CONTENT HANDLING (NON-NEGOTIABLE RULES):**
+**STEP 2: CONTENT ANALYSIS & CLASSIFICATION (Internal Thought Process)**
+- Before drawing anything, you MUST analyze and classify every single element on the document into one of two categories:
+    - **CATEGORY A: Typed Text.** Machine-printed characters.
+    - **CATEGORY B: Graphics & Handwriting.** This includes ALL seals, stamps, logos, signatures, handwritten notes, diagrams, etc., that are **visibly present** in the original.
 
-    - **A. For GRAPHICAL & HANDWRITTEN ELEMENTS (FORENSIC PRESERVATION MANDATE):**
-        - **A.1. ZERO HALLUCINATION & ALTERATION (ABSOLUTE PROHIBITION):** You are **STRICTLY FORBIDDEN** from re-drawing, replacing, generating, creating, or "cleaning up" any element in this category. A re-drawn seal or a generated signature is a CRITICAL FAILURE. Adding a seal that was not in the original is a CRITICAL FAILURE.
-        - **A.2. PERFECT PHOTOGRAPHIC TRANSFER:** These elements **MUST** be photographically "lifted" directly from the source image. Their original shape, color, texture, and internal details must be preserved with 100% accuracy.
-        - **A.3. PERFECT POSITIONAL INTEGRITY:** The lifted elements **MUST** be placed in the final document at their **EXACT original coordinates, size, and rotation**. A seal that is moved, even slightly, is a CRITICAL FAILURE.
+**STEP 3: CONTENT RECONSTRUCTION (ZERO-DEVIATION RULES)**
 
-    - **B. For TYPED TEXT (HIGH-FIDELITY RECONSTRUCTION):**
-        - **B.1. Perfect Transcription & Language Integrity:** Perform a 100% accurate OCR.
-            - **UNIVERSAL LANGUAGE & DIACRITIC MANDATE:** 100% character and diacritic accuracy is NON-NEGOTIABLE for ALL languages. An incorrect diacritic (e.g., Vietnamese \`dấu\`, German \`umlaut\`) or a single wrong character is a COMPLETE FAILURE of the task. The language must be perfectly preserved.
-        - **B.2. Precise Layout & Font Matching:** The re-drawn text's font must be the **closest possible professional font match** to the original. The position, size, weight, kerning, and line spacing **MUST PERFECTLY MIRROR** the original layout.
-        - **B.3. Re-draw for Ultimate Clarity:** Using the perfect transcription and layout match, render new text. The final text must appear as if printed from a high-resolution laser printer—razor-sharp, with clean edges, and completely free of any digital artifacts, blurring, or pixelation.
+- **RULE FOR CATEGORY B (Graphics & Handwriting): PHOTOGRAPHIC PRESERVATION**
+    - **B.1: NO REDRAWING:** You are **ABSOLUTELY FORBIDDEN** from redrawing, recreating, or "improving" any element in this category.
+    - **B.2: FORENSIC LIFT:** These elements **MUST** be photographically "lifted" from the source image with zero changes.
+    - **B.3: 100% FIDELITY:** Their original color, shape, size, texture, and all imperfections MUST be preserved EXACTLY. If a seal is red, it must be lifted and placed as the EXACT SAME SHADE of red. If a seal is black, it must be black.
+    - **B.4: PERFECT PLACEMENT:** Place the lifted elements at their EXACT original coordinates, size, and rotation on the final canvas.
 
-4.  **FINAL ASSEMBLY & QUALITY CHECK:**
-    - **Assemble:** Combine the re-drawn \`Typed Text\` and the preserved \`Graphical/Handwritten Elements\` onto a new, clean digital canvas, maintaining the perfect original layout.
-    - **Background & Enhancement:** Create a clean background based on the enhancement mode: '${enhancement}'.
-    - **Shadows:** ${removeShadows ? 'Completely remove all shadows for a perfectly uniform, flat-lit background.' : 'Preserve natural lighting and shadows.'}
-    - **Final Quality:** The resulting image must have ultra-sharp text and perfectly preserved graphics, looking like a flawless digital master of the original document.
+- **RULE FOR CATEGORY A (Typed Text): HIGH-FIDELITY RECONSTRUCTION**
+    - **A.1: PERFECT OCR:** Transcribe the text with 100% accuracy, including all special characters and diacritics for ANY language (e.g., Vietnamese, Japanese, German). A single incorrect character is a failure.
+    - **A.2: PERFECT LAYOUT:** Replicate the original font, size, weight, and spacing as closely as possible. The layout must be identical.
+    - **A.3: RE-RENDER FOR CLARITY:** Render the perfectly transcribed text to be razor-sharp, as if from a laser printer.
 
-**OUTPUT REQUIREMENTS:**
-- Return ONLY the final, restored document as a high-resolution PNG file.
-- Do not output any text.`;
+**STEP 4: FINAL ASSEMBLY & ENHANCEMENT**
+- Combine the re-rendered text (Category A) and the photographically preserved graphics (Category B) onto a new digital canvas.
+- The new background must be clean and uniform, based on the enhancement mode: '${enhancement}'.
+- ${removeShadows ? 'Remove ALL shadows to create a perfectly flat-lit surface.' : 'Preserve natural lighting.'}
+
+**FINAL CHECK:** Does the output contain ANY stamp or seal that was not in the original? If yes, it is a failure. Start over.
+
+**OUTPUT:** Return ONLY the final, perfect document replica as a high-resolution PNG. Do not output text.`;
     } else {
-        prompt = `**AI TASK: Professional Photo Correction for Documents**
+        prompt = `**AI TASK: Professional Photo Correction for Documents v3.0**
 
 **PRIMARY OBJECTIVE:** Transform the input image into a perfect, head-on photograph of the document it contains. The result should look like a high-resolution, professional studio photo of the document, not a typical office scan.
 
-**CRITICAL RULES:**
+**NON-NEGOTIABLE DIRECTIVE & DEFINITION OF CRITICAL FAILURE:**
+- **THE SINGLE BIGGEST FAILURE you can make is to HALLUCINATE (add, invent, create) a stamp or seal that is NOT VISIBLY PRESENT in the original image.**
+- If the original has no red stamp, the output MUST have no red stamp.
+- **Adding a non-existent stamp is a CRITICAL MISSION FAILURE.**
 
-1.  **ABSOLUTE CONTENT PRESERVATION:**
-    - **DO NOT ALTER THE TEXT OR IMAGES ON THE DOCUMENT.** You are forbidden from redrawing, changing, or "correcting" any characters, words, or graphics. Your task is to enhance the *photograph*, not the *document's content*.
-    - **PRESERVE TEXTURE AND SHARPNESS:** The final output **MUST** maintain or even slightly enhance the original sharpness, paper texture, and ink detail. Do not blur, smudge, or over-smooth the image. The goal is maximum clarity while preserving photographic realism.
+**MANDATORY AI EXECUTION WORKFLOW:**
 
-2.  **GEOMETRIC & LIGHTING CORRECTION:**
-    - **PERSPECTIVE:** First, perform a perfect perspective warp to make the document appear completely flat and rectangular, as if photographed from directly above. Crop precisely to the document's edges.
-    - **LIGHTING & SHADOWS:** ${removeShadows ? 'Completely remove all shadows and lighting glare to create a perfectly even, flat-lit surface. The lighting should be uniform across the entire document.' : 'Preserve the natural lighting and shadows, but balance them to improve overall readability.'}
-    - **ENHANCEMENT:** Apply the requested enhancement mode: '${enhancement}'. Adjust contrast and clarity to make the content as readable as possible without sacrificing the photographic quality and texture.
+**STEP 1: GEOMETRIC CORRECTION & BACKGROUND ELIMINATION**
+- **Identify Document Edges:** First, precisely identify the four corners of the document within the image.
+- **Flatten & Crop:** Perform a perfect perspective warp to make the document perfectly rectangular. CROP EXACTLY to these edges.
+- **CRITICAL:** **ALL of the original image background MUST be completely removed and discarded.** The final output must only contain the document itself on a new, clean digital background.
+
+**STEP 2: PHOTOGRAPHIC ENHANCEMENT (ZERO-DEVIATION RULES)**
+- **ABSOLUTE CONTENT PRESERVATION:** You are forbidden from redrawing, changing, or "correcting" any characters, words, or graphics on the document. Your task is to enhance the *photograph*, not the *content*.
+- **STRICT RULE FOR GRAPHICS (SEALS, STAMPS, SIGNATURES):** All graphical elements **MUST BE PRESERVED with 100% photographic accuracy**.
+    - DO NOT redraw or alter their shape or internal details.
+    - PRESERVE ORIGINAL COLOR AND SIZE: The color, shades of color, and size of a seal or stamp must remain identical to the original source.
+- **PRESERVE TEXTURE AND SHARPNESS:** The final output MUST maintain or slightly enhance the original sharpness, paper texture, and ink detail. Do not blur or over-smooth the image. The goal is maximum clarity while preserving photographic realism.
+
+**STEP 3: FINAL ASSEMBLY & ENHANCEMENT**
+- **LIGHTING & SHADOWS:** ${removeShadows ? 'Completely remove all shadows and lighting glare to create a perfectly even, flat-lit surface. The lighting should be uniform across the entire document.' : 'Preserve the natural lighting and shadows, but balance them to improve overall readability.'}
+- **ENHANCEMENT:** Apply the requested enhancement mode: '${enhancement}'. Adjust contrast and clarity to make the content as readable as possible.
 
 **OUTPUT:**
 - Return ONLY the final, corrected image as a high-quality PNG.
-- The image must look like a professional, perfectly-lit photograph of the document.
 - Do not output text.`;
     }
 
@@ -605,50 +638,54 @@ export const generateScannedDocumentWithCorners = async (
 - Bottom-Right: (${corners.br.x}, ${corners.br.y})`;
 
     if (restoreText) {
-        prompt = `**AI TASK: Zero Deviation Document Protocol**
+        prompt = `**AI TASK: Forensic Document Recreation Protocol v3.0**
 
-**CORE MANDATE:** This is a forensic-level recreation task. Your primary goal is to produce a perfect digital copy. Any creative alteration, hallucination, or deviation from the original's graphical content is a CRITICAL FAILURE of this task.
+**CORE MISSION:** Your ONLY task is to create a perfect, 1:1 digital replica of the document in the user's image. This is a technical task demanding absolute precision. Creativity is forbidden.
 
 **INPUTS:**
 - Image containing a document.
 - Source Quad (exact pixel coordinates of the document corners):
 ${sourceQuad}
 
-**MANDATORY EXECUTION PLAN:**
+**NON-NEGOTIABLE DIRECTIVE & DEFINITION OF CRITICAL FAILURE:**
+- **THE SINGLE BIGGEST FAILURE you can make is to HALLUCINATE (add, invent, create) a stamp or seal that is NOT VISIBLY PRESENT in the original image.**
+- If the original has no red stamp, the output MUST have no red stamp.
+- **Adding a non-existent stamp is a CRITICAL MISSION FAILURE.**
 
-1.  **GEOMETRIC CORRECTION:**
-    - Use the provided Source Quad to perform a perfect perspective warp, making the document completely flat and rectangular.
-    - Crop precisely to the new edges.
+**MANDATORY AI EXECUTION WORKFLOW:**
 
-2.  **CONTENT TRIAGE (CRITICAL ANALYSIS):**
-    - **Examine the entire document and classify ALL content into one of two categories:**
-        - **1. TYPED TEXT:** Machine-printed text.
-        - **2. GRAPHICAL & HANDWRITTEN ELEMENTS:** Includes all stamps, seals, logos, signatures, handwriting, diagrams, and photos.
+**STEP 1: GEOMETRIC CORRECTION & BACKGROUND ELIMINATION**
+- **Use the provided Source Quad** to perform a perfect perspective warp, making the document perfectly rectangular. CROP EXACTLY to these new edges.
+- **CRITICAL:** **ALL of the original image background MUST be completely removed and discarded.** The final output must only contain the document itself on a new, clean digital background.
 
-3.  **CONTENT HANDLING (NON-NEGOTIABLE RULES):**
+**STEP 2: CONTENT ANALYSIS & CLASSIFICATION (Internal Thought Process)**
+- Before drawing anything, you MUST analyze and classify every single element on the document into one of two categories:
+    - **CATEGORY A: Typed Text.** Machine-printed characters.
+    - **CATEGORY B: Graphics & Handwriting.** This includes ALL seals, stamps, logos, signatures, handwritten notes, diagrams, etc., that are **visibly present** in the original.
 
-    - **A. For GRAPHICAL & HANDWRITTEN ELEMENTS (FORENSIC PRESERVATION MANDATE):**
-        - **A.1. ZERO HALLUCINATION & ALTERATION (ABSOLUTE PROHIBITION):** You are **STRICTLY FORBIDDEN** from re-drawing, replacing, generating, creating, or "cleaning up" any element in this category. A re-drawn seal or a generated signature is a CRITICAL FAILURE. Adding a seal that was not in the original is a CRITICAL FAILURE.
-        - **A.2. PERFECT PHOTOGRAPHIC TRANSFER:** These elements **MUST** be photographically "lifted" directly from the source image. Their original shape, color, texture, and internal details must be preserved with 100% accuracy.
-        - **A.3. PERFECT POSITIONAL INTEGRITY:** The lifted elements **MUST** be placed in the final document at their **EXACT original coordinates, size, and rotation**. A seal that is moved, even slightly, is a CRITICAL FAILURE.
+**STEP 3: CONTENT RECONSTRUCTION (ZERO-DEVIATION RULES)**
 
-    - **B. For TYPED TEXT (HIGH-FIDELITY RECONSTRUCTION):**
-        - **B.1. Perfect Transcription & Language Integrity:** Perform a 100% accurate OCR.
-            - **UNIVERSAL LANGUAGE & DIACRITIC MANDATE:** 100% character and diacritic accuracy is NON-NEGOTIABLE for ALL languages. An incorrect diacritic (e.g., Vietnamese \`dấu\`, German \`umlaut\`) or a single wrong character is a COMPLETE FAILURE of the task. The language must be perfectly preserved.
-        - **B.2. Precise Layout & Font Matching:** The re-drawn text's font must be the **closest possible professional font match** to the original. The position, size, weight, kerning, and line spacing **MUST PERFECTLY MIRROR** the original layout.
-        - **B.3. Re-draw for Ultimate Clarity:** Using the perfect transcription and layout match, render new text. The final text must appear as if printed from a high-resolution laser printer—razor-sharp, with clean edges, and completely free of any digital artifacts, blurring, or pixelation.
+- **RULE FOR CATEGORY B (Graphics & Handwriting): PHOTOGRAPHIC PRESERVATION**
+    - **B.1: NO REDRAWING:** You are **ABSOLUTELY FORBIDDEN** from redrawing, recreating, or "improving" any element in this category.
+    - **B.2: FORENSIC LIFT:** These elements **MUST** be photographically "lifted" from the source image with zero changes.
+    - **B.3: 100% FIDELITY:** Their original color, shape, size, texture, and all imperfections MUST be preserved EXACTLY. If a seal is red, it must be lifted and placed as the EXACT SAME SHADE of red. If a seal is black, it must be black.
+    - **B.4: PERFECT PLACEMENT:** Place the lifted elements at their EXACT original coordinates, size, and rotation on the final canvas.
 
-4.  **FINAL ASSEMBLY & QUALITY CHECK:**
-    - **Assemble:** Combine the re-drawn \`Typed Text\` and the preserved \`Graphical/Handwritten Elements\` onto a new, clean digital canvas, maintaining the perfect original layout.
-    - **Background & Enhancement:** Create a clean background based on the enhancement mode: '${enhancement}'.
-    - **Shadows:** ${removeShadows ? 'Completely remove all shadows for a perfectly uniform, flat-lit background.' : 'Preserve natural lighting and shadows.'}
-    - **Final Quality:** The resulting image must have ultra-sharp text and perfectly preserved graphics, looking like a flawless digital master of the original document.
+- **RULE FOR CATEGORY A (Typed Text): HIGH-FIDELITY RECONSTRUCTION**
+    - **A.1: PERFECT OCR:** Transcribe the text with 100% accuracy, including all special characters and diacritics for ANY language (e.g., Vietnamese, Japanese, German). A single incorrect character is a failure.
+    - **A.2: PERFECT LAYOUT:** Replicate the original font, size, weight, and spacing as closely as possible. The layout must be identical.
+    - **A.3: RE-RENDER FOR CLARITY:** Render the perfectly transcribed text to be razor-sharp, as if from a laser printer.
 
-**OUTPUT REQUIREMENTS:**
-- Return ONLY the final, restored document as a high-resolution PNG file.
-- Do not output any text.`;
+**STEP 4: FINAL ASSEMBLY & ENHANCEMENT**
+- Combine the re-rendered text (Category A) and the photographically preserved graphics (Category B) onto a new digital canvas.
+- The new background must be clean and uniform, based on the enhancement mode: '${enhancement}'.
+- ${removeShadows ? 'Remove ALL shadows to create a perfectly flat-lit surface.' : 'Preserve natural lighting.'}
+
+**FINAL CHECK:** Does the output contain ANY stamp or seal that was not in the original? If yes, it is a failure. Start over.
+
+**OUTPUT:** Return ONLY the final, perfect document replica as a high-resolution PNG. Do not output text.`;
     } else {
-        prompt = `**AI TASK: Professional Photo Correction for Documents**
+        prompt = `**AI TASK: Professional Photo Correction for Documents v3.0**
 
 **PRIMARY OBJECTIVE:** Transform the input image into a perfect, head-on photograph of the document it contains. The result should look like a high-resolution, professional studio photo of the document, not a typical office scan.
 
@@ -657,20 +694,30 @@ ${sourceQuad}
 - Source Quad (exact pixel coordinates of the document corners):
 ${sourceQuad}
 
-**CRITICAL RULES:**
+**NON-NEGOTIABLE DIRECTIVE & DEFINITION OF CRITICAL FAILURE:**
+- **THE SINGLE BIGGEST FAILURE you can make is to HALLUCINATE (add, invent, create) a stamp or seal that is NOT VISIBLY PRESENT in the original image.**
+- If the original has no red stamp, the output MUST have no red stamp.
+- **Adding a non-existent stamp is a CRITICAL MISSION FAILURE.**
 
-1.  **ABSOLUTE CONTENT PRESERVATION:**
-    - **DO NOT ALTER THE TEXT OR IMAGES ON THE DOCUMENT.** You are forbidden from redrawing, changing, or "correcting" any characters, words, or graphics. Your task is to enhance the *photograph*, not the *document's content*.
-    - **PRESERVE TEXTURE AND SHARPNESS:** The final output **MUST** maintain or even slightly enhance the original sharpness, paper texture, and ink detail. Do not blur, smudge, or over-smooth the image. The goal is maximum clarity while preserving photographic realism.
+**MANDATORY AI EXECUTION WORKFLOW:**
 
-2.  **GEOMETRIC & LIGHTING CORRECTION:**
-    - **PERSPECTIVE:** Use the provided Source Quad to perform a perfect perspective warp, making the document appear completely flat and rectangular. Crop precisely to the new edges.
-    - **LIGHTING & SHADOWS:** ${removeShadows ? 'Completely remove all shadows and lighting glare to create a perfectly even, flat-lit surface. The lighting should be uniform across the entire document.' : 'Preserve the natural lighting and shadows, but balance them to improve overall readability.'}
-    - **ENHANCEMENT:** Apply the requested enhancement mode: '${enhancement}'. Adjust contrast and clarity to make the content as readable as possible without sacrificing the photographic quality and texture.
+**STEP 1: GEOMETRIC CORRECTION & BACKGROUND ELIMINATION**
+- **Use the provided Source Quad** to perform a perfect perspective warp, making the document perfectly rectangular. CROP EXACTLY to these new edges.
+- **CRITICAL:** **ALL of the original image background MUST be completely removed and discarded.** The final output must only contain the document itself on a new, clean digital background.
+
+**STEP 2: PHOTOGRAPHIC ENHANCEMENT (ZERO-DEVIATION RULES)**
+- **ABSOLUTE CONTENT PRESERVATION:** You are forbidden from redrawing, changing, or "correcting" any characters, words, or graphics on the document. Your task is to enhance the *photograph*, not the *content*.
+- **STRICT RULE FOR GRAPHICS (SEALS, STAMPS, SIGNATURES):** All graphical elements **MUST BE PRESERVED with 100% photographic accuracy**.
+    - DO NOT redraw or alter their shape or internal details.
+    - PRESERVE ORIGINAL COLOR AND SIZE: The color, shades of color, and size of a seal or stamp must remain identical to the original source.
+- **PRESERVE TEXTURE AND SHARPNESS:** The final output MUST maintain or slightly enhance the original sharpness, paper texture, and ink detail. Do not blur or over-smooth the image. The goal is maximum clarity while preserving photographic realism.
+
+**STEP 3: FINAL ASSEMBLY & ENHANCEMENT**
+- **LIGHTING & SHADOWS:** ${removeShadows ? 'Completely remove all shadows and lighting glare to create a perfectly even, flat-lit surface. The lighting should be uniform across the entire document.' : 'Preserve the natural lighting and shadows, but balance them to improve overall readability.'}
+- **ENHANCEMENT:** Apply the requested enhancement mode: '${enhancement}'. Adjust contrast and clarity to make the content as readable as possible.
 
 **OUTPUT:**
 - Return ONLY the final, corrected image as a high-quality PNG.
-- The image must look like a professional, perfectly-lit photograph of the document.
 - Do not output text.`;
     }
 
@@ -777,4 +824,98 @@ export const generateExtractedItem = async (
 
     console.error(`Model response did not contain an image part for extraction.`, { response });
     throw new Error(errorMessage);
+};
+
+/**
+ * Removes all people from an image, reconstructing the background.
+ * @param originalImage The original image file.
+ * @returns A promise that resolves to the data URL of the image with people removed.
+ */
+export const removePeopleFromImage = async (
+    originalImage: File,
+): Promise<string> => {
+    console.log(`Starting people removal from background image.`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+    const originalImagePart = await fileToPart(originalImage);
+    const prompt = `You are an expert photo editing AI. Your task is to completely and seamlessly remove ALL people from the provided image.
+
+**CRITICAL INSTRUCTIONS:**
+1.  **IDENTIFY ALL HUMANS:** Find every person in the image, regardless of size or position.
+2.  **COMPLETE REMOVAL:** Erase them entirely.
+3.  **SEAMLESS RECONSTRUCTION:** Reconstruct the areas where the people were. You must do this by intelligently and photorealistically extending the existing background, textures, and lighting from the surrounding areas. The result must be completely seamless and look like the people were never there.
+4.  **PRESERVE EVERYTHING ELSE:** Do not alter, change, or distort any other part of the image (scenery, objects, animals, etc.). The final image must be the exact same scene, just without any humans.
+
+**OUTPUT:**
+Return ONLY the final, high-quality, edited image as a PNG file. Do not output text, explanations, or apologies.`;
+    const textPart = { text: prompt };
+
+    console.log('Sending image for people removal...');
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
+    console.log('Received response from model for people removal.', response);
+
+    return handleApiResponse(response, 'people removal');
+};
+
+
+/**
+ * Removes the background from an image, leaving the main subject on a transparent background.
+ * @param originalImage The original image file.
+ * @returns A promise that resolves to the data URL of the image with a transparent background.
+ */
+export const removeBackground = async (
+    originalImage: File,
+): Promise<string> => {
+    console.log(`Starting background removal`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+    const originalImagePart = await fileToPart(originalImage);
+    const prompt = `**AI TASK: Professional Background Removal**
+
+**PRIMARY OBJECTIVE:** Your one and only task is to flawlessly and accurately segment the main subject(s) from the background and make the background completely transparent. The result must be a high-quality, clean image suitable for professional design or e-commerce.
+
+**CRITICAL RULES & EXECUTION PROTOCOL:**
+
+1.  **PERFECT SEGMENTATION (NON-NEGOTIABLE):**
+    - The edges of the subject must be clean, sharp, and precise.
+    - Do not leave any background remnants, "halos," or fringes around the subject.
+    - Pay extreme attention to complex areas like hair, fur, or semi-transparent objects, ensuring a natural and detailed cutout.
+
+2.  **COMPLETE BACKGROUND REMOVAL:**
+    - The entire background, and only the background, must be made transparent.
+
+3.  **ABSOLUTE SUBJECT PRESERVATION:**
+    - The subject itself **MUST NOT BE ALTERED** in any way.
+    - You must perfectly preserve its original colors, lighting, internal shadows (shadows *on* the subject itself), and textures.
+    - Do not "enhance," recolor, or change any part of the subject.
+
+4.  **OUTPUT FORMAT:**
+    - The final output **MUST** be a PNG file with a transparent alpha channel.
+
+**OUTPUT REQUIREMENTS:**
+- Return ONLY the final, high-quality image of the subject with the background removed.
+- Do not output any text, explanations, or apologies.`;
+    const textPart = { text: prompt };
+
+    console.log('Sending image for background removal...');
+    const response = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [originalImagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        })
+    );
+    console.log('Received response from model for background removal.', response);
+
+    return handleApiResponse(response, 'background removal');
 };

@@ -12,8 +12,11 @@ interface ExtractPanelProps {
   isImageLoaded: boolean;
   prompt: string;
   onPromptChange: (prompt: string) => void;
+  extractedItemsFiles: File[];
   extractedItemUrls: string[];
-  onUseAsStyle: (index: number) => void;
+  extractHistoryFiles: File[][];
+  extractedHistoryItemUrls: string[][];
+  onUseAsStyle: (file: File) => void;
 }
 
 const ExtractPanel: React.FC<ExtractPanelProps> = ({ 
@@ -22,7 +25,10 @@ const ExtractPanel: React.FC<ExtractPanelProps> = ({
   isImageLoaded,
   prompt,
   onPromptChange,
+  extractedItemsFiles,
   extractedItemUrls,
+  extractHistoryFiles,
+  extractedHistoryItemUrls,
   onUseAsStyle
 }) => {
   const { t } = useTranslation();
@@ -75,13 +81,45 @@ const ExtractPanel: React.FC<ExtractPanelProps> = ({
                   <img src={url} alt={`${t('extractResultTitle')} ${index + 1}`} className="w-full h-full object-contain"/>
                 </div>
                 <button
-                  onClick={() => onUseAsStyle(index)}
+                  onClick={() => onUseAsStyle(extractedItemsFiles[index])}
                   disabled={isLoading}
                   className="w-full text-xs bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold py-2 px-3 rounded-lg transition-all active:scale-95 disabled:from-gray-600"
                 >
                   {t('extractUseAsStyle')}
                 </button>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {extractedHistoryItemUrls.length > 0 && (
+        <div className="w-full pt-4 mt-4 border-t border-white/10 flex flex-col items-center gap-4 animate-fade-in">
+          <h4 className="text-md font-semibold text-gray-300">{t('extractHistoryTitle')}</h4>
+          <div className="w-full flex flex-col gap-4 max-h-64 overflow-y-auto pr-2">
+            {extractedHistoryItemUrls.map((urlSet, setIndex) => (
+                <div key={setIndex} className="w-full grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {urlSet.map((url, itemIndex) => (
+                        <div key={`${setIndex}-${itemIndex}`} className="flex flex-col gap-2">
+                            <div 
+                                className="w-full aspect-square rounded-lg bg-black/20 p-2 border border-white/10"
+                                style={{ 
+                                    backgroundImage: 'repeating-conic-gradient(rgba(255,255,255,0.1) 0% 25%, transparent 0% 50%)',
+                                    backgroundSize: '16px 16px'
+                                }}
+                            >
+                                <img src={url} alt={`History item ${setIndex}-${itemIndex}`} className="w-full h-full object-contain"/>
+                            </div>
+                            <button
+                                onClick={() => onUseAsStyle(extractHistoryFiles[setIndex][itemIndex])}
+                                disabled={isLoading}
+                                className="w-full text-xs bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold py-2 px-3 rounded-lg transition-all active:scale-95 disabled:from-gray-600"
+                            >
+                                {t('extractUseAsStyle')}
+                            </button>
+                        </div>
+                    ))}
+                </div>
             ))}
           </div>
         </div>
