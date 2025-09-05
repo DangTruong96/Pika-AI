@@ -8,7 +8,9 @@
 import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, removePeopleFromImage, type Corners, type Enhancement, RateLimitError, dataURLtoFile } from './services/geminiService';
+import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
+import * as XLSX from 'xlsx';
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, removePeopleFromImage, generateDocumentStructure, type Corners, type Enhancement, RateLimitError, dataURLtoFile } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
@@ -168,8 +170,9 @@ const App: React.FC = () => {
   const [scanHistory, setScanHistory] = useState<string[]>([]);
   const [corners, setCorners] = useState<Corners | null>(null);
   const [activeCorner, setActiveCorner] = useState<keyof Corners | null>(null);
-  const [scanParams, setScanParams] = useState<{ enhancement: Enhancement, removeShadows: boolean, restoreText: boolean } | null>(null);
+  const [scanParams, setScanParams] = useState<{ enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean } | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [exportingDocType, setExportingDocType] = useState<'word' | 'excel' | null>(null);
 
   // Comparison Slider State
   const [isComparing, setIsComparing] = useState(false);
@@ -551,6 +554,9 @@ const App: React.FC = () => {
     if (err instanceof RateLimitError) {
         errorMessage = t('errorRateLimit');
     } else if (err instanceof Error) {
+        if (err.message.includes("invalid data structure for the document")) {
+          contextKey = 'errorFailedToExport';
+        }
         const context = t(contextKey);
         errorMessage = `${context} ${err.message}`;
     } else {
@@ -962,7 +968,7 @@ const App: React.FC = () => {
   }, []);
 
   // --- Scan Handlers ---
-  const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => {
+  const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean) => {
     if (!currentImage) {
       setError('No image loaded to scan.');
       return;
@@ -972,10 +978,10 @@ const App: React.FC = () => {
     setError(null);
     setIsScanModalOpen(true);
     setScannedImageUrl(null); // Show loading state in modal
-    setScanParams({ enhancement, removeShadows, restoreText });
+    setScanParams({ enhancement, removeShadows, restoreText, removeHandwriting });
 
     try {
-        const resultUrl = await generateScannedDocument(currentImage, enhancement, removeShadows, restoreText);
+        const resultUrl = await generateScannedDocument(currentImage, enhancement, removeShadows, restoreText, removeHandwriting);
         setScannedImageUrl(resultUrl);
         setScanHistory(prev => [resultUrl, ...prev].slice(0, 5));
     } catch (err) {
@@ -996,8 +1002,8 @@ const App: React.FC = () => {
     setScannedImageUrl(null);
 
     try {
-      const { enhancement, removeShadows, restoreText } = scanParams;
-      const resultUrl = await generateScannedDocumentWithCorners(currentImage, corners, enhancement, removeShadows, restoreText);
+      const { enhancement, removeShadows, restoreText, removeHandwriting } = scanParams;
+      const resultUrl = await generateScannedDocumentWithCorners(currentImage, corners, enhancement, removeShadows, restoreText, removeHandwriting);
       setScannedImageUrl(resultUrl);
       setScanHistory(prev => [resultUrl, ...prev].slice(0, 5));
     } catch (err) {
@@ -1069,6 +1075,103 @@ const App: React.FC = () => {
           setIsDownloadingPdf(false);
       }
   }, [scannedImageUrl]);
+
+  const handleExportToWord = useCallback(async () => {
+    if (!scannedImageUrl) return;
+    setExportingDocType('word');
+    setError(null);
+    try {
+        const structure = await generateDocumentStructure(scannedImageUrl);
+        if (!structure || !Array.isArray(structure.elements)) {
+            throw new Error("AI response did not contain the expected document elements.");
+        }
+        
+        const docElements = [];
+
+        for (const element of structure.elements) {
+            if (element.type === 'heading' && element.text) {
+                docElements.push(new Paragraph({ text: element.text, heading: HeadingLevel.HEADING_1, spacing: { after: 200 } }));
+            } else if (element.type === 'paragraph' && element.text) {
+                docElements.push(new Paragraph({ text: element.text, spacing: { after: 100 } }));
+            } else if (element.type === 'table' && Array.isArray(element.table)) {
+                const tableRows = element.table.map((row: string[]) => {
+                    return new TableRow({
+                        children: row.map(cellText => new TableCell({ children: [new Paragraph(cellText || "")] }))
+                    });
+                });
+                if (tableRows.length > 0) {
+                    docElements.push(new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+                }
+                docElements.push(new Paragraph({ text: "", spacing: { after: 200 } })); // Spacer after table
+            }
+        }
+
+        if (docElements.length === 0) {
+             throw new Error("No exportable content was found in the document.");
+        }
+
+        const doc = new Document({
+            sections: [{ children: docElements }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `pixshop-scan-${Date.now()}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+    } catch (err) {
+        handleApiError(err, 'errorFailedToExport');
+    } finally {
+        setExportingDocType(null);
+    }
+  }, [scannedImageUrl, handleApiError]);
+  
+  const handleExportToExcel = useCallback(async () => {
+      if (!scannedImageUrl) return;
+      setExportingDocType('excel');
+      setError(null);
+      try {
+          const structure = await generateDocumentStructure(scannedImageUrl);
+          if (!structure || !Array.isArray(structure.elements)) {
+              throw new Error("AI response did not contain the expected document elements.");
+          }
+
+          const wb = XLSX.utils.book_new();
+          let hasContent = false;
+
+          const tables = structure.elements.filter((el: any) => el.type === 'table' && Array.isArray(el.table));
+          if (tables.length > 0) {
+              tables.forEach((tableEl: any, index: number) => {
+                  const ws = XLSX.utils.aoa_to_sheet(tableEl.table);
+                  XLSX.utils.book_append_sheet(wb, ws, `Table ${index + 1}`);
+              });
+              hasContent = true;
+          }
+
+          const textElements = structure.elements.filter((el: any) => (el.type === 'heading' || el.type === 'paragraph') && el.text);
+          if (textElements.length > 0) {
+              const textData = textElements.map((el: any) => [el.text]);
+              const ws = XLSX.utils.aoa_to_sheet(textData);
+              XLSX.utils.book_append_sheet(wb, ws, 'Text Content');
+              hasContent = true;
+          }
+
+          if (!hasContent) {
+              throw new Error("No exportable content (tables or text) was found in the document.");
+          }
+
+          XLSX.writeFile(wb, `pixshop-scan-${Date.now()}.xlsx`);
+
+      } catch (err) {
+          handleApiError(err, 'errorFailedToExport');
+      } finally {
+          setExportingDocType(null);
+      }
+  }, [scannedImageUrl, handleApiError]);
 
 
   const handleUndo = useCallback(() => {
@@ -1898,7 +2001,7 @@ const App: React.FC = () => {
         >
              {/* Placeholder when no image is loaded */}
              {!currentImageUrl && (
-                <div className="w-full h-full max-h-[70vh] flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center">
                     <ImagePlaceholder onFileSelect={handleFileSelect} />
                 </div>
             )}
@@ -2282,7 +2385,7 @@ const App: React.FC = () => {
     };
 
     const editorLayout = (
-        <div className="w-full h-full flex-grow flex flex-col md:grid md:grid-cols-[1fr_auto] gap-4 overflow-hidden">
+        <div className="w-full h-full flex-grow grid grid-cols-1 grid-rows-2 sm:grid-rows-1 sm:grid-cols-[1fr_auto] gap-4 overflow-hidden">
              {isScanModalOpen && (
               <ScanViewerModal
                 imageUrl={scannedImageUrl}
@@ -2293,11 +2396,14 @@ const App: React.FC = () => {
                 isLoading={isLoading}
                 onDownloadPdf={handleDownloadPdf}
                 isDownloadingPdf={isDownloadingPdf}
+                onExportToWord={handleExportToWord}
+                onExportToExcel={handleExportToExcel}
+                exportingDocType={exportingDocType}
               />
             )}
             
             {/* Image Viewer Area */}
-            <div className={`flex flex-col min-w-0 min-h-0 relative ${currentImage ? 'flex-none h-[40vh] md:h-auto md:flex-1' : 'flex-1'}`}>
+            <div className="flex flex-col min-w-0 min-h-0 relative">
                  <div
                     className="w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
                     style={{ transform: activeTab === 'crop' || activeTab === 'expand' ? 'scale(1)' : `scale(${imageScale})` }}
@@ -2341,11 +2447,11 @@ const App: React.FC = () => {
             {/* Controls (visible on mobile and desktop) */}
             <div className={`
               transition-all duration-300 ease-in-out overflow-hidden
-              ${isToolboxOpen ? 'w-full md:w-[400px]' : 'w-0 h-0 md:w-0 md:h-auto' }
+              ${isToolboxOpen ? 'w-full sm:w-[320px] md:w-[350px] lg:w-[400px]' : 'w-0 h-0 sm:w-0' }
             `}>
               <div 
                 ref={toolsContainerRef} 
-                className="w-full md:w-[400px] h-full flex flex-col overflow-y-auto md:pr-2 touch-pan-y"
+                className="w-full h-full flex flex-col overflow-y-auto sm:pr-2 touch-pan-y"
                 onTouchStart={handleToolsTouchStart}
                 onTouchMove={handleToolsTouchMove}
                 onTouchEnd={handleToolsTouchEnd}

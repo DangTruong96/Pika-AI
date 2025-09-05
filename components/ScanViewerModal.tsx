@@ -17,9 +17,12 @@ interface ScanViewerModalProps {
   isLoading: boolean;
   onDownloadPdf: () => void;
   isDownloadingPdf: boolean;
+  onExportToWord: () => void;
+  onExportToExcel: () => void;
+  exportingDocType: 'word' | 'excel' | null;
 }
 
-const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalImageUrl, onClose, onSave, onAdjust, isLoading, onDownloadPdf, isDownloadingPdf }) => {
+const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalImageUrl, onClose, onSave, onAdjust, isLoading, onDownloadPdf, isDownloadingPdf, onExportToWord, onExportToExcel, exportingDocType }) => {
   const { t } = useTranslation();
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -134,7 +137,7 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalIma
 
       <button
           onClick={onClose}
-          disabled={isLoading || isDownloadingPdf}
+          disabled={isLoading || isDownloadingPdf || !!exportingDocType}
           className="absolute top-4 right-4 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors z-[110] disabled:opacity-50"
           aria-label={t('scanModalClose')}
           title={t('scanModalClose')}
@@ -145,29 +148,43 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalIma
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-[110] flex-wrap justify-center">
           <button
             onClick={onClose}
-            disabled={isLoading || isDownloadingPdf}
+            disabled={isLoading || isDownloadingPdf || !!exportingDocType}
             className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-6 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base disabled:opacity-50"
           >
             {t('scanDiscard')}
           </button>
           <button
             onClick={onAdjust}
-            disabled={isLoading || isDownloadingPdf || !imageUrl}
+            disabled={isLoading || isDownloadingPdf || !imageUrl || !!exportingDocType}
             className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-6 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base disabled:opacity-50"
           >
             {t('scanAdjustCorners')}
           </button>
         <button
             onClick={onDownloadPdf}
-            disabled={isLoading || isDownloadingPdf || !imageUrl}
-            className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-purple-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center"
+            disabled={isLoading || isDownloadingPdf || !imageUrl || !!exportingDocType}
+            className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-purple-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center min-w-[150px]"
         >
-           {isDownloadingPdf ? <Spinner/> : t('scanDownloadPdf')}
+           {isDownloadingPdf ? <Spinner className="w-6 h-6" /> : t('scanDownloadPdf')}
+        </button>
+        <button
+            onClick={onExportToWord}
+            disabled={isLoading || isDownloadingPdf || !imageUrl || !!exportingDocType}
+            className="bg-gradient-to-br from-blue-500 to-sky-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-blue-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center min-w-[170px]"
+        >
+           {exportingDocType === 'word' ? <Spinner className="w-6 h-6"/> : t('scanExportToWord')}
+        </button>
+        <button
+            onClick={onExportToExcel}
+            disabled={isLoading || isDownloadingPdf || !imageUrl || !!exportingDocType}
+            className="bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-green-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center min-w-[170px]"
+        >
+           {exportingDocType === 'excel' ? <Spinner className="w-6 h-6"/> : t('scanExportToExcel')}
         </button>
         <button
             onClick={onSave}
-            disabled={isLoading || isDownloadingPdf || !imageUrl}
-            className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-cyan-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center"
+            disabled={isLoading || isDownloadingPdf || !imageUrl || !!exportingDocType}
+            className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-cyan-500/30 hover:shadow-xl active:scale-95 disabled:from-gray-600 disabled:to-gray-500 disabled:shadow-none flex items-center justify-center min-w-[150px]"
         >
            {t('scanSave')}
         </button>

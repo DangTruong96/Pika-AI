@@ -8,7 +8,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import type { Enhancement } from '../services/geminiService';
 
 interface ScanPanelProps {
-  onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => void;
+  onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean) => void;
   isLoading: boolean;
   isImageLoaded: boolean;
   scanHistory: string[];
@@ -20,6 +20,7 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
   const [enhancement, setEnhancement] = useState<Enhancement>('color');
   const [removeShadows, setRemoveShadows] = useState<boolean>(true);
   const [restoreText, setRestoreText] = useState<boolean>(false);
+  const [removeHandwriting, setRemoveHandwriting] = useState<boolean>(false);
 
   const enhancementOptions: { name: string; value: Enhancement }[] = [
     { name: t('scanColor'), value: 'color' },
@@ -65,6 +66,19 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
                     {t('scanRemoveShadows')}
                 </label>
               </div>
+               <div className="flex items-center gap-2">
+                <input
+                    type="checkbox"
+                    id="remove-handwriting-checkbox"
+                    checked={removeHandwriting}
+                    onChange={(e) => setRemoveHandwriting(e.target.checked)}
+                    disabled={isLoading || !isImageLoaded}
+                    className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 ring-offset-gray-900 focus:ring-2 cursor-pointer disabled:cursor-not-allowed"
+                />
+                <label htmlFor="remove-handwriting-checkbox" className="text-sm font-medium text-gray-300 cursor-pointer">
+                    {t('scanRemoveHandwriting')}
+                </label>
+              </div>
               <div className="flex items-start gap-2" title={t('scanRestoreTextTooltip')}>
                 <input
                     type="checkbox"
@@ -82,7 +96,7 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
         </div>
 
         <button
-          onClick={() => onApplyScan(enhancement, removeShadows, restoreText)}
+          onClick={() => onApplyScan(enhancement, removeShadows, restoreText, removeHandwriting)}
           disabled={isLoading || !isImageLoaded}
           className="w-full max-w-xs mt-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10 self-center"
         >

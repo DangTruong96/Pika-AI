@@ -33,6 +33,7 @@ const en = {
   errorFailedToExtract: 'Failed to extract the item.',
   errorFailedToCleanBackground: 'Failed to clean people from the background image.',
   errorRateLimit: "You've made too many requests in a short time. Please wait a moment and try again.",
+  errorFailedToExport: 'Failed to export the document.',
 
   startScreenTitle: 'AI-Powered Photo Editing, {simplified}.',
   startScreenTitleSimplified: 'Simplified',
@@ -111,9 +112,9 @@ const en = {
   adjustmentBgGreen: 'Green',
   adjustmentBgBlack: 'Black',
   adjustmentRestorationTitle: 'Upscaling & Restoration',
-  adjustmentUpscale2x: 'Upscale 2x',
-  adjustmentUpscale4x: 'Upscale 4x',
-  adjustmentUpscale8x: 'Upscale 8x',
+  adjustmentUpscale2K: 'Upscale to 2K',
+  adjustmentUpscale4K: 'Upscale to 4K',
+  adjustmentUpscale8K: 'Upscale to 8K',
   adjustmentFaceRestore: 'Restore Faces',
   adjustmentPreset1: 'Blur Background',
   adjustmentPreset2: 'Enhance Details',
@@ -131,7 +132,7 @@ const en = {
   adjustmentSkyPreset3: 'Starry Night',
 
   adjustmentOldPhotoRestorationTitle: 'Old Photo Restoration',
-  adjustmentOldPhotoAutoRestore: 'Auto Restore',
+  adjustmentFullRestore4K: 'Full Restore (4K)',
 
 // Fix: Add missing translation keys to resolve TypeScript errors in BeautyPanel.
   beautyTitle: 'Beauty Enhancements',
@@ -216,6 +217,7 @@ const en = {
   scanRemoveShadows: 'Remove shadows',
   scanRestoreText: 'Restore Text Clarity',
   scanRestoreTextTooltip: '(Beta) AI will attempt to read and redraw text for maximum sharpness. May alter characters.',
+  scanRemoveHandwriting: 'Remove Handwriting',
   scanAuto: 'Auto Scan',
   scanModalTitle: 'Scanned Document Preview',
   scanModalClose: 'Close',
@@ -230,6 +232,8 @@ const en = {
   scanManualDescription: 'Drag the corner handles to precisely define the document area.',
   scanApplyManual: 'Apply Crop',
   scanCancel: 'Cancel',
+  scanExportToWord: 'Export to Word',
+  scanExportToExcel: 'Export to Excel',
   scanHistoryTitle: 'Recent Scans',
   scanHistoryReview: 'Review Scan',
 
@@ -282,6 +286,7 @@ const vi = {
   errorFailedToExtract: 'Không thể tách vật phẩm.',
   errorFailedToCleanBackground: 'Không thể xóa người khỏi ảnh nền.',
   errorRateLimit: "Bạn đã thực hiện quá nhiều yêu cầu trong một thời gian ngắn. Vui lòng đợi một lát và thử lại.",
+  errorFailedToExport: 'Không thể xuất tài liệu.',
 
   startScreenTitle: 'Chỉnh sửa ảnh bằng AI, {simplified}.',
   startScreenTitleSimplified: 'Đơn giản hóa',
@@ -360,9 +365,9 @@ const vi = {
   adjustmentBgGreen: 'Nền xanh lá',
   adjustmentBgBlack: 'Nền đen',
   adjustmentRestorationTitle: 'Nâng cấp & Phục hồi',
-  adjustmentUpscale2x: 'Nâng cấp 2x',
-  adjustmentUpscale4x: 'Nâng cấp 4x',
-  adjustmentUpscale8x: 'Nâng cấp 8x',
+  adjustmentUpscale2K: 'Nâng cấp lên 2K',
+  adjustmentUpscale4K: 'Nâng cấp lên 4K',
+  adjustmentUpscale8K: 'Nâng cấp lên 8K',
   adjustmentFaceRestore: 'Phục hồi Gương mặt',
   adjustmentPreset1: 'Làm mờ nền',
   adjustmentPreset2: 'Tăng chi tiết',
@@ -380,7 +385,7 @@ const vi = {
   adjustmentSkyPreset3: 'Đêm đầy sao',
   
   adjustmentOldPhotoRestorationTitle: 'Phục chế ảnh cũ',
-  adjustmentOldPhotoAutoRestore: 'Tự động Phục chế',
+  adjustmentFullRestore4K: 'Phục Chế Toàn Diện (4K)',
 
 // Fix: Add missing translation keys to resolve TypeScript errors in BeautyPanel.
   beautyTitle: 'Làm đẹp Chân dung',
@@ -465,6 +470,7 @@ const vi = {
   scanRemoveShadows: 'Loại bỏ bóng',
   scanRestoreText: 'Khôi phục độ nét văn bản',
   scanRestoreTextTooltip: '(Beta) AI sẽ cố gắng đọc và vẽ lại văn bản để có độ sắc nét tối đa. Có thể làm thay đổi ký tự.',
+  scanRemoveHandwriting: 'Xóa chữ viết tay',
   scanAuto: 'Quét tự động',
   scanModalTitle: 'Xem trước tài liệu đã quét',
   scanModalClose: 'Đóng',
@@ -479,6 +485,8 @@ const vi = {
   scanManualDescription: 'Kéo các tay cầm ở góc để xác định chính xác khu vực tài liệu.',
   scanApplyManual: 'Áp dụng cắt',
   scanCancel: 'Hủy',
+  scanExportToWord: 'Xuất ra Word',
+  scanExportToExcel: 'Xuất ra Excel',
   scanHistoryTitle: 'Các bản quét gần đây',
   scanHistoryReview: 'Xem lại bản quét',
 
@@ -531,6 +539,7 @@ const ja = {
   errorFailedToExtract: 'アイテムの抽出に失敗しました。',
   errorFailedToCleanBackground: '背景画像から人物を削除できませんでした。',
   errorRateLimit: "短時間でリクエストが多すぎます。しばらく待ってからもう一度お試しください。",
+  errorFailedToExport: 'ドキュメントのエクスポートに失敗しました。',
 
   startScreenTitle: 'AIによる写真編集を、{simplified}。',
   startScreenTitleSimplified: 'もっと簡単に',
@@ -609,9 +618,9 @@ const ja = {
   adjustmentBgGreen: '緑背景',
   adjustmentBgBlack: '黒背景',
   adjustmentRestorationTitle: 'アップスケールと復元',
-  adjustmentUpscale2x: '2倍に拡大',
-  adjustmentUpscale4x: '4倍に拡大',
-  adjustmentUpscale8x: '8倍に拡大',
+  adjustmentUpscale2K: '2Kにアップスケール',
+  adjustmentUpscale4K: '4Kにアップスケール',
+  adjustmentUpscale8K: '8Kにアップスケール',
   adjustmentFaceRestore: '顔を復元',
   adjustmentPreset1: '背景をぼかす',
   adjustmentPreset2: 'ディテールを強調',
@@ -629,7 +638,7 @@ const ja = {
   adjustmentSkyPreset3: '星空',
 
   adjustmentOldPhotoRestorationTitle: '古い写真の修復',
-  adjustmentOldPhotoAutoRestore: '自動修復',
+  adjustmentFullRestore4K: 'フルレストア (4K)',
   
 // Fix: Add missing translation keys to resolve TypeScript errors in BeautyPanel.
   beautyTitle: 'ビューティー補正',
@@ -714,6 +723,7 @@ const ja = {
   scanRemoveShadows: '影を除去',
   scanRestoreText: 'テキストの鮮明度を復元',
   scanRestoreTextTooltip: '(ベータ) AIがテキストを読み取り、最大の鮮明さで再描画を試みます。文字が変更される可能性があります。',
+  scanRemoveHandwriting: '手書きを削除',
   scanAuto: '自動スキャン',
   scanModalTitle: 'スキャンしたドキュメントのプレビュー',
   scanModalClose: '閉じる',
@@ -728,6 +738,8 @@ const ja = {
   scanManualDescription: '角のハンドルをドラッグして、ドキュメントの領域を正確に定義します。',
   scanApplyManual: 'トリミングを適用',
   scanCancel: 'キャンセル',
+  scanExportToWord: 'Wordにエクスポート',
+  scanExportToExcel: 'Excelにエクスポート',
   scanHistoryTitle: '最近のスキャン',
   scanHistoryReview: 'スキャンをレビュー',
   

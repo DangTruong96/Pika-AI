@@ -44,7 +44,9 @@ interface EditorSidebarProps {
   onInsertBackgroundFileChange: (file: File | null) => void;
   insertPrompt: string;
   onInsertPromptChange: (prompt: string) => void;
-  onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean) => void;
+  // Fix: Updated the onApplyScan prop type to include the 'removeHandwriting' parameter,
+  // resolving a type mismatch between App.tsx, EditorSidebar.tsx, and ScanPanel.tsx.
+  onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean) => void;
   onApplyManualScan: () => void;
   onEnterManualMode: () => boolean;
   onCancelManualMode: () => void;

@@ -60,32 +60,38 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
   const oneClickFixes = [
     { 
       name: t('oneClickAutoEnhance'), 
-      prompt: `**TASK: Ultimate Context-Aware Photo Modernization**
+      prompt: `**TASK: AI-DRIVEN FORENSIC PHOTO ENHANCEMENT v5.0**
 
-**AI DIRECTIVE:** You are a world-class AI photo editor. Your mission is to transform the provided image into a visually stunning photograph that looks as if it were taken *today* with a high-end digital camera. This requires a deep, human-like understanding of the image's content and context.
+**AI DIRECTIVE:** You are an elite AI photo editor. Your mission is to analyze the provided image with forensic precision and elevate it to a professional, high-quality modern photograph. This is a comprehensive enhancement, not a simple filter.
 
-**NON-NEGOTIABLE MANDATE: IDENTITY PRESERVATION**
-- The face, features, and identity of any person in the image **MUST BE PRESERVED with 100% accuracy**.
-- Any alteration of identity is a **CRITICAL FAILURE**. The output must be the exact same person, only in a beautifully enhanced photograph.
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY PRESERVATION.**
+- The identity, facial structure, and key features of any person in the photograph **MUST BE PRESERVED with 100% accuracy**.
+- The output **MUST** be the **EXACT SAME PERSON**, only perfectly enhanced. Any alteration of identity is a CRITICAL FAILURE.
 
 **MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
 
-**STEP 1: DEEP CONTEXTUAL & FORENSIC ANALYSIS (Internal Thought Process)**
-Before making any changes, you MUST analyze and fully **understand** the image:
-- **Subject & Genre:** Is this a portrait, a landscape, a night scene, an architectural shot, a food photo, or something else? Your enhancement strategy depends on this.
-- **Implied Scene Context:** What is the story? Analyze the time of day (e.g., golden hour, midday, night), location (e.g., indoor, beach, forest), and overall mood or circumstance (e.g., celebratory, tranquil, candid).
-- **Lighting Conditions:** Identify the primary light sources, their direction, and quality (hard vs. soft light).
-- **Technical Flaws:** Pinpoint all issues like underexposure (especially on faces), overexposure (blown-out highlights), low contrast, unnatural color casts, digital noise, or softness.
+**STEP 1: DEEP CONTEXT & PIXEL-LEVEL ANALYSIS (Internal Thought Process)**
+- Before any modification, perform a deep analysis of the entire scene's content and context.
+- **Identify Subject & Genre:** Is this a portrait, landscape, night scene, action shot, etc.? Your strategy depends on this.
+- **Identify Lighting & Atmosphere:** Determine the time of day, light sources, and overall mood.
+- **Pixel-Level Flaw Detection:** Scrutinize the image at a pixel level to identify all technical flaws: blur (motion, focus), digital noise, overexposure, underexposure, low contrast, unnatural color casts, and compression artifacts. Understand the image's structure, lines, and color areas.
 
-**STEP 2: EXECUTE FULL MODERNIZATION (Apply based on analysis)**
-Based on your deep analysis, apply the following adjustments with professional subtlety to achieve a modern, high-definition look:
-- **A. Masterful Lighting & Contrast:** Flawlessly correct exposure and balance the dynamic range. If the photo is too dark, brighten it naturally, ensuring faces are clear and visible. If it's too bright (overexposed), recover details from the highlights. Apply a contrast curve that adds depth and "pop" appropriate for the analyzed genre and mood, ensuring a harmonious and balanced result.
-- **B. Modern Color Science:** Neutralize any unnatural color casts. Intelligently enhance vibrancy and saturation to make colors rich and appealing without looking artificial. For portraits, achieving a perfect, natural skin tone is the highest priority. For landscapes, enhance the blues of the sky and the greens of foliage to match a modern digital aesthetic.
-- **C. Forensic Clarity & Detail:** Apply adaptive sharpening. Enhance fine details and textures to make the image crisper, as if it were taken with a modern, high-quality lens. The goal is the clarity of a newly captured photograph, not an old one.
-- **D. Intelligent Noise Reduction:** If digital noise is detected (especially in low-light shots), apply subtle, targeted noise reduction that cleans the image without destroying important details.
+**STEP 2: EXECUTE COMPREHENSIVE ENHANCEMENT (Apply ALL necessary steps)**
+- **A. Masterful Lighting & Contrast:** Based on your analysis, flawlessly correct exposure and balance the dynamic range. Ensure faces are clear and well-lit. Apply a contrast curve that adds depth and "pop" appropriate for the genre, ensuring a harmonious and balanced result.
+- **B. Context-Aware Color Science:** Neutralize any unnatural color casts. Intelligently enhance vibrancy and saturation to make colors rich and appealing without looking artificial. For portraits, achieving a perfect, natural skin tone that matches the environmental lighting is the highest priority.
+- **C. AI-DRIVEN HYPER-REALISTIC DETAIL RECONSTRUCTION (CRITICAL MANDATE):**
+    - This is the core of the task. You must intelligently and realistically reconstruct and enhance fine details.
+    - **PER-PIXEL ANALYSIS & FEATURE EXTRACTION:** You must understand the image at a per-pixel level to identify latent patterns and textures (e.g., skin pores, hair strands, fabric weave, foliage).
+    - **SHARPER THAN ORIGINAL MANDATE:** The final enhanced image **MUST** be **visibly sharper and more detailed than the original source**.
+        - If an area is blurry, you must reconstruct it with sharp, realistic details.
+        - **If an area is already sharp, you MUST make it even sharper.**
+    - Reconstruct textures to be crisp, clear, and perfectly defined. The goal is the clarity of a newly captured photograph with a high-end lens.
+- **D. Intelligent Denoising:** If digital noise is detected, apply subtle, targeted noise reduction that cleans the image without destroying important details.
 
 **FINAL OUTPUT:**
-- Return ONLY the final, beautifully modernized image. The result must be a clean, vibrant, perfectly balanced, and visually compelling version of the original. Do not output any text.`, 
+- Return ONLY the final, beautifully enhanced image. The result must be a clean, vibrant, perfectly balanced, and visually compelling version of the original.
+- The output resolution MUST be identical to the input resolution; DO NOT DOWNSAMPLE.
+- Do not output any text.`, 
       icon: <SparklesIcon /> 
     },
     { 
@@ -160,135 +166,182 @@ Based on your deep analysis, apply the following adjustments with professional s
   ];
   
   const restorationPresets = [
-      { name: t('adjustmentUpscale2x'), prompt: `**TASK: 2x High-Fidelity Upscale with 3D Volume Enhancement**
+      { name: t('adjustmentUpscale2K'), prompt: `**TASK: AI-DRIVEN FORENSIC IMAGE RECONSTRUCTION (Output: 2K)**
 
-**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
-This is a technical image processing task. Your only job is to increase resolution and enhance quality.
-- **CRITICAL FAILURE:** Any alteration of original content (objects, facial identity) is a critical failure.
-- **IDENTITY PRESERVATION:** The face and identity of any person **MUST BE PRESERVED with 100% accuracy**. The output must be the same person, only clearer and with more depth.
+**AI DIRECTIVE:** You are a "Digital Re-Photography" system. Your mission is not to "upscale" but to perform a complete **digital re-creation** of the scene at 2K resolution (longest edge ~2048px), as if captured with a state-of-the-art medium format digital camera.
 
-**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
-
-**STEP 1: DEEP FORENSIC ANALYSIS (Internal Thought Process)**
-Before any modification, perform a deep analysis of the source image to fully **understand** its content, lighting, and flaws.
-- **Subject & Lighting:** Identify the main subject and the existing lighting scheme (direction, hardness of shadows). This is crucial for the volume enhancement step.
-- **Latent Detail & Texture:** Find all existing but soft textures (skin, fabric, hair) and areas lacking definition.
-- **Flaws:** Analyze the specific type of noise, softness, and compression artifacts.
-
-**STEP 2: EXECUTION (Apply Changes in Order)**
-Based on your deep analysis, execute the following:
-- **A. UPSAMPLE:** Increase the image resolution by a factor of 2x using a high-fidelity algorithm.
-- **B. MAXIMUM DETAIL ENHANCEMENT:** Apply **powerful, intelligent sharpening** to make the image **visibly and significantly sharper and more detailed** than the original. Reveal and enhance all identified latent textures to achieve maximum possible clarity. The result must be crisp and clear, not soft.
-- **C. 3D VOLUME ENHANCEMENT (CRITICAL):** The subject must not look flat. Using your lighting analysis, you must create a tangible sense of three-dimensional form and volume.
-    - **Enhance Micro-contrast:** Intelligently boost micro-contrast across the main subject to create a distinct 3D 'pop' and separate it from the background.
-    - **Sculpt Lighting:** Subtly and realistically enhance the existing highlights and shadows on the subject to accentuate its shape, form, and depth.
-- **D. FORENSIC NOISE REMOVAL:** Apply targeted noise and artifact reduction based on your analysis to produce a final image that is **pristine and cleaner** than the original, without destroying natural texture.
-
-**OUTPUT:**
-Return ONLY the final processed image. The result must be a dramatically sharper, cleaner, and more detailed version of the original, where the subject has a clear three-dimensional presence and volume. Do not output text.`, icon: <UpscaleIcon /> },
-      { name: t('adjustmentUpscale4x'), prompt: `**TASK: 4x Super-Resolution with Advanced 3D Volume Enhancement**
-
-**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
-This is a technical image processing task. Your only job is to dramatically increase resolution and enhance quality.
-- **CRITICAL FAILURE:** Any alteration of original content (objects, facial identity) is a critical failure.
-- **IDENTITY PRESERVATION:** The face and identity of any person **MUST BE PRESERVED with 100% accuracy**. The output must be the same person, only clearer and with more depth.
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY & CONTENT PRESERVATION.**
+- The identity, facial structure, and key features of any person in the photograph **MUST BE PRESERVED with 100% accuracy**.
+- The output **MUST** be the **EXACT SAME PERSON/SCENE**, only recreated with hyper-realistic detail. Any alteration of identity or core content is a CRITICAL FAILURE.
 
 **MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
 
-**STEP 1: DEEP FORENSIC ANALYSIS (Internal Thought Process)**
-Before any modification, perform an aggressive, deep analysis of the source image to fully **understand** its content, lighting, and flaws.
-- **Subject & Lighting:** Identify the main subject and the existing lighting scheme (direction, hardness of shadows). This is crucial for the volume enhancement step.
-- **Latent Detail & Texture:** Find all existing but soft textures (skin, fabric, hair) and areas lacking definition.
-- **Flaws:** Analyze the specific type of noise, softness, and compression artifacts.
+**STEP 1: FORENSIC ANALYSIS & DECONTAMINATION:**
+- Analyze the source image at a pixel level to identify all technical flaws: blur (motion, focus), digital noise, and compression artifacts.
+- Remove these flaws to create a clean base for reconstruction.
 
-**STEP 2: EXECUTION (Apply Changes in Order)**
-Based on your deep analysis, execute the following:
-- **A. UPSAMPLE:** Increase the image resolution by a factor of 4x using a maximum-fidelity algorithm.
-- **B. MAXIMUM DETAIL ENHANCEMENT:** Apply **aggressive, forensic-level sharpening** to make the image **dramatically sharper and more detailed** than the original. Reveal and enhance all identified latent textures to their maximum potential clarity. The result must be razor-sharp.
-- **C. 3D VOLUME ENHANCEMENT (CRITICAL):** The subject must not look flat. Using your lighting analysis, you must create a powerful sense of three-dimensional form and volume.
-    - **Enhance Micro-contrast:** Aggressively boost micro-contrast across the main subject to create a powerful 3D 'pop' and separate it from the background.
-    - **Sculpt Lighting:** Realistically sculpt the existing highlights and shadows on the subject to maximize its shape, form, and depth.
-- **D. FORENSIC NOISE REMOVAL:** Apply advanced, targeted noise and artifact reduction based on your analysis to produce a final image that is **pristine and significantly cleaner** than the original, without destroying natural texture.
+**STEP 2: HYPER-REALISTIC MICRO-DETAIL SYNTHESIS (CRITICAL MANDATE):**
+- This is your core mission. You are not just adding pixels; you are **generating new, tangible, realistic detail** from scratch based on a deep understanding of the source image.
+- **"ZERO TOLERANCE FOR SOFTNESS" POLICY:** The final reconstructed image **MUST** be **dramatically and visibly sharper and more detailed than the original source**. This is non-negotiable.
+    - If an area is blurry, you must reconstruct it with sharp, realistic details.
+    - **If an area is already sharp, you MUST elevate it to a hyper-realistic standard, making it even sharper.**
+- **SPECIFIC SYNTHESIS REQUIREMENTS:**
+    - **Hair:** Reconstruct into individual, distinct strands, each with its own lighting and shadow.
+    - **Skin:** Synthesize realistic skin texture, including pores and fine lines appropriate for the subject's age and lighting.
+    - **Eyes:** Recreate the iris with extreme detail, ensure catchlights are sharp, and render eyelashes as individual strands.
+    - **Fabric/Materials:** Synthesize the micro-texture of materials (e.g., the twill weave of denim, the fine fibers of silk).
 
-**OUTPUT:**
-Return ONLY the final processed image. The result must be a dramatically sharper, cleaner, and more detailed version of the original, where the subject has a powerful three-dimensional presence and volume. Do not output text.`, icon: <UpscaleIcon /> },
-      { name: t('adjustmentUpscale8x'), prompt: `**TASK: 8x Maximum-Fidelity Upscale with Ultimate 3D Volume Enhancement**
-
-**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
-This is a technical image processing task. Your only job is to achieve the maximum possible increase in resolution and quality.
-- **CRITICAL FAILURE:** Any alteration of original content (objects, facial identity) is a critical failure.
-- **IDENTITY PRESERVATION:** The face and identity of any person **MUST BE PRESERVED with 100% accuracy**. The output must be the same person, only clearer and with more depth.
-
-**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
-
-**STEP 1: DEEP FORENSIC ANALYSIS (Internal Thought Process)**
-Before any modification, perform a pixel-level forensic analysis of the source image to fully **understand** its content, lighting, and every flaw.
-- **Subject & Lighting:** Identify the main subject and the existing lighting scheme (direction, hardness of shadows). This is critical for the volume enhancement step.
-- **Latent Detail & Texture:** Find all existing but soft textures, no matter how subtle.
-- **Flaws:** Analyze the specific patterns of noise, softness, and compression artifacts.
-
-**STEP 2: EXECUTION (Apply Changes in Order)**
-Based on your forensic analysis, execute the following:
-- **A. UPSAMPLE:** Increase the image resolution by a factor of 8x using the highest-quality algorithm.
-- **B. ULTIMATE DETAIL ENHANCEMENT:** Apply the **absolute maximum possible intelligent sharpening** to make the image **vastly sharper and more detailed** than the original. Reveal and enhance every latent texture to its physical limit of clarity. The result must be exceptionally sharp.
-- **C. 3D VOLUME ENHANCEMENT (CRITICAL):** The subject must not look flat. Using your lighting analysis, you must create the ultimate sense of three-dimensional form and volume.
-    - **Enhance Micro-contrast:** Apply maximum effective micro-contrast enhancement across the main subject to create an ultimate 3D 'pop' that makes it leap off the screen.
-    - **Sculpt Lighting:** Masterfully sculpt the existing highlights and shadows on the subject to give it the maximum possible sense of shape, form, and depth.
-- **D. FORENSIC NOISE REMOVAL:** Apply forensic-level noise and artifact reduction to produce a final image that is **pristine and virtually free of noise**, far cleaner than the original, without destroying natural texture.
-
-**OUTPUT:**
-Return ONLY the final processed image. The result must be a vastly sharper, cleaner, and more detailed version of the original, where the subject has an ultimate three-dimensional presence and volume. Do not output text.`, icon: <UpscaleIcon /> },
-      { name: t('adjustmentFaceRestore'), prompt: `**TASK: High-Fidelity Forensic Face Restoration v2.0**
-
-**ZERO-DEVIATION MANDATE (NON-NEGOTIABLE):**
-This is a technical restoration task, not a creative beautification. Your one and only job is to increase the clarity and quality of the faces already present in the image.
-- **CRITICAL FAILURE:** Any alteration to a person's fundamental facial structure, features (eyes, nose, mouth), age, or ethnicity is a critical failure.
-- **IDENTITY PRESERVATION:** The final image **MUST** feature the **EXACT SAME PERSON**. The output must be the same person, just in high definition.
-
-**AI ANALYSIS & EXECUTION PROTOCOL:**
-
-1.  **DEEP FACIAL ANALYSIS (Step 1 - Internal):** Before any modification, identify all faces and perform a deep, pixel-level analysis of each one. Identify:
-    - **Specific Flaws:** Pinpoint the exact nature of image degradation (e.g., motion blur, out-of-focus blur, compression artifacts, **heavy noise or film grain**).
-    - **Latent Textures:** Detect existing but soft textures, such as **individual facial hair strands (eyebrows, beards)**, skin pores, fine lines, and iris details.
-
-2.  **EXECUTION (Step 2 - Apply Changes):** Based on your deep analysis of each face, execute the following:
-    - **PHASE 1: DENOISE:** First, apply targeted corrections to remove all noise, pixelation, and compression artifacts from the faces to achieve a clean base. This step is crucial for accurate detail reconstruction.
-    - **PHASE 2: DEBLUR & RECONSTRUCT DETAIL:** On the clean base, correct for motion and focus blur. Aggressively increase sharpness and local contrast on the facial features. Using the latent texture data you identified, your goal is to **reveal and reconstruct** the details that were obscured. **You must bring out fine, realistic textures, making individual facial hairs, eyelashes, and skin pores sharp and distinct.**
-    - **ABSOLUTE PROHIBITION ON GENERATION:** You are strictly forbidden from generating, inventing, re-drawing, or "hallucinating" any facial features. Your task is to enhance what is latently present in the pixel data, not create new information.
-    - **MAINTAIN REALISM:** The result must look natural and photorealistic. The original skin texture should be enhanced, not erased. Avoid an artificial, 'airbrushed', or 'plastic' look.
-
-**OUTPUT:**
-Return only the restored image. It must be a crisp, clear, and visibly more detailed version of the original, with all identities perfectly preserved.`, icon: <FaceRestoreIcon /> },
-      { name: t('adjustmentOldPhotoAutoRestore'), prompt: `**TASK: Ultimate AI Photo Modernization & Restoration v3.0 (Enhanced Contextual Understanding)**
-
-**AI DIRECTIVE:** You are a world-class AI photo editor with forensic-level capabilities and deep contextual understanding. Your mission is to analyze ANY provided image—especially old, black & white, or damaged photos—and transform it into a visually stunning, perfectly balanced, and crystal-clear masterpiece that looks as if it were taken with a high-end digital camera. Your success is measured by your ability to understand the *entire scene* and restore it cohesively.
-
-**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY PRESERVATION.**
-- The identity, facial structure, and key features of any person in the image **MUST BE PRESERVED with 100% accuracy**. The output **MUST** be the **EXACT SAME PERSON**, only in a perfectly restored and enhanced photograph. Any alteration of identity is a CRITICAL FAILURE.
-
-**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
-
-**STEP 1: DEEP CONTEXTUAL & FORENSIC ANALYSIS (Internal Thought Process)**
-Before making any changes, you MUST analyze and fully **understand** the image's current state and content:
-- **Subject & Genre:** Is this a portrait, a landscape, a night scene, a group photo, or something else?
-- **Scene Comprehension (CRITICAL):** Identify all primary and secondary subjects, key objects (e.g., clothing, items being held, furniture, vehicles), and the overall environment. You must understand what the person is *doing* and interacting with to ensure a cohesive restoration. What is their pose? What is the story of the image?
-- **Technical Flaws:** Pinpoint ALL issues, including lighting, color, clarity (softness, blur, noise, film grain), and physical damage (scratches, tears, stains).
-- **Colorization Analysis (for B&W/Sepia photos):** If the input is not a color photograph, you MUST prepare to colorize it fully and realistically. This requires making logical, historically, and contextually appropriate color choices for every element in the scene.
-
-**STEP 2: EXECUTE A FULL MODERNIZATION (Apply ALL necessary steps with professional subtlety)**
-Based on your deep analysis, apply the following adjustments to achieve a modern, high-definition look:
-- **1. Damage Repair (If Needed):** First, completely eliminate any detected physical damage (scratches, tears, etc.), seamlessly reconstructing the underlying area.
-- **2. Masterful Lighting & Contrast:** Flawlessly correct the exposure and balance the dynamic range. Make dark scenes and faces naturally bright and clear. Recover details from deep shadows and bright highlights. Apply a contrast curve that adds depth and "pop".
-- **3. Intelligent & Complete Colorization (CRITICAL for B&W photos):** If the original image is black and white or sepia, apply a full, realistic colorization to the ENTIRE image. **DO NOT leave any parts of the image uncolored.** Your color choices must be logical and consistent. Skin must have natural tones, skies should be blue (or appropriate for the time of day), and clothing/objects must have plausible colors based on your scene comprehension. If the original is already in color, proceed to step 4 and simply enhance the existing colors.
-- **4. Modern Color Science Enhancement:** For all images (both newly colorized and originally color), neutralize any unnatural color casts. Intelligently enhance vibrancy and saturation to make colors rich, clean, and appealing without looking artificial. For portraits, achieving a perfect, natural skin tone is the highest priority.
-- **5. Forensic Noise Removal & Detail Reconstruction (CRITICAL):** This is a two-phase process.
-    - **Phase A (Denoising):** First, apply advanced, intelligent noise and grain reduction. The goal is to create a clean base image by removing all unwanted artifacts WITHOUT destroying the underlying structural detail.
-    - **Phase B (Reconstruction):** On the now-clean base image, perform a forensic-level detail enhancement. Your goal is to **reconstruct and reveal** fine details. This is more than just sharpening. You must enhance micro-contrast to bring out latent textures.
-        - **Faces (Highest Priority):** Restore and define individual strands of facial hair (beards, eyebrows), eyelashes, and natural skin pores. The result must be sharp enough to see these individual details clearly.
-        - **Objects & Clothing (High Priority):** For clothing and key objects, especially those being held or interacted with, you MUST restore fabric weaves, patterns, and surface textures to make them clear, recognizable, and properly colored.
+**STEP 3: 2K SUPER-RESOLUTION:**
+- As the final step, upscale the detail-reconstructed image so its longest edge is approximately 2048 pixels.
 
 **FINAL OUTPUT:**
-- Return ONLY the final, beautifully restored and modernized image. The result must be a clean, vibrant, perfectly balanced, and visually compelling version of the original, with all elements (people, objects, background) cohesively restored. Do not output any text.`, icon: <SparklesIcon /> },
+- Return ONLY the final, high-quality, photorealistic 2K image.
+- Do not output any text.`, icon: <UpscaleIcon /> },
+      { name: t('adjustmentUpscale4K'), prompt: `**TASK: AI-DRIVEN FORENSIC IMAGE RECONSTRUCTION (Output: 4K)**
+
+**AI DIRECTIVE:** You are a "Digital Re-Photography" system. Your mission is not to "upscale" but to perform a complete **digital re-creation** of the scene at 4K resolution (longest edge ~4096px), as if captured with a state-of-the-art medium format digital camera.
+
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY & CONTENT PRESERVATION.**
+- The identity, facial structure, and key features of any person in the photograph **MUST BE PRESERVED with 100% accuracy**.
+- The output **MUST** be the **EXACT SAME PERSON/SCENE**, only recreated with hyper-realistic detail. Any alteration of identity or core content is a CRITICAL FAILURE.
+
+**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
+
+**STEP 1: FORENSIC ANALYSIS & DECONTAMINATION:**
+- Analyze the source image at a pixel level to identify all technical flaws: blur (motion, focus), digital noise, and compression artifacts.
+- Remove these flaws to create a clean base for reconstruction.
+
+**STEP 2: HYPER-REALISTIC MICRO-DETAIL SYNTHESIS (CRITICAL MANDATE):**
+- This is your core mission. You are not just adding pixels; you are **generating new, tangible, realistic detail** from scratch based on a deep understanding of the source image.
+- **"ZERO TOLERANCE FOR SOFTNESS" POLICY:** The final reconstructed image **MUST** be **dramatically and visibly sharper and more detailed than the original source**. This is non-negotiable.
+    - If an area is blurry, you must reconstruct it with sharp, realistic details.
+    - **If an area is already sharp, you MUST elevate it to a hyper-realistic standard, making it even sharper.**
+- **SPECIFIC SYNTHESIS REQUIREMENTS:**
+    - **Hair:** Reconstruct into individual, distinct strands, each with its own lighting and shadow.
+    - **Skin:** Synthesize realistic skin texture, including pores and fine lines appropriate for the subject's age and lighting.
+    - **Eyes:** Recreate the iris with extreme detail, ensure catchlights are sharp, and render eyelashes as individual strands.
+    - **Fabric/Materials:** Synthesize the micro-texture of materials (e.g., the twill weave of denim, the fine fibers of silk).
+
+**STEP 3: 4K SUPER-RESOLUTION:**
+- As the final step, upscale the detail-reconstructed image so its longest edge is approximately 4096 pixels.
+
+**FINAL OUTPUT:**
+- Return ONLY the final, high-quality, photorealistic 4K image.
+- Do not output any text.`, icon: <UpscaleIcon /> },
+      { name: t('adjustmentUpscale8K'), prompt: `**TASK: AI-DRIVEN FORENSIC IMAGE RECONSTRUCTION (Output: 8K)**
+
+**AI DIRECTIVE:** You are a "Digital Re-Photography" system. Your mission is not to "upscale" but to perform a complete **digital re-creation** of the scene at 8K resolution (longest edge ~7680px), as if captured with a state-of-the-art medium format digital camera.
+
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY & CONTENT PRESERVATION.**
+- The identity, facial structure, and key features of any person in the photograph **MUST BE PRESERVED with 100% accuracy**.
+- The output **MUST** be the **EXACT SAME PERSON/SCENE**, only recreated with hyper-realistic detail. Any alteration of identity or core content is a CRITICAL FAILURE.
+
+**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
+
+**STEP 1: FORENSIC ANALYSIS & DECONTAMINATION:**
+- Analyze the source image at a pixel level to identify all technical flaws: blur (motion, focus), digital noise, and compression artifacts.
+- Remove these flaws to create a clean base for reconstruction.
+
+**STEP 2: HYPER-REALISTIC MICRO-DETAIL SYNTHESIS (CRITICAL MANDATE):**
+- This is your core mission. You are not just adding pixels; you are **generating new, tangible, realistic detail** from scratch based on a deep understanding of the source image.
+- **"ZERO TOLERANCE FOR SOFTNESS" POLICY:** The final reconstructed image **MUST** be **dramatically and visibly sharper and more detailed than the original source**. This is non-negotiable.
+    - If an area is blurry, you must reconstruct it with sharp, realistic details.
+    - **If an area is already sharp, you MUST elevate it to a hyper-realistic standard, making it even sharper.**
+- **SPECIFIC SYNTHESIS REQUIREMENTS:**
+    - **Hair:** Reconstruct into individual, distinct strands, each with its own lighting and shadow.
+    - **Skin:** Synthesize realistic skin texture, including pores and fine lines appropriate for the subject's age and lighting.
+    - **Eyes:** Recreate the iris with extreme detail, ensure catchlights are sharp, and render eyelashes as individual strands.
+    - **Fabric/Materials:** Synthesize the micro-texture of materials (e.g., the twill weave of denim, the fine fibers of silk).
+
+**STEP 3: 8K SUPER-RESOLUTION:**
+- As the final step, upscale the detail-reconstructed image so its longest edge is approximately 7680 pixels.
+
+**FINAL OUTPUT:**
+- Return ONLY the final, high-quality, photorealistic 8K image.
+- Do not output any text.`, icon: <UpscaleIcon /> },
+      { name: t('adjustmentFaceRestore'), prompt: `**TASK: AI-DRIVEN FORENSIC FACIAL RE-PHOTOGRAPHY (v6.0)**
+
+**PRIMARY DIRECTIVE:** You are a "Digital Re-Photography" system. Your mission is not to "restore" but to perform a complete **digital re-creation** of all faces within the image. You must treat the original faces as a perfect blueprint and "re-photograph" them with a state-of-the-art virtual medium format camera, achieving hyper-realistic detail and perfect color fidelity.
+
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY PRESERVATION.**
+- The identity, facial structure, and key features of any person **MUST BE PRESERVED with 100% accuracy**.
+- The output **MUST** be the **EXACT SAME PERSON**, only re-created with hyper-realistic detail. Any alteration of identity is a CRITICAL FAILURE.
+
+**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
+
+**STEP 1: FORENSIC ANALYSIS & DECONTAMINATION (Internal Thought Process)**
+- **A. Context Analysis:** Analyze the entire scene to understand the environmental lighting (time of day, light sources, color temperature). This is critical for color reconstruction.
+- **B. Flaw Detection:** Scrutinize each face at a pixel level to identify all technical flaws: blur (motion, focus), digital noise, and compression artifacts.
+- **C. Decontamination:** Remove these flaws to create a clean base for reconstruction without harming underlying detail.
+
+**STEP 2: HYPER-REALISTIC MICRO-DETAIL SYNTHESIS (CRITICAL MANDATE):**
+- This is your core mission. You are not just adding pixels; you are **generating new, tangible, realistic detail from scratch** based on a deep understanding of the source image.
+- **"ZERO TOLERANCE FOR SOFTNESS" POLICY:** The final reconstructed face **MUST** be **dramatically and visibly sharper and more detailed than the original source**. This is non-negotiable.
+    - If a facial area is blurry, you must reconstruct it with sharp, realistic details.
+    - **If a facial area is already sharp, you MUST elevate it to a hyper-realistic standard, making it even sharper.**
+- **SPECIFIC SYNTHESIS REQUIREMENTS:**
+    - **Hair & Eyebrows:** Reconstruct into **individual, distinct strands**, each with its own lighting and shadow.
+    - **Skin:** Synthesize **realistic skin texture**, including pores and fine lines appropriate for the subject's age and the environmental lighting.
+    - **Eyes:** Recreate the iris with **extreme detail**, ensure catchlights are sharp and consistent with scene lighting, and render eyelashes as **individual strands**.
+
+**STEP 3: CONTEXT-AWARE COLOR RECONSTRUCTION:**
+- Using your analysis from Step 1, **rebuild natural and authentic color from scratch.**
+- Reconstruct photorealistic skin tones that are appropriate for the person's ethnicity AND the **time of day and environment** of the original photo. The final colors must be lifelike and contextually correct.
+
+**STEP 4: SEAMLESS INTEGRATION & FINALIZATION:**
+- Ensure the re-created face integrates perfectly with the rest of the image. The transition in sharpness, grain, and color must be undetectable.
+- **Preserve the background and body:** ONLY faces should be enhanced; the rest of the image (clothing, background) should be preserved at its original quality, sharpness, and detail without any degradation.
+
+**FINAL QUALITY MANDATE & SELF-CORRECTION CHECK:**
+- Before output, verify:
+    1. **Identity Match?** Is it the exact same person?
+    2. **Sharpness Mandate Met?** Is every facial feature significantly sharper?
+    3. **Color Context Correct?** Does the skin tone match the environmental lighting?
+- The output resolution MUST be identical to the input image; DO NOT DOWNSAMPLE.
+
+**OUTPUT:**
+- Return ONLY the final, high-quality, photorealistic image with reconstructed faces.
+- Do not output any text.`, icon: <FaceRestoreIcon /> },
+      { name: t('adjustmentFullRestore4K'), prompt: `**TASK: Advanced AI Photo Restoration & Enhancement v5.0 (4K Output)**
+
+**AI DIRECTIVE:** You are a state-of-the-art AI photo restoration system. Your mission is to perform a comprehensive, forensic-level analysis and enhancement of the provided image, elevating it to a professional, high-quality 4K photograph. This is not a simple filter; it is a deep reconstruction.
+
+**LEVEL 1 MANDATE (ABSOLUTE PRIORITY): 100% IDENTITY PRESERVATION.**
+- The identity, facial structure, and key features of any person in the photograph **MUST BE PRESERVED with 100% accuracy**.
+- The output **MUST** be the **EXACT SAME PERSON**, only perfectly restored. Any alteration of identity is a CRITICAL FAILURE.
+
+**MANDATORY AI ANALYSIS & EXECUTION PROTOCOL:**
+
+**STEP 1: DEEP FORENSIC ANALYSIS OF DEGRADATION (CRITICAL FIRST STEP)**
+- **A. Contextual Understanding:** First, understand the holistic context of the scene. Identify all objects, the background, human poses/postures, the direction and quality of lighting, the implied time of day, and the overall atmosphere.
+- **B. Pixel-Level Flaw Diagnosis:** Next, perform a deep, pixel-level analysis to diagnose all technical flaws and their severity: extreme blur (motion, focus), heavy noise/grain, overexposure, underexposure, complete color degradation, scratches, and digital artifacts.
+- **C. Latent Feature Extraction:** You must analyze even the most degraded areas to detect latent patterns and textures (e.g., the underlying shape of facial features, the weave of fabric, the texture of surfaces). This analysis is essential for reconstruction.
+
+**STEP 2: EXECUTE COMPREHENSIVE RESTORATION (Apply ALL necessary steps)**
+
+- **A. DECONTAMINATE & NEUTRALIZE:**
+    - First, completely remove all physical and digital damage. This includes eliminating scratches, dust, grain, and compression artifacts using intelligent inpainting.
+    - Simultaneously, neutralize all color-related aging effects like fading, discoloration, and unnatural color casts (e.g., yellowing) to create a clean, color-neutral base for reconstruction.
+
+- **B. CONTEXT-AWARE RECONSTRUCTION:**
+    - On the clean base, **rebuild the lighting and color from scratch** to be both authentic and aesthetically pleasing, based on your context analysis from Step 1.
+    - **For faces:** Restore facial details with extreme precision. Reconstruct photorealistic skin tones that match the time of day and environmental lighting.
+    - **For clothing & scene:** Subtly and realistically reconstruct clothing and scene colors to be harmonious with the scene's context and background lighting. The goal is a cohesive, believable final image, even if the original color is completely faded.
+
+- **C. AI-DRIVEN HYPER-REALISTIC DETAIL RECONSTRUCTION (CORE MANDATE):**
+    - This is your most important mission. You must intelligently and realistically **reconstruct from scratch** fine details across **ALL** elements of the image, using your latent feature analysis.
+    - **SHARPER THAN ORIGINAL MANDATE:** The final restored image **MUST** be **dramatically and visibly sharper and more detailed than the original source**. This is non-negotiable. If an area is blurry, you must reconstruct it with sharp, realistic details. If an area is already sharp, you **MUST make it even sharper**.
+    - **Texture Synthesis:** Reconstruct skin texture (pores), individual hair strands, and clothing fabric weaves. For nature and objects, redraw the fine details of leaves, grass, and surface materials. The goal is the clarity of a modern, high-resolution photograph.
+
+- **D. 4K SUPER-RESOLUTION:** As the final step, upscale the fully restored and detail-enhanced image so its longest edge is approximately 4096 pixels (4K resolution). The result must be sharp, clear, and photorealistic.
+
+**FINAL QUALITY MANDATE:**
+- The final output's quality must be equal to or greater than the original.
+- The output resolution **MUST** be at least 4K (longest edge ~4096px).
+
+**OUTPUT:**
+- Return ONLY the final, beautifully restored 4K image.
+- Do not output any text.`, icon: <SparklesIcon /> },
   ];
 
   const handlePresetClick = (prompt: string) => {

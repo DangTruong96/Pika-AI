@@ -1,5 +1,5 @@
 {
-  "name": "pixshop-v3.3",
+  "name": "pixshop-v3.5",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,7 +13,9 @@
     "react-dom": "^19.1.0",
     "@google/genai": "^1.10.0",
     "react-image-crop": "^11.0.6",
-    "jspdf": "^2.5.1"
+    "jspdf": "^2.5.1",
+    "docx": "^8.5.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
