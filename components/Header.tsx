@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -53,13 +54,15 @@ const Header: React.FC<HeaderProps> = ({
                 className="flex items-center justify-center gap-3 transition-opacity hover:opacity-80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={t('appName')}
                 aria-expanded={isToolboxOpen}
-                aria-controls="editor-toolbox"
                 title={isImageLoaded ? (isToolboxOpen ? t('hideTools') : t('showTools')) : t('appName')}
             >
                 <SparklesIcon className="w-6 h-6 text-cyan-400" />
-                <h1 className="text-xl font-bold tracking-tight text-white">
-                  {t('appName')}
-                </h1>
+                <div className="flex items-baseline">
+                    <h1 className="text-xl font-bold tracking-tight text-white">
+                      {t('appName')}
+                    </h1>
+                    <span className="ml-1.5 text-xs font-semibold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded-full border border-cyan-400/50">v4.0</span>
+                </div>
             </button>
             {isImageLoaded && imageFile && imageDimensions && (
                 <div className="hidden md:flex items-center gap-2 text-sm text-gray-400 border-l border-white/20 pl-4">

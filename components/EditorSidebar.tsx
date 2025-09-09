@@ -5,18 +5,16 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BrushIcon, CropIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon, TagIcon } from './icons';
+import { BrushIcon, IdCardIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon, TagIcon, SparklesIcon, UsersIcon } from './icons';
 import type { Tab } from '../App';
 import RetouchPanel, { SelectionMode, BrushMode } from './RetouchPanel';
-import CropPanel from './CropPanel';
+import IdPhotoPanel from './IdPhotoPanel';
 import AdjustmentPanel from './AdjustmentPanel';
-import FilterPanel from './FilterPanel';
 import ExpandPanel from './ExpandPanel';
 import CompositePanel from './CompositePanel';
 import ScanPanel from './ScanPanel';
 import ManualScanPanel from './ManualScanPanel';
-import ExtractPanel from './ExtractPanel';
-import type { Enhancement } from '../services/geminiService';
+import type { Enhancement, IdPhotoOptions, Face } from '../services/geminiService';
 
 interface EditorSidebarProps {
   className?: string;
@@ -25,27 +23,33 @@ interface EditorSidebarProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   onApplyRetouch: (promptOverride?: string) => void;
-  onApplyCrop: () => void;
-  onSetAspect: (aspect: number | undefined) => void;
-  isCropping: boolean;
+  onApplyIdPhoto: (options: IdPhotoOptions) => void;
   onApplyAdjustment: (prompt: string) => void;
   onApplyFilter: (prompt: string) => void;
   onApplyExpansion: (prompt: string) => void;
   expandPrompt: string;
   onExpandPromptChange: (prompt: string) => void;
   hasExpansion: boolean;
-  onApplyInsert: () => void;
+  onApplyComposite: () => void;
+  onApplyFaceSwap: () => void;
+  onSelectTargetFace: (index: number) => void;
+  onSelectSourceFace: (index: number) => void;
   currentImage: File | null;
   insertSubjectFiles: File[];
   onInsertSubjectFilesChange: (files: File[]) => void;
   insertStyleFiles: File[];
   onInsertStyleFilesChange: (files: File[]) => void;
+  swapFaceFile: File | null;
+  onSwapFaceFileChange: (file: File | null) => void;
   insertBackgroundFile: File | null;
   onInsertBackgroundFileChange: (file: File | null) => void;
   insertPrompt: string;
   onInsertPromptChange: (prompt: string) => void;
-  // Fix: Updated the onApplyScan prop type to include the 'removeHandwriting' parameter,
-  // resolving a type mismatch between App.tsx, EditorSidebar.tsx, and ScanPanel.tsx.
+  insertUseSearch: boolean;
+  onInsertUseSearchChange: (useSearch: boolean) => void;
+  detectedFaces: Record<string, Face[]>;
+  selectedTargetFace: { fileKey: string; faceIndex: number } | null;
+  selectedSourceFace: { fileKey: string; faceIndex: number } | null;
   onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean) => void;
   onApplyManualScan: () => void;
   onEnterManualMode: () => boolean;
@@ -60,11 +64,14 @@ interface EditorSidebarProps {
   extractHistoryFiles: File[][];
   extractedHistoryItemUrls: string[][];
   onUseExtractedAsStyle: (file: File) => void;
+  onDownloadExtractedItem: (file: File) => void;
   isMaskPresent: boolean;
   clearMask: () => void;
   retouchPrompt: string;
   onRetouchPromptChange: (prompt: string) => void;
   retouchPromptInputRef: React.RefObject<HTMLInputElement>;
+  retouchUseSearch: boolean;
+  onRetouchUseSearchChange: (useSearch: boolean) => void;
   selectionMode: SelectionMode;
   setSelectionMode: (mode: SelectionMode) => void;
   brushMode: BrushMode;
@@ -79,11 +86,9 @@ interface EditorSidebarProps {
 
 export const TABS_CONFIG = [
     { id: 'retouch', icon: BrushIcon, tooltip: 'tooltipRetouch' },
+    { id: 'adjust', icon: SparklesIcon, tooltip: 'tooltipAdjust' },
     { id: 'insert', icon: PlusCircleIcon, tooltip: 'tooltipInsert' },
-    { id: 'extract', icon: TagIcon, tooltip: 'tooltipExtract' },
-    { id: 'adjust', icon: AdjustmentsIcon, tooltip: 'tooltipAdjust' },
-    { id: 'filters', icon: MagicWandIcon, tooltip: 'tooltipFilters' },
-    { id: 'crop', icon: CropIcon, tooltip: 'tooltipCrop' },
+    { id: 'idphoto', icon: IdCardIcon, tooltip: 'tooltipIdPhoto' },
     { id: 'expand', icon: ExpandIcon, tooltip: 'tooltipExpand' },
     { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
 ];
@@ -115,13 +120,27 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                   prompt={props.retouchPrompt}
                   onPromptChange={props.onRetouchPromptChange}
                   promptInputRef={props.retouchPromptInputRef}
+                  retouchUseSearch={props.retouchUseSearch}
+                  onRetouchUseSearchChange={props.onRetouchUseSearchChange}
+                  onApplyExtract={props.onApplyExtract}
+                  extractPrompt={props.extractPrompt}
+                  onExtractPromptChange={props.onExtractPromptChange}
+                  extractedItemsFiles={props.extractedItemsFiles}
+                  extractedItemUrls={props.extractedItemUrls}
+                  extractHistoryFiles={props.extractHistoryFiles}
+                  extractedHistoryItemUrls={props.extractedHistoryItemUrls}
+                  onUseExtractedAsStyle={props.onUseExtractedAsStyle}
+                  onDownloadExtractedItem={props.onDownloadExtractedItem}
                 />;
-      case 'crop':
-        return <CropPanel onApplyCrop={props.onApplyCrop} onSetAspect={props.onSetAspect} isLoading={props.isLoading} isCropping={props.isCropping} isImageLoaded={props.isImageLoaded} />;
+      case 'idphoto':
+        return <IdPhotoPanel 
+                  onApplyIdPhoto={props.onApplyIdPhoto} 
+                  isLoading={props.isLoading} 
+                  isImageLoaded={props.isImageLoaded}
+                  currentImage={props.currentImage}
+                />;
       case 'adjust':
-        return <AdjustmentPanel onApplyAdjustment={props.onApplyAdjustment} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
-      case 'filters':
-        return <FilterPanel onApplyFilter={props.onApplyFilter} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
+        return <AdjustmentPanel onApplyAdjustment={props.onApplyAdjustment} onApplyFilter={props.onApplyFilter} isLoading={props.isLoading} isImageLoaded={props.isImageLoaded} />;
       case 'expand':
         return <ExpandPanel 
                   onApplyExpansion={props.onApplyExpansion} 
@@ -133,7 +152,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                 />;
       case 'insert':
         return <CompositePanel
-                    onApplyInsert={props.onApplyInsert} 
+                    onApplyComposite={props.onApplyComposite} 
                     isLoading={props.isLoading}
                     subjectFiles={props.insertSubjectFiles}
                     onSubjectFilesChange={props.onInsertSubjectFilesChange}
@@ -143,6 +162,17 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                     onBackgroundFileChange={props.onInsertBackgroundFileChange}
                     prompt={props.insertPrompt}
                     onPromptChange={props.onInsertPromptChange}
+                    useSearchGrounding={props.insertUseSearch}
+                    onUseSearchGroundingChange={props.onInsertUseSearchChange}
+                    currentImage={props.currentImage}
+                    onApplyFaceSwap={props.onApplyFaceSwap}
+                    onSelectTargetFace={props.onSelectTargetFace}
+                    onSelectSourceFace={props.onSelectSourceFace}
+                    swapFaceFile={props.swapFaceFile}
+                    onSwapFaceFileChange={props.onSwapFaceFileChange}
+                    detectedFaces={props.detectedFaces}
+                    selectedTargetFace={props.selectedTargetFace}
+                    selectedSourceFace={props.selectedSourceFace}
                 />;
       case 'scan':
         return isManualScanMode
@@ -154,19 +184,6 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
               scanHistory={props.scanHistory}
               onReviewScan={props.onReviewScan}
             />;
-      case 'extract':
-        return <ExtractPanel
-                  isImageLoaded={props.isImageLoaded}
-                  isLoading={props.isLoading}
-                  onApplyExtract={props.onApplyExtract}
-                  prompt={props.extractPrompt}
-                  onPromptChange={props.onExtractPromptChange}
-                  extractedItemsFiles={props.extractedItemsFiles}
-                  extractedItemUrls={props.extractedItemUrls}
-                  extractHistoryFiles={props.extractHistoryFiles}
-                  extractedHistoryItemUrls={props.extractedHistoryItemUrls}
-                  onUseAsStyle={props.onUseExtractedAsStyle}
-                />;
       default:
         return null;
     }

@@ -6,16 +6,16 @@
 
 // Fix: Corrected syntax error in import statement to correctly import React hooks.
 import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
-import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
 import * as XLSX from 'xlsx';
-import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, removePeopleFromImage, generateDocumentStructure, type Corners, type Enhancement, RateLimitError, dataURLtoFile } from './services/geminiService';
+// Fix: Corrected import to use generateEditedImageWithMaskStream as the original function was removed.
+import { generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMaskStream, generateCompositeImage, generateScannedDocument, generateScannedDocumentWithCorners, generateExtractedItem, removePeopleFromImage, generateDocumentStructure, generateIdPhoto, detectFaces, detectSubjectDetails, type Corners, type Enhancement, type IdPhotoOptions, RateLimitError, dataURLtoFile, type Face } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
 import ScanViewerModal from './components/ScanViewerModal';
-import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, UploadIcon, PaperAirplaneIcon, ClockIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon, ChevronsLeftRightIcon, EyeIcon, EyeSlashIcon } from './components/icons';
+import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, UploadIcon, PaperAirplaneIcon, ClockIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon, ChevronsLeftRightIcon, EyeIcon, EyeSlashIcon, XMarkIcon } from './components/icons';
 import { useTranslation } from './contexts/LanguageContext';
 import { SelectionMode, BrushMode } from './components/RetouchPanel';
 import HistoryPanel from './components/HistoryPanel';
@@ -74,7 +74,7 @@ const MobileInputBar: React.FC<{
 };
 
 
-export type Tab = 'retouch' | 'crop' | 'adjust' | 'filters' | 'expand' | 'insert' | 'scan' | 'extract';
+export type Tab = 'retouch' | 'idphoto' | 'adjust' | 'expand' | 'insert' | 'scan' | 'extract' | 'faceswap';
 export type TransformType = 'rotate-cw' | 'rotate-ccw' | 'flip-h' | 'flip-v';
 type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
 
@@ -113,6 +113,7 @@ const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => voi
   );
 };
 
+
 const App: React.FC = () => {
   const { t } = useTranslation();
   const [history, setHistory] = useState<File[]>([]);
@@ -120,17 +121,14 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [aspect, setAspect] = useState<number | undefined>();
-  
   // Editor State
   const [activeTab, setActiveTab] = useState<Tab>('retouch');
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
-  
+
   // Retouch state
   const [retouchPrompt, setRetouchPrompt] = useState('');
+  const [retouchUseSearch, setRetouchUseSearch] = useState(false);
   const [selectionMode, setSelectionMode] = useState<SelectionMode>('point');
   const [editHotspot, setEditHotspot] = useState<{ x: number, y: number } | null>(null);
   const [hotspotDisplayPosition, setHotspotDisplayPosition] = useState<{ left: number, top: number } | null>(null);
@@ -147,6 +145,13 @@ const App: React.FC = () => {
   const [insertStyleFiles, setInsertStyleFiles] = useState<File[]>([]);
   const [insertBackgroundFile, setInsertBackgroundFile] = useState<File | null>(null);
   const [insertPrompt, setInsertPrompt] = useState('');
+  const [insertUseSearch, setInsertUseSearch] = useState(false);
+
+  // Face Swap state
+  const [swapFaceFile, setSwapFaceFile] = useState<File | null>(null);
+  const [detectedFaces, setDetectedFaces] = useState<Record<string, Face[]>>({});
+  const [selectedTargetFace, setSelectedTargetFace] = useState<{ fileKey: string; faceIndex: number } | null>(null);
+  const [selectedSourceFace, setSelectedSourceFace] = useState<{ fileKey: string; faceIndex: number } | null>(null);
   
   // Expand state
   const [expandPrompt, setExpandPrompt] = useState('');
@@ -300,7 +305,7 @@ const App: React.FC = () => {
     clearMask();
     setExpansionPadding({ top: 0, right: 0, bottom: 0, left: 0 });
     // When switching to a mode that needs a clean view, reset zoom/pan.
-    if (activeTab === 'crop' || isComparing) {
+    if (activeTab === 'idphoto' || isComparing) {
         resetView();
     }
   }, [activeTab, clearMask, resetView, isComparing]);
@@ -476,78 +481,10 @@ const App: React.FC = () => {
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
     // Reset transient states after an action, but keep Insert panel state
-    setCrop(undefined);
-    setCompletedCrop(undefined);
     clearMask();
     setEditHotspot(null);
     setRetouchPrompt('');
   }, [history, historyIndex, clearMask]);
-
-  const handleImageUpload = useCallback((file: File) => {
-    setError(null);
-    setHistory([file]);
-    setHistoryIndex(0);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-    clearMask();
-    setRetouchPrompt('');
-    setEditHotspot(null);
-    // This is a new session, so we reset the insert panel
-    // and set the newly uploaded image as the first subject.
-    setInsertSubjectFiles([file]);
-    setInsertStyleFiles([]);
-    setInsertBackgroundFile(null);
-    setInsertPrompt('');
-    setScanHistory([]);
-    setExtractPrompt('');
-    setExtractedItems([]);
-    setExtractHistory([]);
-    setIsComparing(false);
-  }, [clearMask]);
-  
-  const handleStartOver = useCallback(() => {
-    setHistory([]);
-    setHistoryIndex(-1);
-    setError(null);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-    clearMask();
-    setRetouchPrompt('');
-    setEditHotspot(null);
-    // Reset Insert panel state
-    setInsertSubjectFiles([]);
-    setInsertStyleFiles([]);
-    setInsertBackgroundFile(null);
-    setInsertPrompt('');
-    setScanHistory([]);
-    setExtractPrompt('');
-    setExtractedItems([]);
-    setExtractHistory([]);
-    setIsComparing(false);
-  }, [clearMask]);
-
-  const handleHistorySelect = (index: number) => {
-      setHistoryIndex(index);
-      clearMask();
-      setEditHotspot(null);
-      setCrop(undefined);
-      setCompletedCrop(undefined);
-      setIsHistoryPanelOpen(false); // Close panel on mobile after selection
-  };
-
-
-  const isMaskPresent = useCallback((): boolean => {
-    const canvas = maskCanvasRef.current;
-    if (!canvas) return false;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return false;
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    // Check if any pixel has an alpha value greater than 0
-    for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] > 0) return true;
-    }
-    return false;
-  }, []);
 
   const handleApiError = useCallback((err: unknown, contextKey: TranslationKey) => {
     let errorMessage: string;
@@ -566,6 +503,79 @@ const App: React.FC = () => {
     setError(errorMessage);
     console.error(err);
   }, [t]);
+
+  const handleImageUpload = useCallback((file: File) => {
+    setError(null);
+    // Reset all states first
+    setHistory([]);
+    setHistoryIndex(-1);
+    clearMask();
+    setRetouchPrompt('');
+    setEditHotspot(null);
+    setInsertSubjectFiles([file]);
+    setInsertStyleFiles([]);
+    setSwapFaceFile(null);
+    setInsertBackgroundFile(null);
+    setInsertPrompt('');
+    setScanHistory([]);
+    setExtractPrompt('');
+    setExtractedItems([]);
+    setExtractHistory([]);
+    setIsComparing(false);
+    setDetectedFaces({});
+    setSelectedSourceFace(null);
+    setSelectedTargetFace(null);
+
+    // Set history and stop loading AFTER detection is done
+    setHistory([file]);
+    setHistoryIndex(0);
+
+  }, [clearMask]);
+  
+  const handleStartOver = useCallback(() => {
+    setHistory([]);
+    setHistoryIndex(-1);
+    setError(null);
+    clearMask();
+    setRetouchPrompt('');
+    setEditHotspot(null);
+    // Reset Insert panel state
+    setInsertSubjectFiles([]);
+    setInsertStyleFiles([]);
+    setSwapFaceFile(null);
+    setInsertBackgroundFile(null);
+    setInsertPrompt('');
+    setScanHistory([]);
+    setExtractPrompt('');
+    setExtractedItems([]);
+    setExtractHistory([]);
+    setIsComparing(false);
+    // Reset face detection state
+    setDetectedFaces({});
+    setSelectedSourceFace(null);
+    setSelectedTargetFace(null);
+  }, [clearMask]);
+
+  const handleHistorySelect = (index: number) => {
+      setHistoryIndex(index);
+      clearMask();
+      setEditHotspot(null);
+      setIsHistoryPanelOpen(false); // Close panel on mobile after selection
+  };
+
+
+  const isMaskPresent = useCallback((): boolean => {
+    const canvas = maskCanvasRef.current;
+    if (!canvas) return false;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // Check if any pixel has an alpha value greater than 0
+    for (let i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] > 0) return true;
+    }
+    return false;
+  }, []);
 
   const handleGenerate = useCallback(async (promptOverride?: string) => {
     if (!currentImage) {
@@ -653,16 +663,27 @@ const App: React.FC = () => {
             }
         }
 
-        const editedImageUrl = await generateEditedImageWithMask(currentImage, finalPrompt, finalMaskUrl);
+        // Fix: Use the streaming function and take the last result for the non-streaming UI.
+        const stream = generateEditedImageWithMaskStream(currentImage, finalPrompt, finalMaskUrl, retouchUseSearch);
+        let editedImageUrl: string | null = null;
+        for await (const chunk of stream) {
+            // In a streaming UI, we would render each chunk. Here, we just want the final image.
+            editedImageUrl = chunk;
+        }
 
-        const newImageFile = dataURLtoFile(editedImageUrl, `edited-${Date.now()}.png`);
+        if (!editedImageUrl) {
+            throw new Error("Image generation failed to produce an image.");
+        }
+        
+        const newImageFile = dataURLtoFile(editedImageUrl, `retouched-${Date.now()}.png`);
         addImageToHistory(newImageFile);
+
     } catch (err) {
         handleApiError(err, 'errorFailedToGenerate');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, isMaskPresent, t, selectionMode, editHotspot, retouchPrompt, handleApiError]);
+  }, [currentImage, isMaskPresent, t, selectionMode, editHotspot, retouchPrompt, handleApiError, addImageToHistory, retouchUseSearch]);
   
   const handleApplyFilter = useCallback(async (filterPrompt: string) => {
     if (!currentImage) {
@@ -682,7 +703,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t, handleApiError]);
+  }, [currentImage, t, handleApiError, addImageToHistory]);
   
   const handleApplyAdjustment = useCallback(async (adjustmentPrompt: string) => {
     if (!currentImage) {
@@ -702,7 +723,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory, t, handleApiError]);
+  }, [currentImage, t, handleApiError, addImageToHistory]);
 
   const handleApplyTransform = useCallback((transform: TransformType) => {
     if (!currentImage) {
@@ -765,49 +786,23 @@ const App: React.FC = () => {
     image.src = imageUrl;
   }, [currentImage, addImageToHistory, t]);
 
-  const handleApplyCrop = useCallback(() => {
-    if (!completedCrop || !imgRef.current || !imgRef.current.naturalWidth) {
-      setError(t('errorPleaseSelectCrop'));
-      return;
+  const handleApplyIdPhoto = useCallback(async (options: IdPhotoOptions) => {
+    if (!currentImage) {
+        setError(t('errorNoImageLoadedToAdjust'));
+        return;
     }
-
-    const image = imgRef.current;
-    const canvas = document.createElement('canvas');
-
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
-    const sourceCropWidth = completedCrop.width * scaleX;
-    const sourceCropHeight = completedCrop.height * scaleY;
-
-    canvas.width = Math.round(sourceCropWidth);
-    canvas.height = Math.round(sourceCropHeight);
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      setError(t('errorCouldNotProcessCrop'));
-      return;
+    setIsLoading(true);
+    setError(null);
+    try {
+        const idPhotoUrl = await generateIdPhoto(currentImage, options);
+        const newImageFile = dataURLtoFile(idPhotoUrl, `idphoto-${Date.now()}.png`);
+        addImageToHistory(newImageFile);
+    } catch (err) {
+        handleApiError(err, 'errorFailedToGenerate');
+    } finally {
+        setIsLoading(false);
     }
-    
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.drawImage(
-      image,
-      completedCrop.x * scaleX, // Source X
-      completedCrop.y * scaleY, // Source Y
-      sourceCropWidth,          // Source Width
-      sourceCropHeight,         // Source Height
-      0,                        // Destination X
-      0,                        // Destination Y
-      canvas.width,             // Destination Width
-      canvas.height             // Destination Height
-    );
-    
-    const croppedImageUrl = canvas.toDataURL('image/png');
-    const newImageFile = dataURLtoFile(croppedImageUrl, `cropped-${Date.now()}.png`);
-    addImageToHistory(newImageFile);
-
-  }, [completedCrop, addImageToHistory, t]);
+  }, [currentImage, t, handleApiError, addImageToHistory]);
 
   const handleApplyExpansion = useCallback(async (prompt: string) => {
     if (!currentImage || !imgRef.current) {
@@ -868,38 +863,90 @@ const App: React.FC = () => {
     }
   }, [currentImage, addImageToHistory, t, expansionPadding, hasExpansion, handleApiError]);
 
-  const handleApplyInsert = useCallback(async () => {
-    if (insertSubjectFiles.length === 0) {
-        setError(t('insertErrorNoSubjects'));
-        return;
-    }
-    
+  const handleApplyComposite = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
     try {
+        if (insertSubjectFiles.length === 0) {
+            setError(t('insertErrorNoSubjects'));
+            return;
+        }
+
         const insertedImageUrl = await generateCompositeImage(
             insertBackgroundFile,
-            insertSubjectFiles, 
-            insertStyleFiles, 
-            insertPrompt
+            insertSubjectFiles,
+            insertStyleFiles,
+            null, // No swap face file in composite mode
+            insertPrompt,
+            null, // No mask file in composite mode
+            insertUseSearch
         );
         const newImageFile = dataURLtoFile(insertedImageUrl, `inserted-${Date.now()}.png`);
         
         if (history.length === 0 || historyIndex === -1) {
-            // If this is the first image, treat it like a new upload
-            // which also sets the new image as a subject for further edits.
             handleImageUpload(newImageFile);
         } else {
             addImageToHistory(newImageFile);
         }
+    } catch (err) {
+        handleApiError(err, 'errorFailedToGenerate');
+    } finally {
+        setIsLoading(false);
+    }
+  }, [
+    addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, 
+    insertStyleFiles, insertBackgroundFile, insertPrompt, handleApiError, insertUseSearch
+  ]);
+
+  const handleApplyFaceSwap = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+        if (!currentImage || !swapFaceFile || !selectedSourceFace || (selectedTargetFace?.fileKey !== 'currentImage')) {
+            setError(t('errorFaceSwapValidation'));
+            return;
+        }
+
+        const faceBox = detectedFaces['currentImage']?.[selectedTargetFace.faceIndex]?.box;
+        if (!faceBox) {
+            setError(t('errorFaceSwapValidation'));
+            return;
+        }
+        
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = imageDimensions?.width ?? 0;
+        maskCanvas.height = imageDimensions?.height ?? 0;
+        const ctx = maskCanvas.getContext('2d');
+        if (!ctx) throw new Error("Could not create canvas context for mask");
+        
+        ctx.fillStyle = 'white';
+        ctx.fillRect(faceBox.x, faceBox.y, faceBox.width, faceBox.height);
+        const maskDataUrl = maskCanvas.toDataURL('image/png');
+        const maskFile = dataURLtoFile(maskDataUrl, 'facemask.png');
+        
+        const insertedImageUrl = await generateCompositeImage(
+            null,
+            [currentImage],
+            [],
+            swapFaceFile,
+            t('faceSwapDefaultPrompt'),
+            maskFile,
+            false // Search grounding not applicable for face swap
+        );
+        const newImageFile = dataURLtoFile(insertedImageUrl, `swapped-${Date.now()}.png`);
+        addImageToHistory(newImageFile);
 
     } catch (err) {
         handleApiError(err, 'errorFailedToGenerate');
     } finally {
         setIsLoading(false);
     }
-  }, [addImageToHistory, handleImageUpload, history.length, historyIndex, t, insertSubjectFiles, insertStyleFiles, insertBackgroundFile, insertPrompt, handleApiError]);
+  }, [
+    addImageToHistory, t, handleApiError,
+    currentImage, swapFaceFile, selectedTargetFace, selectedSourceFace, detectedFaces, imageDimensions
+  ]);
+
 
   // --- Background Handler for Insert Panel ---
   const handleInsertBackgroundFileChange = useCallback(async (file: File | null) => {
@@ -921,6 +968,43 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [handleApiError]);
+
+    // --- Face Detection and Selection Handlers ---
+    const handleFileFaceDetection = useCallback(async (file: File, type: 'target' | 'source', fileKey: string) => {
+        try {
+            const faces = await detectFaces(file);
+            setDetectedFaces(prev => ({ ...prev, [fileKey]: faces }));
+
+            if (faces.length === 1) {
+                if (type === 'target') {
+                    setSelectedTargetFace({ fileKey, faceIndex: 0 });
+                } else {
+                    setSelectedSourceFace({ fileKey, faceIndex: 0 });
+                }
+            }
+        } catch (err) {
+            handleApiError(err, 'errorFailedToGenerate'); // Using a generic error key
+        }
+    }, [handleApiError]);
+
+    const handleInsertSubjectFilesChange = useCallback((files: File[]) => {
+        setInsertSubjectFiles(files);
+        setSelectedTargetFace(null);
+        if (files.length > 0) {
+            const firstFile = files[0];
+            const fileKey = firstFile.name + firstFile.lastModified;
+            handleFileFaceDetection(firstFile, 'target', fileKey);
+        }
+    }, [handleFileFaceDetection]);
+
+    const handleSwapFaceFileChange = useCallback((file: File | null) => {
+        setSwapFaceFile(file);
+        setSelectedSourceFace(null);
+        if (file) {
+            const fileKey = file.name + file.lastModified;
+            handleFileFaceDetection(file, 'source', fileKey);
+        }
+    }, [handleFileFaceDetection]);
 
   // --- Extract Handlers ---
   const handleApplyExtract = useCallback(async () => {
@@ -966,6 +1050,23 @@ const App: React.FC = () => {
         });
     }
   }, []);
+  
+  const handleDownloadExtractedItem = useCallback((itemFile: File) => {
+    if (!itemFile) return;
+    try {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(itemFile);
+        link.href = url;
+        link.download = itemFile.name || `pika-ai-extracted-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        setError(t('errorCouldNotProcessDownload'));
+        console.error("Download extracted item error:", err);
+    }
+  }, [t]);
 
   // --- Scan Handlers ---
   const handleApplyScan = useCallback(async (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean) => {
@@ -1068,7 +1169,7 @@ const App: React.FC = () => {
           const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
           pdf.addImage(img, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          pdf.save(`pixshop-scan-${Date.now()}.pdf`);
+          pdf.save(`pika-ai-scan-${Date.now()}.pdf`);
       } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to create PDF.');
       } finally {
@@ -1117,7 +1218,7 @@ const App: React.FC = () => {
         const blob = await Packer.toBlob(doc);
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `pixshop-scan-${Date.now()}.docx`;
+        link.download = `pika-ai-scan-${Date.now()}.docx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1164,7 +1265,7 @@ const App: React.FC = () => {
               throw new Error("No exportable content (tables or text) was found in the document.");
           }
 
-          XLSX.writeFile(wb, `pixshop-scan-${Date.now()}.xlsx`);
+          XLSX.writeFile(wb, `pika-ai-scan-${Date.now()}.xlsx`);
 
       } catch (err) {
           handleApiError(err, 'errorFailedToExport');
@@ -1172,6 +1273,29 @@ const App: React.FC = () => {
           setExportingDocType(null);
       }
   }, [scannedImageUrl, handleApiError]);
+
+  const handleSelectTargetFace = useCallback((faceIndex: number) => {
+    setSelectedTargetFace({ fileKey: 'currentImage', faceIndex });
+  }, []);
+
+  const handleSelectSourceFace = useCallback((faceIndex: number) => {
+    if (swapFaceFile) {
+        const fileKey = swapFaceFile.name + swapFaceFile.lastModified;
+        setSelectedSourceFace({ fileKey, faceIndex });
+    }
+  }, [swapFaceFile]);
+
+
+  // Effect to detect faces on the main image for Face Swap mode
+  useEffect(() => {
+    if (currentImage) {
+        const fileKey = 'currentImage';
+        const faces = detectedFaces[fileKey];
+        if (!faces) {
+            handleFileFaceDetection(currentImage, 'target', fileKey);
+        }
+    }
+  }, [currentImage, handleFileFaceDetection, detectedFaces]);
 
 
   const handleUndo = useCallback(() => {
@@ -1201,7 +1325,7 @@ const App: React.FC = () => {
     }
 
     const mimeType = 'image/jpeg';
-    const filename = `pixshop-edited-${Date.now()}.jpg`;
+    const filename = `pika-ai-edited-${Date.now()}.jpg`;
 
     const image = new Image();
     image.crossOrigin = 'anonymous';
@@ -1269,53 +1393,10 @@ const App: React.FC = () => {
     document.getElementById('global-file-input')?.click();
   }, []);
 
-  const handleAspectSelect = (newAspect: number | undefined) => {
-    setAspect(newAspect);
-    if (imgRef.current) {
-        const { width, height } = imgRef.current;
-        
-        let cropWidth: number, cropHeight: number;
-        
-        if (newAspect) {
-            const imageAspect = width / height;
-            if (newAspect > imageAspect) {
-                // The crop is wider than the image, so width is the limiting factor
-                cropWidth = width * 0.9;
-                cropHeight = cropWidth / newAspect;
-            } else {
-                // The crop is taller than the image, so height is the limiting factor
-                cropHeight = height * 0.9;
-                cropWidth = cropHeight * newAspect;
-            }
-        } else {
-            // Free crop, default to 90%
-            cropWidth = width * 0.9;
-            cropHeight = height * 0.9;
-        }
-
-        const newCrop = centerCrop(
-            makeAspectCrop(
-                {
-                    unit: 'px',
-                    width: cropWidth,
-                },
-                newAspect ?? (cropWidth / cropHeight),
-                width,
-                height,
-            ),
-            width,
-            height
-        );
-        setCrop(newCrop);
-        setCompletedCrop(undefined);
-    }
-};
-
   const handleViewerMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
       if (e.button !== 0 || (e.target as HTMLElement).closest('.corner-handle') || (e.target as HTMLElement).closest('[data-slider-handle="true"]')) return;
       if (activeTab === 'retouch' && selectionMode === 'brush') return; // Let canvas handle it
       if (activeTab === 'scan' && isManualScanMode) return; // Let corner handles manage clicks
-      if (activeTab === 'crop') return; // Disable panning in crop mode
       if (scale <= 1 && !isComparing) return; // Don't pan if not zoomed (allow in compare mode)
 
       e.preventDefault();
@@ -1360,7 +1441,6 @@ const App: React.FC = () => {
   };
 
   const handleViewerWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-      if (activeTab === 'crop') return; // Disable zoom in crop mode
       e.preventDefault();
       const zoomAmount = 0.1;
       if (e.deltaY < 0) {
@@ -1368,7 +1448,7 @@ const App: React.FC = () => {
       } else {
           handleZoom('out', zoomAmount);
       }
-  }, [handleZoom, activeTab]);
+  }, [handleZoom]);
 
   // --- Pinch-to-Zoom and Touch Pan Handlers ---
   const getDistanceBetweenTouches = (touches: React.TouchList): number => {
@@ -1383,7 +1463,6 @@ const App: React.FC = () => {
     if ((e.target as HTMLElement).closest('.corner-handle') || (e.target as HTMLElement).closest('[data-slider-handle="true"]')) return;
     if (activeTab === 'retouch' && selectionMode === 'brush') return;
     if (activeTab === 'scan' && isManualScanMode) return;
-    if (activeTab === 'crop') return;
 
     e.preventDefault();
 
@@ -1480,7 +1559,7 @@ const App: React.FC = () => {
 
       if (deltaTime < 500 && Math.abs(deltaX) > swipeThreshold && Math.abs(deltaY) < verticalThreshold) {
           const availableTabs = TABS_CONFIG.filter(tab => {
-              if (tab.id === 'insert') return true; // Always available
+              if (tab.id === 'insert' || tab.id === 'faceswap') return true; // Always available
               return !!currentImage;
           });
           const currentIndex = availableTabs.findIndex(tab => tab.id === activeTab);
@@ -1975,24 +2054,13 @@ const App: React.FC = () => {
         );
     }
     
-    const cropImageElement = (
-      <img 
-        ref={imgRef}
-        key={`crop-${historyIndex}`}
-        src={currentImageUrl ?? ''} 
-        alt="Crop this image"
-        crossOrigin="anonymous"
-        className="block"
-      />
-    );
-
     const imageDisplay = (
         <div
             ref={imageViewerRef}
             className={`relative w-full h-full overflow-hidden bg-black/30 select-none rounded-2xl transition-all duration-200 ease-in-out
                 ${currentImage ? 'touch-none' : ''}
                 ${isPanning ? 'cursor-grabbing' : ''}
-                ${!isPanning && scale > 1 && (activeTab !== 'crop') ? 'cursor-grab' : ''}
+                ${!isPanning && scale > 1 ? 'cursor-grab' : ''}
                 ${activeTab === 'retouch' && selectionMode === 'point' && currentImage && !isComparing ? 'cursor-crosshair' : ''}
                 ${activeTab === 'retouch' && selectionMode === 'brush' && currentImage && !isComparing ? 'cursor-none' : ''}
                 ${(isPanning || isInteracting) ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/25' : ''}
@@ -2010,30 +2078,10 @@ const App: React.FC = () => {
             {currentImageUrl && (
                 isComparing && canUndo && beforeImageUrl ? (
                     // --- COMPARING VIEW ---
-                    <>
-                        {/* Background Image (Original/Before) */}
-                        <div
-                            className="absolute inset-0 w-full h-full transition-transform duration-100 ease-out"
-                            style={{
-                                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                                transformOrigin: 'center center',
-                            }}
-                        >
-                            <div className="relative w-full h-full flex items-center justify-center">
-                                <img
-                                    src={beforeImageUrl}
-                                    alt={t('original')}
-                                    crossOrigin="anonymous"
-                                    className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                                />
-                            </div>
-                        </div>
-                    
-                        {/* Foreground Image (Edited/After) - This one gets clipped */}
-                        <div
-                            className="absolute inset-0 w-full h-full"
-                            style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-                        >
+                    windowSize.width < 768 ? (
+                        // --- SLIDER VIEW (MOBILE) ---
+                        <>
+                            {/* Background Image (Original/Before) */}
                             <div
                                 className="absolute inset-0 w-full h-full transition-transform duration-100 ease-out"
                                 style={{
@@ -2043,32 +2091,93 @@ const App: React.FC = () => {
                             >
                                 <div className="relative w-full h-full flex items-center justify-center">
                                     <img
-                                        ref={imgRef} // Keep ref on the visible "main" image
-                                        key={historyIndex}
-                                        src={currentImageUrl}
-                                        alt={t('edited')}
+                                        src={beforeImageUrl}
+                                        alt={t('original')}
                                         crossOrigin="anonymous"
                                         className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                                     />
                                 </div>
                             </div>
-                        </div>
+                        
+                            {/* Foreground Image (Edited/After) - This one gets clipped */}
+                            <div
+                                className="absolute inset-0 w-full h-full"
+                                style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+                            >
+                                <div
+                                    className="absolute inset-0 w-full h-full transition-transform duration-100 ease-out"
+                                    style={{
+                                        transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                        transformOrigin: 'center center',
+                                    }}
+                                >
+                                    <div className="relative w-full h-full flex items-center justify-center">
+                                        <img
+                                            ref={imgRef} // Keep ref on the visible "main" image
+                                            key={historyIndex}
+                                            src={currentImageUrl}
+                                            alt={t('edited')}
+                                            crossOrigin="anonymous"
+                                            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
 
-                        {/* Slider Handle - Overlay on viewer */}
+                            {/* Slider Handle - Overlay on viewer */}
+                            <div
+                                ref={sliderRef}
+                                className="absolute top-0 bottom-0 w-1 bg-white/80 cursor-ew-resize group z-30"
+                                style={{ left: `calc(${sliderPosition}% - 2px)` }}
+                                onMouseDown={handleSliderMouseDown}
+                                onTouchStart={handleSliderTouchStart}
+                                aria-label={t('compareSliderAria')}
+                                data-slider-handle="true"
+                            >
+                                <div className="absolute top-1/2 -translate-y-1/2 -left-3 bg-white rounded-full p-1.5 shadow-lg border-2 border-cyan-400 transition-transform group-hover:scale-110">
+                                    <ChevronsLeftRightIcon className="w-5 h-5 text-black"/>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        // --- SIDE-BY-SIDE VIEW (DESKTOP) ---
                         <div
-                            ref={sliderRef}
-                            className="absolute top-0 bottom-0 w-1 bg-white/80 cursor-ew-resize group z-30"
-                            style={{ left: `calc(${sliderPosition}% - 2px)` }}
-                            onMouseDown={handleSliderMouseDown}
-                            onTouchStart={handleSliderTouchStart}
-                            aria-label={t('compareSliderAria')}
-                            data-slider-handle="true"
+                            className="transition-transform duration-100 ease-out w-full h-full flex items-center justify-center"
+                            style={{
+                                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                transformOrigin: 'center center',
+                            }}
                         >
-                            <div className="absolute top-1/2 -translate-y-1/2 -left-3 bg-white rounded-full p-1.5 shadow-lg border-2 border-cyan-400 transition-transform group-hover:scale-110">
-                                <ChevronsLeftRightIcon className="w-5 h-5 text-black"/>
+                            <div className="flex w-full h-full gap-4">
+                                {/* Before Image Container */}
+                                <div className="w-1/2 h-full relative flex items-center justify-center">
+                                    <img
+                                        src={beforeImageUrl}
+                                        alt={t('original')}
+                                        crossOrigin="anonymous"
+                                        className="w-full h-full object-contain pointer-events-none"
+                                    />
+                                    <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-10">
+                                        {t('original')}
+                                    </div>
+                                </div>
+                                {/* After Image Container */}
+                                <div className="w-1/2 h-full relative flex items-center justify-center">
+                                    <img
+                                        ref={imgRef} // Keep ref on the "main" image
+                                        key={historyIndex}
+                                        src={currentImageUrl}
+                                        alt={t('edited')}
+                                        crossOrigin="anonymous"
+                                        className="w-full h-full object-contain pointer-events-none"
+                                    />
+                                     <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-10">
+                                        {t('edited')}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </>
+                    )
                 ) : (
                     // --- NORMAL VIEW ---
                     <div
@@ -2330,24 +2439,32 @@ const App: React.FC = () => {
         activeTab: activeTab,
         setActiveTab: setActiveTab,
         onApplyRetouch: handleGenerate,
-        onApplyCrop: handleApplyCrop,
-        onSetAspect: handleAspectSelect,
-        isCropping: !!completedCrop?.width && completedCrop.width > 0,
+        onApplyIdPhoto: handleApplyIdPhoto,
         onApplyAdjustment: handleApplyAdjustment,
         onApplyFilter: handleApplyFilter,
         onApplyExpansion: handleApplyExpansion,
         expandPrompt: expandPrompt,
         onExpandPromptChange: setExpandPrompt,
         hasExpansion: hasExpansion,
-        onApplyInsert: handleApplyInsert,
+        onApplyComposite: handleApplyComposite,
+        onApplyFaceSwap: handleApplyFaceSwap,
+        onSelectTargetFace: handleSelectTargetFace,
+        onSelectSourceFace: handleSelectSourceFace,
         insertSubjectFiles: insertSubjectFiles,
-        onInsertSubjectFilesChange: setInsertSubjectFiles,
+        onInsertSubjectFilesChange: handleInsertSubjectFilesChange,
         insertStyleFiles: insertStyleFiles,
         onInsertStyleFilesChange: setInsertStyleFiles,
+        swapFaceFile: swapFaceFile,
+        onSwapFaceFileChange: handleSwapFaceFileChange,
         insertBackgroundFile: insertBackgroundFile,
         onInsertBackgroundFileChange: handleInsertBackgroundFileChange,
         insertPrompt: insertPrompt,
         onInsertPromptChange: setInsertPrompt,
+        insertUseSearch: insertUseSearch,
+        onInsertUseSearchChange: setInsertUseSearch,
+        detectedFaces: detectedFaces,
+        selectedTargetFace: selectedTargetFace,
+        selectedSourceFace: selectedSourceFace,
         onApplyScan: handleApplyScan,
         onApplyManualScan: handleApplyManualScan,
         onCancelManualMode: handleCancelManualMode,
@@ -2362,11 +2479,14 @@ const App: React.FC = () => {
         extractHistoryFiles: extractHistory,
         extractedHistoryItemUrls: extractedHistoryItemUrls,
         onUseExtractedAsStyle: handleUseExtractedAsStyle,
+        onDownloadExtractedItem: handleDownloadExtractedItem,
         isMaskPresent: isMaskPresent(),
         clearMask: clearMask,
         retouchPrompt: retouchPrompt,
         onRetouchPromptChange: setRetouchPrompt,
         retouchPromptInputRef: retouchPromptInputRef,
+        retouchUseSearch: retouchUseSearch,
+        onRetouchUseSearchChange: setRetouchUseSearch,
         selectionMode: selectionMode,
         setSelectionMode: (mode: SelectionMode) => {
             setSelectionMode(mode);
@@ -2406,7 +2526,7 @@ const App: React.FC = () => {
             <div className="flex flex-col min-w-0 min-h-0 relative">
                  <div
                     className="w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
-                    style={{ transform: activeTab === 'crop' || activeTab === 'expand' ? 'scale(1)' : `scale(${imageScale})` }}
+                    style={{ transform: activeTab === 'expand' ? 'scale(1)' : `scale(${imageScale})` }}
                  >
                     <div className="w-full h-full relative">
                         {isLoading && !isScanModalOpen && (
@@ -2417,20 +2537,7 @@ const App: React.FC = () => {
                         )}
                         
                         <div className="w-full h-full border glow-border-animate rounded-2xl p-1 relative flex items-center justify-center">
-                            {activeTab === 'crop' && currentImage ? (
-                              <div className="w-full h-full overflow-auto bg-black/30 backdrop-blur-xl border border-white/10 rounded-xl">
-                                <div className="grid min-h-full place-items-center p-2">
-                                    <ReactCrop 
-                                      crop={crop} 
-                                      onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)} 
-                                      onComplete={c => setCompletedCrop(c)}
-                                      aspect={aspect}
-                                    >
-                                      {cropImageElement}
-                                    </ReactCrop>
-                                </div>
-                              </div>
-                            ) : imageDisplay }
+                            { imageDisplay }
                         </div>
                     </div>
                 </div>
