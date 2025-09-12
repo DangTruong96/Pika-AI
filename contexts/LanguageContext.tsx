@@ -6,7 +6,7 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { translations, TranslationKey } from '../translations';
 
-export type Language = 'en' | 'vi' | 'ja';
+export type Language = 'vi';
 
 interface LanguageContextType {
   language: Language;
@@ -17,10 +17,10 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('vi');
+  const [language] = useState<Language>('vi');
 
   const t = (key: TranslationKey, replacements: { [key: string]: string | number } = {}) => {
-    let text = translations[language]?.[key] || translations['en'][key] || key;
+    let text = translations.vi[key] || key;
     
     Object.keys(replacements).forEach(rKey => {
       const regex = new RegExp(`\\{${rKey}\\}`, 'g');
@@ -31,7 +31,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage: () => {}, t }}>
       {children}
     </LanguageContext.Provider>
   );

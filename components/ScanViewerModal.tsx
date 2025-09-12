@@ -130,7 +130,7 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalIma
         ) : (
           <div className="flex flex-col items-center gap-4">
             <Spinner />
-            <p className="text-gray-300">{t('loadingText')}</p>
+            <p className="text-gray-300">{t('loadingScan')}</p>
           </div>
         )}
       </div>

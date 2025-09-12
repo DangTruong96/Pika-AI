@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -5,8 +6,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { UploadIcon, XMarkIcon, PlusCircleIcon, UsersIcon } from './icons';
+import { UploadIcon, XMarkIcon, PlusCircleIcon, UsersIcon, UserCircleIcon, UndoIcon, RedoIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, ChevronDownIcon } from './icons';
 import type { Face } from '../services/geminiService';
+import type { CameraAngle } from './EditorSidebar';
 
 interface CompositePanelProps {
     onApplyComposite: () => void;
@@ -19,8 +21,8 @@ interface CompositePanelProps {
     onBackgroundFileChange: (file: File | null) => void;
     prompt: string;
     onPromptChange: (prompt: string) => void;
-    useSearchGrounding: boolean;
-    onUseSearchGroundingChange: (useSearch: boolean) => void;
+    insertCameraAngle: CameraAngle;
+    onInsertCameraAngleChange: (angle: CameraAngle) => void;
     // Props merged from FaceSwapPanel
     onApplyFaceSwap: () => void;
     onSelectTargetFace: (index: number) => void;
@@ -158,7 +160,7 @@ const CompositePanel: React.FC<CompositePanelProps> = (props) => {
     const { 
         onApplyComposite, isLoading, subjectFiles, onSubjectFilesChange,
         styleFiles, onStyleFilesChange, backgroundFile, onBackgroundFileChange,
-        prompt, onPromptChange, useSearchGrounding, onUseSearchGroundingChange,
+        prompt, onPromptChange, insertCameraAngle, onInsertCameraAngleChange,
         onApplyFaceSwap, onSelectTargetFace, onSelectSourceFace, currentImage,
         swapFaceFile, onSwapFaceFileChange, detectedFaces, selectedTargetFace, selectedSourceFace
     } = props;
@@ -247,6 +249,42 @@ const CompositePanel: React.FC<CompositePanelProps> = (props) => {
     const title = mode === 'composite' ? t('insertTitle') : t('swapFaceTitle');
     const description = mode === 'composite' ? t('insertDescription') : t('swapFaceDescription');
 
+    // Fix: Changed JSX.Element to React.ReactElement to resolve JSX namespace error.
+    const cameraAngleOptions: { value: CameraAngle, label: string, icon: React.FC<{ className?: string }> }[] = [
+        { value: 'front', label: t('studioAngleFront'), icon: UserCircleIcon },
+        { value: 'threeQuartersLeft', label: t('studioAngle34Left'), icon: UndoIcon },
+        { value: 'threeQuartersRight', label: t('studioAngle34Right'), icon: RedoIcon },
+        { value: 'profileLeft', label: t('studioAngleProfileLeft'), icon: ChevronLeftIcon },
+        { value: 'profileRight', label: t('studioAngleProfileRight'), icon: ChevronRightIcon },
+        { value: 'slightlyAbove', label: t('studioAngleAbove'), icon: ChevronUpIcon },
+        { value: 'slightlyBelow', label: t('studioAngleBelow'), icon: ChevronDownIcon },
+    ];
+
+    const CameraAngleControl = () => (
+        <div className="w-full flex flex-col items-center gap-2">
+            <span className="text-sm font-medium text-gray-300">{t('studioCameraAngle')}:</span>
+            <div className="flex items-center justify-center gap-1 rounded-lg bg-black/30 p-1 flex-wrap">
+                {cameraAngleOptions.map(({ value, label, icon: Icon }) => (
+                    <button
+                        type="button"
+                        key={value}
+                        onClick={() => onInsertCameraAngleChange(value)}
+                        disabled={isLoading}
+                        title={label}
+                        className={`p-2 rounded-md transition-all duration-200 active:scale-95 disabled:opacity-50 flex items-center justify-center ${
+                            insertCameraAngle === value
+                                ? 'bg-white/15 text-white shadow-sm'
+                                : 'bg-transparent hover:bg-white/10 text-gray-300'
+                        }`}
+                    >
+                        {/* Fix: Replaced React.cloneElement with direct component rendering to fix type error. */}
+                        <Icon className="w-5 h-5" />
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+
     return (
         <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
             <h3 className="text-lg font-semibold text-gray-200">{title}</h3>
@@ -311,10 +349,7 @@ const CompositePanel: React.FC<CompositePanelProps> = (props) => {
                     </div>
                     <form onSubmit={(e) => { e.preventDefault(); onApplyComposite(); }} className="w-full flex flex-col items-center gap-3">
                         <input type="text" value={prompt} onChange={(e) => onPromptChange(e.target.value)} placeholder={backgroundFile ? t('insertPromptPlaceholder') : t('insertPromptPlaceholderInitial')} className="bg-white/5 border border-white/10 text-gray-200 rounded-lg p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base focus:bg-white/10" disabled={isLoading} />
-                        <div className="flex items-center gap-2 self-start">
-                            <input type="checkbox" id="use-search-checkbox" checked={useSearchGrounding} onChange={(e) => onUseSearchGroundingChange(e.target.checked)} disabled={isLoading} className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 ring-offset-gray-900 focus:ring-2 cursor-pointer disabled:cursor-not-allowed" />
-                            <label htmlFor="use-search-checkbox" className="text-sm font-medium text-gray-300 cursor-pointer">{t('insertUseSearch')}</label>
-                        </div>
+                        <CameraAngleControl />
                         <button type="submit" className="w-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10" disabled={!canComposite} >{t('insertApply')}</button>
                     </form>
                 </div>
@@ -333,6 +368,7 @@ const CompositePanel: React.FC<CompositePanelProps> = (props) => {
                         <FaceSelectionDisplay file={currentImage} title={t('faceSwapTargetTitle')} noImageMessage={t('faceSwapNoTargetImage')} detectedFaces={detectedFaces['currentImage']} selectedFaceIndex={selectedTargetFace?.fileKey === 'currentImage' ? selectedTargetFace.faceIndex : null} onFaceSelect={onSelectTargetFace} />
                         <FaceSelectionDisplay file={swapFaceFile} title={t('faceSwapSourceTitle')} noImageMessage={t('faceSwapUploadFaceButton')} onFileChange={handleSwapFaceFileChange} dragProps={swapFaceDragProps} inputId="swap-face-file-input" detectedFaces={swapFaceFile ? detectedFaces[swapFaceFile.name + swapFaceFile.lastModified] : undefined} selectedFaceIndex={selectedSourceFace?.faceIndex ?? null} onFaceSelect={onSelectSourceFace} />
                     </div>
+                    <CameraAngleControl />
                     <button onClick={onApplyFaceSwap} disabled={!canFaceSwap} className="w-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10">
                         {t('swapFaceApply')}
                     </button>

@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { detectSubjectDetails, type IdPhotoOptions } from '../services/geminiService';
+import { type IdPhotoOptions } from '../services/geminiService';
 import Spinner from './Spinner';
 
 interface IdPhotoPanelProps {
@@ -18,7 +18,7 @@ interface IdPhotoPanelProps {
 type PhotoType = 'standard' | 'newborn';
 type Gender = 'male' | 'female';
 type Expression = 'neutral' | 'smile' | 'keep' | 'big-smile';
-type Outfit = 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai';
+type Outfit = 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai' | 'office-wear';
 type Background = 'white' | 'blue' | 'gray' | 'green';
 type Hair = 'keep' | 'professional-short' | 'professional-tied-back' | 'professional-neat-down' | 'male-neat' | 'male-short' | 'male-medium';
 type Size = '3x4' | '4x6' | '2x2' | '3.5x4.5' | '5x5';
@@ -55,7 +55,6 @@ const SegmentedControl = <T extends string>({ label, options, selected, onSelect
 const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, isImageLoaded, currentImage }) => {
   const { t } = useTranslation();
 
-  const [isDetecting, setIsDetecting] = useState(false);
   const [photoType, setPhotoType] = useState<PhotoType>('standard');
   const [gender, setGender] = useState<Gender>('female');
   const [expression, setExpression] = useState<Expression>('keep');
@@ -82,38 +81,11 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
       return prevOutfit; // No change needed
     });
   }, []);
-
-  // Effect to auto-detect subject details when the image changes
+  
+  // Effect to reset custom prompt when image changes
   useEffect(() => {
-    // Don't run if no image is loaded
-    if (!isImageLoaded || !currentImage) {
-        return;
-    }
-
-    const detectDetails = async () => {
-        setIsDetecting(true);
-        try {
-            const details = await detectSubjectDetails(currentImage);
-            setPhotoType(details.ageCategory === 'newborn' ? 'newborn' : 'standard');
-            // Fix: The `ageCategory` from the API is 'adult' or 'newborn', not 'standard'.
-            if (details.ageCategory === 'adult') {
-                handleGenderChange(details.gender);
-            }
-        } catch (error) {
-            console.error("Failed to detect subject details for ID photo:", error);
-            // Fallback to defaults on error, don't show an error to the user
-            setPhotoType('standard');
-            handleGenderChange('female');
-        } finally {
-            setIsDetecting(false);
-        }
-    };
-
-    detectDetails();
-    // Reset custom prompt whenever the image changes
     setCustomPrompt('');
-
-  }, [currentImage, isImageLoaded, handleGenderChange]);
+  }, [currentImage]);
   
   const handleApply = () => {
     const optionsForApi: IdPhotoOptions = photoType === 'standard'
@@ -138,12 +110,14 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
   const outfitOptions: { value: Outfit, label: string }[] = gender === 'male'
     ? [
         { value: 'suit', label: t('idPhotoOutfitSuit') },
-        { value: 'collared-shirt-m', label: t('idPhotoOutfitCollaredShirtM') }
+        { value: 'collared-shirt-m', label: t('idPhotoOutfitCollaredShirtM') },
+        { value: 'office-wear', label: t('idPhotoOutfitOfficeWear') },
       ]
     : [
         { value: 'ao-dai', label: t('idPhotoOutfitAoDai') },
         { value: 'blouse', label: t('idPhotoOutfitBlouse') },
-        { value: 'collared-shirt-f', label: t('idPhotoOutfitCollaredShirtF') }
+        { value: 'collared-shirt-f', label: t('idPhotoOutfitCollaredShirtF') },
+        { value: 'office-wear', label: t('idPhotoOutfitOfficeWear') },
       ];
 
   const femaleHairOptions: { value: Hair; label: string }[] = [
@@ -164,7 +138,6 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
     <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
       <h3 className="text-lg font-semibold text-gray-200 flex items-center justify-center gap-2">
         {t('idPhotoTitle')}
-        {isDetecting && <Spinner className="w-5 h-5" />}
       </h3>
       <p className="text-sm text-gray-400 -mt-2 text-center">{t('idPhotoDescription')}</p>
       
@@ -178,7 +151,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
               selected={photoType}
               // Fix: Wrapped state setter in a lambda to resolve TypeScript inference issue.
               onSelect={(value) => setPhotoType(value)}
-              disabled={isLoading || isDetecting || !isImageLoaded}
+              disabled={isLoading || !isImageLoaded}
           />
           
           {photoType === 'standard' ? (
@@ -188,21 +161,21 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                   options={[{ value: 'female', label: t('idPhotoGenderFemale') }, { value: 'male', label: t('idPhotoGenderMale') }]}
                   selected={gender}
                   onSelect={handleGenderChange}
-                  disabled={isLoading || isDetecting || !isImageLoaded}
+                  disabled={isLoading || !isImageLoaded}
               />
               <SegmentedControl
                   label={t('idPhotoOutfit')}
                   options={outfitOptions}
                   selected={outfit}
                   onSelect={(value) => setOutfit(value)}
-                  disabled={isLoading || isDetecting || !isImageLoaded}
+                  disabled={isLoading || !isImageLoaded}
               />
                <SegmentedControl
                   label={t('idPhotoHairstyle')}
                   options={gender === 'male' ? maleHairOptions : femaleHairOptions}
                   selected={hair}
                   onSelect={(value) => setHair(value)}
-                  disabled={isLoading || isDetecting || !isImageLoaded}
+                  disabled={isLoading || !isImageLoaded}
               />
               <SegmentedControl
                   label={t('idPhotoExpression')}
@@ -214,7 +187,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                   ]}
                   selected={expression}
                   onSelect={(value) => setExpression(value)}
-                  disabled={isLoading || isDetecting || !isImageLoaded}
+                  disabled={isLoading || !isImageLoaded}
               />
               <div className="w-full flex flex-col items-center gap-2 pt-2">
                 <label htmlFor="custom-prompt-input" className="text-sm font-medium text-gray-300">{t('idPhotoCustomPromptLabel')}:</label>
@@ -225,7 +198,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     placeholder={t('idPhotoCustomPromptPlaceholder')}
                     className="bg-white/5 border border-white/10 text-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-sm focus:bg-white/10"
-                    disabled={isLoading || isDetecting || !isImageLoaded}
+                    disabled={isLoading || !isImageLoaded}
                 />
               </div>
             </div>
@@ -245,7 +218,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
               ]}
               selected={background}
               onSelect={(value) => setBackground(value)}
-              disabled={isLoading || isDetecting || !isImageLoaded}
+              disabled={isLoading || !isImageLoaded}
           />
           <SegmentedControl
               label={t('idPhotoSize')}
@@ -258,13 +231,13 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
               ]}
               selected={size}
               onSelect={(value) => setSize(value)}
-              disabled={isLoading || isDetecting || !isImageLoaded}
+              disabled={isLoading || !isImageLoaded}
           />
       </div>
 
       <button
         onClick={handleApply}
-        disabled={isLoading || isDetecting || !isImageLoaded}
+        disabled={isLoading || !isImageLoaded}
         className="w-full max-w-xs mt-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
       >
         {t('idPhotoApply')}

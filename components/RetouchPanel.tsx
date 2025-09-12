@@ -26,8 +26,6 @@ interface RetouchPanelProps {
   prompt: string;
   onPromptChange: (prompt: string) => void;
   promptInputRef: React.RefObject<HTMLInputElement>;
-  retouchUseSearch: boolean;
-  onRetouchUseSearchChange: (useSearch: boolean) => void;
   onApplyExtract: () => void;
   extractPrompt: string;
   onExtractPromptChange: (prompt: string) => void;
@@ -44,21 +42,10 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
   const { 
     onApplyRetouch, isLoading, isHotspotSelected, selectionMode, onSelectionModeChange, 
     brushMode, onBrushModeChange, brushSize, onBrushSizeChange, onClearMask, isImageLoaded, 
-    isMaskPresent, prompt, onPromptChange, promptInputRef, retouchUseSearch, onRetouchUseSearchChange,
+    isMaskPresent, prompt, onPromptChange, promptInputRef,
     onApplyExtract, extractPrompt, onExtractPromptChange, extractedItemsFiles, extractedItemUrls, 
     extractHistoryFiles, extractedHistoryItemUrls, onUseExtractedAsStyle, onDownloadExtractedItem
   } = props;
-  
-  const removalPresets = [
-    { name: t('retouchRemoveObject'), prompt: t('retouchRemoveObjectPrompt'), icon: <PhotoIcon /> },
-    { name: t('retouchRemovePerson'), prompt: t('retouchRemovePersonPrompt'), icon: <UserCircleIcon /> },
-    { name: t('retouchRemoveReflection'), prompt: t('retouchRemoveReflectionPrompt'), icon: <SparklesIcon /> }
-  ];
-
-  const handlePresetClick = (presetPrompt: string) => {
-    onPromptChange(presetPrompt);
-    onApplyRetouch(presetPrompt);
-  };
 
   const handleRetouchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +140,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
                 onChange={(e) => onPromptChange(e.target.value)}
                 placeholder={canType ? t('retouchPlaceholderGenerative') : t('retouchPlaceholder')}
                 className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base focus:bg-white/10"
-                disabled={isLoading || !isImageLoaded}
+                disabled={isLoading || !isImageLoaded || (selectionMode === 'point' && !isHotspotSelected)}
               />
               <button
                 type="submit"
@@ -163,48 +150,6 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
                 {t('generate')}
               </button>
           </div>
-          
-          <div className="flex items-center gap-2 self-start pt-2">
-              <input
-                  type="checkbox"
-                  id="retouch-use-search-checkbox"
-                  checked={retouchUseSearch}
-                  onChange={(e) => onRetouchUseSearchChange(e.target.checked)}
-                  disabled={isLoading || !isImageLoaded}
-                  className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 ring-offset-gray-900 focus:ring-2 cursor-pointer disabled:cursor-not-allowed"
-              />
-              <label htmlFor="retouch-use-search-checkbox" className="text-sm font-medium text-gray-300 cursor-pointer">
-                  {t('insertUseSearch')}
-              </label>
-          </div>
-
-          {selectionMode === 'brush' && isImageLoaded && (
-            <div className="w-full flex flex-col gap-3 animate-fade-in">
-                <div className="relative flex py-1 items-center">
-                    <div className="flex-grow border-t border-white/10"></div>
-                    <span className="flex-shrink mx-4 text-gray-400 uppercase text-xs">{t('orSeparator')}</span>
-                    <div className="flex-grow border-t border-white/10"></div>
-                </div>
-                <div className="w-full bg-white/5 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
-                    <h4 className="text-sm font-semibold text-gray-300 text-center">{t('retouchRemovalTitle')}</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                        {removalPresets.map(preset => (
-                          <button
-                            key={preset.name}
-                            type="button"
-                            onClick={() => handlePresetClick(preset.prompt)}
-                            disabled={isLoading || !isImageLoaded || !isMaskPresent}
-                            className="w-full h-20 flex flex-col items-center justify-center text-center gap-1 bg-white/5 border border-white/10 text-gray-300 font-medium p-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-white/10 active:scale-95 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={preset.name}
-                          >
-                            {React.cloneElement(preset.icon, { className: 'w-6 h-6 text-gray-300' })}
-                            <span className="leading-tight">{preset.name}</span>
-                          </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-          )}
         </form>
       ) : (
         <div className="w-full animate-fade-in">

@@ -68,32 +68,6 @@ export const BrushIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-export const UKFlagIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36">
-      <clipPath id="uk-a"><path d="M0 0v36h60V0z"/></clipPath>
-      <clipPath id="uk-b"><path d="M30 18v18h30V18zm-30 0v18h30V18zM30 0v18h30V0zm-30 0v18h30V0z"/></clipPath>
-      <g clipPath="url(#uk-a)">
-        <path d="M0 0v36h60V0z" fill="#012169"/>
-        <path d="M0 0l60 36m-60 0L60 0" stroke="#fff" strokeWidth="6"/>
-        <path d="M0 0l60 36m-60 0L60 0" clipPath="url(#uk-b)" stroke="#C8102E" strokeWidth="4"/>
-        <path d="M30 0v36M0 18h60" stroke="#fff" strokeWidth="10"/>
-        <path d="M30 0v36M0 18h60" stroke="#C8102E" strokeWidth="6"/>
-      </g>
-    </svg>
-);
-
-export const VNFlagIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
-      <path fill="#da251d" d="M0 0h36v36H0z"/>
-      <g transform="translate(0, -2.84)">
-        <path fill="#ff0" d="M18 6.13l3.65 11.24H33l-9.55 6.94 3.65 11.24-9.55-6.94-9.55 6.94 3.65-11.24L3 17.37h11.35z"/>
-      </g>
-    </svg>
-);
-
-export const JPFlagIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#eee" d="M0 0h36v36H0z"/><circle fill="#bc002d" cx="18" cy="18" r="7.2"/></svg>
-);
 // Fix: Add missing icon components required by ScanViewerModal.
 export const XMarkIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -166,6 +140,18 @@ export const DocumentScannerIcon: React.FC<{ className?: string }> = ({ classNam
 export const ChevronUpIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+    </svg>
+);
+
+export const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>
+);
+
+export const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
     </svg>
 );
 
@@ -442,5 +428,23 @@ export const PostureCorrectionIcon: React.FC<{ className?: string }> = ({ classN
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v19" strokeDasharray="3 3" />
+    </svg>
+);
+
+export const ChevronLeftIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+);
+
+export const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+    </svg>
+);
+
+export const CheckIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
     </svg>
 );

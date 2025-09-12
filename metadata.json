@@ -1,6 +1,6 @@
 {
-  "name": "Pika-AI v4.0",
-  "description": "A powerful, AI photo editor. Version 4.0 brings a major upgrade in output quality for hyper-realistic results. Retouch, apply creative filters, and make professional adjustments using simple text prompts.",
+  "name": "Pika-AI v10.0",
+  "description": "A powerful, AI photo editor. Version 10.0 introduces a revolutionary 'Dynamic & Context-Aware Integration' protocol, moving beyond static preservation to understand context, lighting, and micro-expressions for unparalleled realism.",
   "requestFramePermissions": [],
   "prompt": ""
 }
