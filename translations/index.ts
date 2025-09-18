@@ -1,5 +1,3 @@
-
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -7,7 +5,7 @@
 
 const vi = {
   appName: 'Pika-AI',
-  errorAnErrorOccurred: 'Đã xảy ra lỗi',
+  errorAnErrorOccurred: 'Đã xảy ra lỗi không xác định',
   errorTryAgain: 'Thử lại',
   errorNoImageLoaded: 'Chưa có ảnh để chỉnh sửa.',
   errorNoImageLoadedToFilter: 'Chưa có ảnh để áp dụng bộ lọc.',
@@ -27,465 +25,621 @@ const vi = {
   errorSelectArea: 'Vui lòng chọn một vùng trên ảnh để chỉnh sửa bằng cách nhấp vào nó.',
   errorNoMask: 'Vui lòng vẽ một vùng chọn trên ảnh bằng công cụ cọ vẽ.',
   errorFailedToGenerate: 'Không thể tạo ảnh đã chỉnh sửa.',
+  errorFailedToProcessImage: 'Không thể xử lý ảnh.',
   errorFailedToExtract: 'Không thể trích xuất vật thể.',
   errorFailedToCleanBackground: 'Không thể xóa người khỏi ảnh nền.',
   errorRateLimit: 'Bạn đã thực hiện quá nhiều yêu cầu trong thời gian ngắn. Vui lòng đợi một lát và thử lại.',
   errorFailedToExport: 'Không thể xuất tài liệu.',
-  errorFaceSwapValidation: 'Vui lòng chọn một khuôn mặt từ cả ảnh chính và ảnh để hoán đổi.',
-  faceSwapDefaultPrompt: `**NHIỆM VỤ AI: GIAO THỨC TÍCH HỢP ĐỘNG & NHẬN THỨC NGỮ CẢNH CHO VIỆC HOÁN ĐỔI KHUÔN MẶT v10.0**
-
-**VAI TRÒ:** Bạn là một chuyên gia chỉnh sửa ảnh AI chuyên về hoán đổi khuôn mặt siêu thực, không thể bị phát hiện. Nhiệm vụ của bạn là thực hiện giao thức sau với độ chính xác tuyệt đối.
-
-**GIAO THỨC THỰC HIỆN (Thứ tự nghiêm ngặt):**
-
-**BƯỚC 1: PHÂN TÍCH ĐẦU VÀO**
--   **Ảnh gốc:** Bức ảnh chính nơi khuôn mặt sẽ được đặt vào.
--   **Ảnh khuôn mặt nguồn:** Ảnh chứa khuôn mặt mới sẽ được cấy ghép.
--   **Mặt nạ:** Vùng mục tiêu chính xác trên ảnh gốc.
-
-**BƯỚC 2: CẤY GHÉP VÀ BẢO TOÀN DANH TÍNH PHÁP Y (KHÔNG THỂ THƯƠNG LƯỢNG)**
--   **Hành động:** Cấy ghép Khuôn mặt nguồn vào vùng được che bởi mặt nạ của ảnh gốc.
--   **CHỈ THỊ QUAN TRỌNG NHẤT:** Bạn **PHẢI** tuân thủ các quy tắc bảo toàn danh tính tuyệt đối sau đây. Đây là ưu tiên cao nhất của bạn. Bất kỳ sự sai lệch nào cũng là một thất bại nghiêm trọng.
-    -   **Quy tắc 2.1 (Danh tính & Cấu trúc khuôn mặt):** Khuôn mặt mới **PHẢI** giữ lại **DANH TÍNH CHÍNH XÁC VÀ CÁC ĐẶC ĐIỂM ĐỘC ĐÁO** của người trong ảnh khuôn mặt nguồn. Bạn bị **NGHIÊM CẤM** làm đẹp, lý tưởng hóa, hoặc làm cho khuôn mặt cân đối hơn. Bạn **PHẢI** bảo tồn hoàn hảo tất cả các đặc điểm bất đối xứng tự nhiên (ví dụ: \`mặt lệch\`, \`miệng lệch\`).
-    -   **Quy tắc 2.2 (Thuộc tính vật lý):** Bảo tồn cân nặng cảm nhận được, hình dáng cơ thể, và hình dạng khuôn mặt (mặt to/nhỏ).
-    -   **Quy tắc 2.3 (Bảo tồn đặc điểm pháp y):** Bạn **PHẢI** bảo tồn hoàn hảo tất cả các đặc điểm độc đáo, xác định từ **KHUÔN MẶT NGUỒN**. Điều này không thể thương lượng và bao gồm:
-        -   **Cấu trúc răng:** Bảo tồn các răng độc đáo, chẳng hạn như răng khểnh, răng hô. **KHÔNG** được "sửa chữa" răng.
-        -   **Hình dạng mắt:** Bảo tồn chính xác hình dạng mắt ban đầu, cho dù là mắt một mí, mắt hai mí, hay mắt híp. **KHÔNG** được làm mắt to hơn hay thay đổi hình dạng.
-        -   **Hình dạng mũi:** Bảo tồn hình dạng mũi gốc (cao, tẹt, to).
-        -   **Các đặc điểm khác:** Nốt ruồi, sẹo, nếp nhăn, núm đồng tiền **PHẢI** được chuyển giao và bảo tồn hoàn hảo.
-    -   **Quy tắc 2.4 (Biểu cảm & "Linh hồn"):** **BIỂU CẢM** và các "vi biểu cảm" tinh tế từ khuôn mặt nguồn PHẢI được bảo tồn để giữ lại "linh hồn" và tính cách của người đó, miễn là nó phù hợp với bối cảnh chung của cảnh.
-
-**BƯỚC 3: TÍCH HỢP ĐỘNG & NHẬN THỨC NGỮ CẢNH**
--   **Hành động:** Tích hợp khuôn mặt được cấy ghép một cách liền mạch vào môi trường ảnh gốc bằng cách sử dụng mô phỏng vật lý nâng cao.
--   **CHỈ THỊ:** Phân tích nguồn sáng, màu sắc và môi trường của ảnh gốc. Điều chỉnh tỉ mỉ các thuộc tính của khuôn mặt đã hoán đổi để hoàn toàn khớp với môi trường:
-    -   **Ánh sáng & Bóng đổ:** Ánh sáng phải chiếu lên khuôn mặt mới một cách tự nhiên, tạo ra các điểm sáng và bóng đổ chính xác.
-    -   **Phản chiếu Môi trường:** Màu sắc từ môi trường xung quanh phải phản chiếu một cách tinh tế lên da, mắt và các bề mặt bóng (như kính).
-    -   **Kết cấu & Nhiễu hạt:** Kết cấu da (giữ lại lỗ chân lông) và nhiễu hạt của ảnh phải khớp hoàn hảo với ảnh gốc.
-    -   **Góc đầu & Ánh mắt:** Phải khớp với cơ thể và bối cảnh của ảnh gốc.
-
-**BƯỚC 4: ĐẦU RA CUỐI CÙNG**
--   **Hành động:** Chỉ trả về bức ảnh đã chỉnh sửa cuối cùng.`,
-  errorNoFaceInMain: 'Không thể phát hiện bất kỳ khuôn mặt nào trong ảnh chính để sử dụng làm mục tiêu.',
-  startScreenTitle: 'Chỉnh sửa ảnh bằng AI, {simplified}.',
-  startScreenTitleSimplified: 'Đơn giản hóa',
-  startScreenDescription: 'Chỉnh sửa ảnh, áp dụng các bộ lọc sáng tạo, hoặc thực hiện các điều chỉnh chuyên nghiệp bằng các câu lệnh văn bản đơn giản. Không cần công cụ phức tạp.',
+  errorNetwork: 'Không thể kết nối đến dịch vụ AI. Vui lòng kiểm tra kết nối internet của bạn.',
+  errorInvalidInput: 'AI không thể xử lý yêu cầu của bạn. Vui lòng kiểm tra lại hình ảnh hoặc lời nhắc.',
+  errorModelExecution: 'Dịch vụ AI gặp lỗi nội bộ. Vui lòng thử lại sau giây lát.',
+  errorContentSafety: 'Yêu cầu của bạn đã bị chặn do chính sách an toàn. Vui lòng sửa đổi lời nhắc hoặc hình ảnh.',
+  errorAPI: 'Đã xảy ra lỗi không mong muốn từ dịch vụ AI.',
   uploadImage: 'Tải ảnh lên',
-  dragAndDrop: 'hoặc kéo và thả một tệp',
-  feature1Title: 'Chỉnh sửa chính xác',
-  feature1Desc: 'Nhấp vào bất kỳ điểm nào trên ảnh của bạn để xóa khuyết điểm, thay đổi màu sắc hoặc thêm các yếu tố với độ chính xác cao.',
-  feature2Title: 'Bộ lọc sáng tạo',
-  feature2Desc: 'Biến đổi ảnh với các phong cách nghệ thuật. Từ vẻ ngoài cổ điển đến ánh sáng tương lai, hãy tìm hoặc tạo bộ lọc hoàn hảo.',
-  feature3Title: 'Điều chỉnh chuyên nghiệp',
-  feature3Desc: 'Tăng cường ánh sáng, làm mờ hậu cảnh hoặc thay đổi tâm trạng. Đạt được kết quả chất lượng studio mà không cần các công cụ phức tạp.',
-  loadingTextDefault: 'AI đang thể hiện phép màu...',
-  loadingRetouch: 'Đang phân tích lựa chọn của bạn và áp dụng chỉnh sửa sáng tạo...',
-  loadingFilter: 'Đang kết xuất ảnh với bộ lọc sáng tạo mới...',
-  loadingAdjustment: 'Đang xử lý các điều chỉnh về ánh sáng và màu sắc...',
-  loadingIdPhoto: 'Đang tạo ảnh thẻ tuân thủ với các tùy chọn đã chỉ định...',
-  loadingExpansion: 'Đang mở rộng khung vẽ và tạo nội dung mới...',
-  loadingComposite: 'Đang tạo các biến thể...',
-  loadingFaceSwap: 'Đang thực hiện hoán đổi khuôn mặt siêu thực...',
-  loadingCleanBackground: 'Đang xóa người và tái tạo hậu cảnh...',
-  loadingExtract: 'Đang xác định và trích xuất mục đã chỉ định...',
-  loadingScan: 'Đang quét và nâng cao tài liệu...',
-  tabRetouch: 'Chỉnh sửa',
-  tabCrop: 'Cắt ảnh',
-  tabAdjust: 'Nâng cao',
-  tabFilters: 'Bộ lọc',
-  tabExpand: 'Mở rộng',
-  tabInsert: 'Ghép ảnh',
-  tabScan: 'Quét',
-  tabFaceSwap: 'Hoán đổi khuôn mặt',
-  tabStudio: 'Studio',
-  tabIdPhoto: 'Ảnh thẻ',
-  tooltipRetouch: 'Chỉnh sửa',
-  tooltipCrop: 'Cắt ảnh',
-  tooltipAdjust: 'Nâng cao bằng AI',
-  tooltipFilters: 'Bộ lọc',
-  tooltipExpand: 'Mở rộng',
-  tooltipInsert: 'Ghép ảnh & Hoán đổi khuôn mặt',
-  tooltipScan: 'Quét tài liệu',
-  tooltipIdPhoto: 'Ảnh thẻ',
-  tooltipExtract: 'Trích xuất vật thể',
-  tooltipFaceSwap: 'Hoán đổi khuôn mặt',
-  tooltipStudio: 'Chế độ Studio',
-  retouchTitle: 'Chỉnh sửa sáng tạo',
-  retouchDescription: 'Chọn một vùng, sau đó mô tả bất kỳ thay đổi nào—từ các bản sửa lỗi nhỏ đến thay thế đối tượng lớn.',
-  retouchPlaceholder: 'Đầu tiên, hãy chọn một khu vực...',
-  retouchPlaceholderGenerative: "ví dụ: 'thay thế chiếc ô tô bằng một chiếc xe đạp'",
-  generate: 'Tạo',
-  retouchSelectionMode: 'Chế độ chọn',
+  dragAndDrop: 'hoặc kéo và thả ảnh vào đây',
+  loadingTextDefault: 'AI đang xử lý, vui lòng đợi...',
+  loadingRetouch: 'Đang áp dụng chỉnh sửa AI...',
+  loadingFilter: 'Đang áp dụng bộ lọc sáng tạo...',
+  loadingAdjustment: 'Đang thực hiện điều chỉnh thông minh...',
+  loadingAutoCrop: 'Phân tích và tự động cắt ảnh...',
+  loadingIdPhoto: 'Đang tạo ảnh thẻ chuyên nghiệp...',
+  loadingExpansion: 'Đang mở rộng ảnh của bạn...',
+  loadingScan: 'Đang quét tài liệu của bạn...',
+  loadingExtract: 'Đang trích xuất vật thể...',
+  loadingCleanBackground: 'Đang làm sạch nền...',
+  loadingTransform: 'Đang áp dụng chuyển đổi...',
+  loadingStyle: 'Đang phân tích phong cách...',
+  loadingTranslate: 'Đang phân tích yêu cầu...',
+  loadingStudioAnalysis: 'Đang tạo kịch bản chụp ảnh...',
+  loadingAnalyzingScene: 'Đang phân tích ảnh để tạo bối cảnh...',
+  errorFailedToTransform: 'Không thể áp dụng chuyển đổi.',
+  retouchTitle: 'Chỉnh sửa',
+  retouchDescription: 'Chọn một điểm hoặc dùng cọ để chọn vùng, sau đó mô tả chỉnh sửa bạn muốn.',
   retouchModePoint: 'Điểm',
   retouchModeBrush: 'Cọ vẽ',
-  retouchBrushTool: 'Công cụ cọ vẽ',
+  retouchBrushTool: 'Công cụ',
   retouchToolDraw: 'Vẽ',
   retouchToolErase: 'Tẩy',
-  retouchBrushSize: 'Kích thước cọ',
+  retouchBrushSize: 'Kích cỡ cọ',
   retouchClearMask: 'Xóa vùng chọn',
-  retouchRemovalTitle: 'Xóa bằng AI',
-  retouchRemoveObject: 'Xóa vật thể',
-  retouchRemovePerson: 'Xóa người',
-  retouchRemoveReflection: 'Xóa phản chiếu',
-  retouchRemoveObjectPrompt: `**NHIỆM VỤ AI: XÓA VẬT THỂ CHÍNH XÁC (KHÓA THEO VÙNG CHỌN)**
-
-**MỤC TIÊU CHÍNH:** Người dùng đã cung cấp một ảnh và một vùng chọn (vùng màu trắng). Nhiệm vụ của bạn và là nhiệm vụ duy nhất là xóa hoàn toàn (các) vật thể nằm **HOÀN TOÀN BÊN TRONG vùng được chọn**.
-
-**QUY TẮC QUAN TRỌNG (KHÔNG THỂ THƯƠNG LƯỢNG):**
-1.  **VÙNG CHỌN LÀ TUYỆT ĐỐI:** Vùng chọn xác định khu vực DUY NHẤT bạn được phép thay đổi. Mọi thứ bên ngoài vùng chọn **PHẢI được giữ nguyên 100% và giống hệt ảnh gốc.**
-2.  **TÁI TẠO NỀN:** Sau khi xóa vật thể, bạn phải tái tạo lại nền phía sau nó một cách siêu thực. Nền mới phải khớp hoàn hảo về ánh sáng, kết cấu, màu sắc và nhiễu hạt với khu vực xung quanh không được chọn.
-3.  **KHÔNG CHỈNH SỬA NGOÀI VÙNG CHỌN:** Bạn bị nghiêm cấm thay đổi, xóa hoặc chỉnh sửa bất kỳ phần nào khác của ảnh, bao gồm các vật thể hoặc người khác nằm ngoài vùng chọn.
-
-**ĐẦU RA:** Chỉ trả về ảnh đã chỉnh sửa.`,
-  retouchRemovePersonPrompt: `**NHIỆM VỤ AI: XÓA NGƯỜI CHÍNH XÁC (KHÓA THEO VÙNG CHỌN)**
-
-**MỤC TIÊU CHÍNH:** Người dùng đã cung cấp một ảnh và một vùng chọn (vùng màu trắng). Nhiệm vụ của bạn và là nhiệm vụ duy nhất là xóa hoàn toàn (các) người nằm **HOÀN TOÀN BÊN TRONG vùng được chọn**.
-
-**QUY TẮC QUAN TRỌNG (KHÔNG THỂ THƯƠNG LƯỢNG):**
-1.  **VÙNG CHỌN LÀ TUYỆT ĐỐI:** Vùng chọn xác định khu vực DUY NHẤT bạn được phép thay đổi. Mọi thứ bên ngoài vùng chọn **PHẢI được giữ nguyên 100% và giống hệt ảnh gốc.**
-2.  **TÁI TẠO NỀN:** Sau khi xóa người, bạn phải tái tạo lại nền phía sau họ một cách siêu thực. Nền mới phải khớp hoàn hảo về ánh sáng, kết cấu, màu sắc và nhiễu hạt với khu vực xung quanh không được chọn.
-3.  **KHÔNG CHỈNH SỬA NGOÀI VÙNG CHỌN:** Bạn bị nghiêm cấm thay đổi, xóa hoặc chỉnh sửa bất kỳ phần nào khác của ảnh, bao gồm các vật thể hoặc người khác nằm ngoài vùng chọn.
-
-**ĐẦU RA:** Chỉ trả về ảnh đã chỉnh sửa.`,
-  retouchRemoveReflectionPrompt: `**NHIỆM VỤ AI: CHỈNH SỬA ÁNH SÁNG CHÍNH XÁC (LÓA/PHẢN CHIẾU/BÓNG)**
-
-Bạn là một AI phục chế ảnh đẳng cấp thế giới. Nhiệm vụ của bạn là phân tích vùng chọn của người dùng (vùng màu trắng của mặt nạ) và chỉ sửa lỗi ánh sáng được chỉ định (ví dụ: lóa sáng gắt, phản chiếu, hoặc bóng).
-
-**YÊU CẦU CỐT LÕI: BẢO TOÀN CHI TIẾT BÊN DƯỚI (ƯU TIÊN CAO NHẤT)**
-- Bạn **PHẢI** bảo toàn kết cấu, vật liệu, màu sắc và chi tiết vật lý ban đầu của bề mặt *bên dưới* lỗi ánh sáng.
-- Bạn **BỊ NGHIÊM CẤM** xóa hoặc thay đổi chính vật thể bên dưới. Công việc duy nhất của bạn là bình thường hóa ánh sáng trong vùng đã chọn.
-- **QUY TẮC QUAN TRỌNG:** Nếu vùng chọn nằm trên một người, danh tính, đặc điểm khuôn mặt và kết cấu da của họ **KHÔNG ĐƯỢC THAY ĐỔI**.
-
-**GIAO THỨC THỰC HIỆN:**
-1. **Phân tích vùng chọn:** Xác định vấn đề ánh sáng trong vùng được che (lóa, phản chiếu, hoặc bóng).
-2. **Tái tạo ánh sáng:** Loại bỏ quang sai ánh sáng.
-3. **Tái tạo kết cấu:** Tái tạo chi tiết bề mặt bên dưới một cách chân thực, khớp hoàn hảo với các vùng xung quanh không bị ảnh hưởng về ánh sáng, màu sắc và kết cấu.
-4. **Hòa trộn liền mạch:** Đảm bảo khu vực đã sửa chữa hòa trộn vô hình với phần còn lại của hình ảnh.
-
-**ĐẦU RA:** Chỉ trả về bức ảnh đã chỉnh sửa.`,
-  cropTitle: 'Cắt ảnh',
-  cropDescription: 'Nhấp và kéo trên ảnh để chọn vùng cắt.',
-  cropAspectRatio: 'Tỷ lệ khung hình',
-  cropAspectFree: 'Tự do',
-  applyCrop: 'Áp dụng cắt',
-  adjustmentTitle: 'Nâng cao bằng AI',
-  oneClickTitle: 'Sửa nhanh',
+  retouchPlaceholder: 'Chọn một điểm hoặc vẽ vùng chọn để bắt đầu.',
+  retouchPlaceholderGenerative: 'Mô tả những gì bạn muốn thay đổi...',
+  generate: 'Tạo',
+  oneClickTitle: 'Một chạm',
+  oneClickAutoCrop: 'Tự động cắt',
   oneClickAutoEnhance: 'Tự động nâng cao',
-  oneClickAutoEnhancePrompt: `**AI TASK: Intelligent Auto-Enhancement v3.1**
-
-Perform a comprehensive, intelligent auto-enhancement on the image. Your goal is a vibrant, deep, and clear result that looks professionally edited, not just automatically adjusted.
-
-**EXECUTION PROTOCOL:**
-1.  **Analyze & Correct:** Adjust brightness, contrast, and color balance for a vibrant, natural look.
-2.  **Enhance Depth & Texture:** Subtly enhance micro-contrast and local texture to improve detail and give the image more depth and a three-dimensional feel. Do not over-sharpen.
-3.  **Final Polish:** Perform a final, subtle pass to denoise and ensure overall clarity.
----
-**ADDENDUM: DYNAMIC & CONTEXT-AWARE IDENTITY INTEGRATION PROTOCOL v10.0 (NON-NEGOTIABLE)**
-This protocol is a strict, non-negotiable requirement for the final output and overrides all other creative instructions. The goal is to move beyond static preservation to dynamically integrate the subject's "soul" and authenticity into any context.
-
-**PART 1: FORENSIC IDENTITY PRESERVATION (CORE FOUNDATION)**
-1.  **IDENTITY & FACIAL STRUCTURE (HIGHEST PRIORITY):** The output **MUST** feature the **EXACT SAME PERSON/PEOPLE**. You are **STRICTLY FORBIDDEN** from beautifying, idealizing, or making the face more symmetrical/balanced (cân đối). You **MUST** perfectly preserve all natural facial asymmetries (e.g., mặt lệch, miệng lệch).
-2.  **PHYSICAL ATTRIBUTES:** The final perceived weight must be true to the original. Preserve the original body shape, height, and face shape (mặt to/nhỏ), etc.
-3.  **CRITICAL FACIAL FEATURES (FORENSIC-LEVEL DETAIL):** You **MUST** meticulously preserve with zero alteration:
-    -   **Eyes:** The exact, original eye shape, size, and angle (monolid/mắt một mí, double-lid/mắt hai mí, hooded/mắt híp).
-    -   **Nose:** The original nose shape (e.g., mũi cao, mũi tẹt, mũi to).
-    -   **Mouth & Teeth:** Unique dental structures like overbites (răng hô) or snaggle teeth (răng khểnh) **MUST** be retained perfectly.
-    -   **Skin & Permanent Features:** Preserve permanent features like dimples (núm đồng tiền), moles, and scars.
-
-**PART 2: DYNAMIC INTEGRATION (CONTEXTUAL AWARENESS & REALISM)**
-4.  **DEEP CONTEXTUAL AWARENESS:** You **MUST** understand the context of the entire image to ensure edits are hyper-realistic.
-    -   **Physics-Based Lighting:** When changing clothes or adding objects, analyze the scene's light sources. The new elements **MUST** have accurate shadows, highlights, and folds that match the environment. Simulate how light and color from the environment reflect on skin, eyes, and shiny surfaces (e.g., glasses).
-    -   **Natural Expressions:** When modifying expressions (e.g., adding a smile), you **MUST** engage the corresponding facial muscles. A smile must include crinkling around the eyes (a "Duchenne smile") to be believable.
-5.  **MICRO-EXPRESSION & "SOUL" PRESERVATION:** Beyond static features, you must identify and preserve the subtle "micro-expressions" and mood of the original subject to retain their personality and authenticity.
-6.  **GENETIC CONSISTENCY:** When making significant changes (e.g., hair color), the results must remain plausible and natural for the subject's inferred ethnicity and features (skin tone, eye color).
----`,
+  oneClickAutoEnhancePrompt: `{
+  "phiên bản": "7.1-PRO-HDR-ENHANCE",
+  "nhiệm vụ": "Nhiệm vụ Tối thượng: Nâng cấp ảnh kỹ thuật số. Mục tiêu là biến một bức ảnh thông thường (kể cả ảnh thiếu sáng, mờ, nhiễu) thành một bức ảnh hiện đại, siêu thực với màu sắc HDR sống động và độ trong trẻo cao, như được chụp bằng máy ảnh kỹ thuật số cao cấp. Phải tái tạo màu sắc sống động như thật, khôi phục chi tiết vi mô bị mất, và tạo độ sâu 3D nổi khối cho ảnh.",
+  "notes": "Phiên bản này tập trung vào 'Chủ nghĩa Hiện thực Tuyệt đối với HDR'. AI phải: 1. **Tái tạo Màu sắc HDR Sống động**: Màu da, tóc, mắt, quần áo và nền phải rực rỡ, có dải tương phản động rộng và chính xác như ngoài đời thực. 2. **Khôi phục Chi tiết Cực cao**: Loại bỏ hoàn toàn nhiễu và mờ, tái tạo các chi tiết nhỏ nhất như lỗ chân lông, sợi tóc, vân vải. 3. **Tạo Độ sâu 3D**: Sử dụng ánh sáng và đổ bóng tinh vi để tạo cảm giác 'nổi khối', chiều sâu và sự hiện diện cho chủ thể.",
+  "mô_phỏng_máy_ảnh": {
+    "brand_model": "Sony A7R V",
+    "ống kính": "FE 50mm f/1.2 GM",
+    "look": "Siêu sắc nét, màu sắc HDR sống động và trong trẻo, chi tiết vi mô cực cao, không gắt.",
+    "settings": { "aperture": "f/1.8", "iso": 100, "bokeh_quality": "creamy_and_smooth" }
+  },
+  "kiểm_soát_màu_sắc_vật_liệu": {
+    "policy": "enforce_physically_accurate_color_rendering",
+    "reference_database": "real_world_material_properties",
+    "notes": "AI phải tái tạo màu sắc của từng vật liệu (da, gỗ, vải, kim loại) dựa trên đặc tính vật lý và cách chúng phản xạ/hấp thụ ánh sáng trong đời thực. Màu sắc phải 'đúng' với bản chất vật liệu."
+  },
+  "ràng_buộc_chủ_thể": {
+    "keep_identity": true,
+    "lock_features": ["khuôn mặt", "biểu cảm"],
+    "kiểm_soát_tuổi_tác": {
+      "policy": "preserve_apparent_age_from_original",
+      "avoid_actions": ["làm sâu thêm nếp nhăn"]
+    },
+    "khóa_tư_thế_và_dáng_đứng": { "policy": "strict_adherence_to_original_pose" },
+    "bảo_tồn_đặc_tính_chủng_tộc": {
+      "policy": "strict_adherence_to_phenotype", "target_ethnicity": "Người Châu Á (Asian)"
+    },
+    "kiểm_tra_giải_phẫu_học": {
+      "policy": "enforce_human_anatomy_realism",
+      "rules": {
+        "hand_structure": "luôn có 5 ngón, không bị biến dạng",
+        "foot_structure": "phải có giải phẫu bàn chân người chính xác, không bị biến dạng",
+        "body_parts": "tất cả các bộ phận cơ thể được tái tạo phải tuân thủ đúng giải phẫu và tỷ lệ của con người"
+      }
+    }
+  },
+  "chỉnh sửa": {
+    "da": {
+      "hoàn thiện": "Khôi phục làn da khỏe mạnh ở đúng độ tuổi. Giữ lại lỗ chân lông và các đường nét tự nhiên.",
+      "technique": "advanced_frequency_separation_with_micro_texture_preservation",
+      "undertone_correction": { "policy": "preserve_or_restore_asian_undertones", "target": ["yellow", "olive"], "avoid": ["pink", "reddish_caucasian"] }
+    },
+    "râu_và_lông_mặt": { "policy": "preserve_and_enhance_individual_strand_texture", "avoid_smoothing": true },
+    "tóc": { "hoàn thiện": "Tách sợi rõ ràng, có độ bóng khỏe và đổ khối chân thực.", "detail_enhancement": "cực cao" },
+    "quần áo_và_vật_thể": {
+      "policy": "hyperrealistic_material_and_texture_rendering",
+      "material_identification": true,
+      "physically_based_rendering": true,
+      "detail_level": "cực cao"
+    },
+    "cảnh_vật_đồ_vật_bầu_trời": {
+      "policy": "enhance_all_elements_with_micro_details",
+      "detail_level": "cực cao",
+      "sky_enhancement": "realistic_and_dynamic"
+    }
+  },
+  "ánh sáng_và_màu_sắc": {
+    "khử_ám_màu": { "policy": "auto_neutralize_color_casts", "strength": "cực cao" },
+    "ánh sáng": {
+      "thiết lập": "ánh sáng tự nhiên, cân bằng, rõ ràng, tối ưu hóa bởi nhận thức 3D.",
+      "white_balance": "trung tính chính xác (5500K)",
+      "dynamic_range_recovery": "cực cao"
+    },
+    "chỉnh_màu": {
+      "đường_cong_tone": "đường cong tương phản kỹ thuật số tối ưu", "vibrance": "tăng đáng kể", "saturation": "tăng nhẹ"
+    }
+  },
+  "lý lịch": {
+    "preserve_original": true,
+    "nâng cao": "làm sạch, phục hồi, và tăng cường đáng kể độ trong, tương phản, và chi tiết vi mô của nền. Loại bỏ các khuyết điểm nhỏ hoặc các yếu tố gây xao lãng nếu nó cải thiện bố cục tổng thể, nhưng phải duy trì cảnh và cấu trúc gốc.",
+    "noise_reduction": { "method": "AI_deep_learning_and_detail_preserving", "strength": "cao" }
+  },
+  "hậu_kỳ": {
+    "sharpening": {
+      "policy": "adaptive_frequency_selective_sharpening_extreme_detail",
+      "amount": 0.5, "radius": 1.5, "threshold": 3
+    },
+    "Clarity": "cao", "Dehaze": "trung bình", "micro_contrast": "cực cao"
+  },
+  "đầu ra": {
+    "độ phân giải": "9256x6944", "dpi": 300, "định dạng": "TIFF", "độ_sâu_màu": "16-bit", "không gian_màu": "Adobe RGB"
+  },
+  "negative_prompt": [
+    "da nhựa", "da sáp", "quá mịn", "airbrushed", "mất kết cấu da", "hiệu ứng tranh vẽ", "nhân vật game",
+    "già hơn tuổi thật", "da nhăn nheo", "thay đổi tư thế", "đặc điểm Tây hóa", "6 ngón tay", "tay/chân bị biến dạng", "tỷ lệ cơ thể sai",
+    "màu sắc không chân thực (unrealistic colors)",
+    "màu vật liệu sai (incorrect material color)",
+    "màu gỗ nhân tạo (artificial wood color)",
+    "màu da sai lệch (inaccurate skin tones)",
+    "quá bão hòa", "ánh sáng phẳng", "tóc bệt",
+    "màu sắc nhợt nhạt, bạc màu", "ảnh bị nhiễu, có hạt", "mờ, không sắc nét", "phẳng, thiếu chiều sâu, không nổi khối"
+  ]
+}`,
+  oneClickRestoreModern: 'Phục chế Hiện đại',
+  oneClickRestoreModernPrompt: `{
+  "phiên bản": "6.6-PRO-HDR-RECONSTRUCT",
+  "nhiệm vụ": "Nhiệm vụ Tối thượng: Tái tạo và Nâng cấp Ảnh Rách/Cũ. Mục tiêu là biến một bức ảnh cũ, hỏng nặng, mờ, nhiễu thành một bức ảnh hiện đại, siêu thực với màu sắc HDR sống động và độ trong trẻo cao. Phải TÁI TẠO lại hoàn toàn các vùng bị hỏng (cả chủ thể và nền) một cách liền mạch, khôi phục chi tiết vi mô bị mất, và tạo độ sâu 3D nổi khối cho ảnh.",
+  "notes": "Phiên bản này tập trung vào 'Tái tạo Toàn diện'. AI không chỉ vá lại phần rách mà phải: 1. **Tô Màu Lại Hoàn Toàn**: Nếu ảnh gốc là đen trắng hoặc ám màu, phải TÔ MÀU LẠI từ đầu, tạo ra màu sắc sống động, chân thực. 2. **Tái tạo Màu sắc HDR Sống động**: Màu sắc phải rực rỡ và chính xác như ngoài đời thực. 3. **Tái tạo Chi tiết Hỏng Nặng**: Đây là ưu tiên hàng đầu. Phải xác định và tái tạo lại hoàn toàn các vùng bị trầy xước, rách, loang lổ, phai màu. 4. **Tạo Độ sâu 3D**: Sử dụng ánh sáng và đổ bóng tinh vi để tạo cảm giác 'nổi khối'.",
+  "xử_lý_khung_ảnh": {
+    "policy": "ưu_tiên_nội_dung_chính",
+    "description": "BƯỚC 0 - XÁC ĐỊNH NỘI DUNG CHÍNH (QUAN TRỌNG NHẤT): Trước khi phục chế, hãy phân tích và xác định vùng chứa nội dung nhiếp ảnh thực sự của bức ảnh. Bỏ qua và loại bỏ hoàn toàn các phần rìa bị hỏng, mép giấy rách, hoặc các phần khung ảnh không liên quan. Nhiệm vụ là phục chế 'bức ảnh', không phải 'mẩu giấy bị hỏng'. Cắt bỏ các phần thừa này một cách thông minh để tạo ra một khung ảnh hình chữ nhật, sạch sẽ chỉ chứa cảnh gốc. Toàn bộ quá trình phục chế sau đó sẽ được áp dụng trên vùng ảnh đã được cắt này."
+  },
+  "mô_phỏng_máy_ảnh": {
+    "brand_model": "Sony A7R V",
+    "ống kính": "FE 50mm f/1.2 GM",
+    "look": "Siêu sắc nét, màu sắc HDR sống động và trong trẻo, chi tiết vi mô cực cao, không gắt.",
+    "settings": { "aperture": "f/1.8", "iso": 100, "bokeh_quality": "creamy_and_smooth" }
+  },
+  "kiểm_soát_màu_sắc_vật_liệu": {
+    "policy": "enforce_physically_accurate_color_rendering",
+    "reference_database": "real_world_material_properties",
+    "notes": "AI phải tái tạo màu sắc của từng vật liệu (da, gỗ, vải, kim loại) dựa trên đặc tính vật lý và cách chúng phản xạ/hấp thụ ánh sáng trong đời thực. Màu sắc phải 'đúng' với bản chất vật liệu."
+  },
+  "ràng_buộc_chủ_thể": {
+    "keep_identity": true,
+    "lock_features": ["khuôn mặt", "biểu cảm"],
+    "kiểm_soát_tuổi_tác": {
+      "policy": "preserve_apparent_age_from_original",
+      "avoid_actions": ["làm sâu thêm nếp nhăn"]
+    },
+    "khóa_tư_thế_và_dáng_đứng": { "policy": "strict_adherence_to_original_pose" },
+    "bảo_tồn_đặc_tính_chủng_tộc": {
+      "policy": "strict_adherence_to_phenotype", "target_ethnicity": "Người Châu Á (Asian)"
+    },
+    "kiểm_tra_giải_phẫu_học": {
+      "policy": "enforce_human_anatomy_realism",
+      "rules": {
+        "hand_structure": "luôn có 5 ngón, không bị biến dạng",
+        "foot_structure": "phải có giải phẫu bàn chân người chính xác, không bị biến dạng",
+        "body_parts": "tất cả các bộ phận cơ thể được tái tạo phải tuân thủ đúng giải phẫu và tỷ lệ của con người"
+      }
+    }
+  },
+  "chỉnh sửa": {
+    "phục_hồi_chi_tiết_hư_hỏng": {
+      "policy": "forensic_level_damage_reconstruction",
+      "strength": "cực cao",
+      "targets": ["scratches", "tears", "creases", "stains", "discoloration_spots", "water_damage", "mold_spots", "tape_marks", "faded_areas"],
+      "method": "Phân tích loại hư hỏng và áp dụng tái tạo chuyên biệt. Đối với các vùng bị mất, thực hiện inpainting nhận thức bối cảnh sử dụng các kết cấu và cấu trúc xung quanh để tái tạo lại thông tin bị mất một cách liền mạch."
+    },
+    "da": {
+      "hoàn thiện": "Khôi phục làn da khỏe mạnh ở đúng độ tuổi. Giữ lại lỗ chân lông và các đường nét tự nhiên.",
+      "technique": "advanced_frequency_separation_with_micro_texture_preservation",
+      "undertone_correction": { "policy": "preserve_or_restore_asian_undertones", "target": ["yellow", "olive"], "avoid": ["pink", "reddish_caucasian"] }
+    },
+    "râu_và_lông_mặt": { "policy": "preserve_and_enhance_individual_strand_texture", "avoid_smoothing": true },
+    "tóc": { "hoàn thiện": "Tách sợi rõ ràng, có độ bóng khỏe và đổ khối chân thực.", "detail_enhancement": "cực cao" },
+    "quần áo_và_vật_thể": {
+      "policy": "hyperrealistic_material_and_texture_rendering",
+      "material_identification": true,
+      "physically_based_rendering": true,
+      "detail_level": "cực cao"
+    },
+    "cảnh_vật_đồ_vật_bầu_trời": {
+      "policy": "enhance_all_elements_with_micro_details",
+      "color_restoration": "BẮT BUỘC: Nếu ảnh gốc là đen trắng, ám vàng, hoặc có màu đơn sắc, phải loại bỏ hoàn toàn và tô màu lại bằng màu sắc sống động, tự nhiên như thật. Không được giữ lại bất kỳ tông màu cũ nào. Màu sắc phải chân thực như được chụp bằng máy ảnh hiện đại.",
+      "detail_level": "cực cao",
+      "sky_enhancement": "realistic_and_dynamic"
+    }
+  },
+  "ánh sáng_và_màu_sắc": {
+    "khử_ám_màu": { "policy": "auto_neutralize_color_casts", "strength": "cực cao" },
+    "ánh sáng": {
+      "thiết lập": "ánh sáng tự nhiên, cân bằng, rõ ràng, tối ưu hóa bởi nhận thức 3D.",
+      "white_balance": "trung tính chính xác (5500K)",
+      "dynamic_range_recovery": "cực cao"
+    },
+    "chỉnh_màu": {
+      "đường_cong_tone": "đường cong tương phản kỹ thuật số tối ưu", "vibrance": "tăng đáng kể", "saturation": "tăng nhẹ"
+    }
+  },
+  "lý lịch": {
+    "policy": "full_reconstruction_and_enhancement",
+    "description": "Nền quan trọng như chủ thể. Nó phải được phục hồi hoàn toàn. Điều này bao gồm việc loại bỏ tất cả các hư hỏng (vết bẩn, trầy xước) và tái tạo lại một cách thông minh bất kỳ khu vực nào bị mất hoặc hư hỏng nặng. Nền cuối cùng phải sạch sẽ, rõ ràng và nhất quán về mặt bối cảnh với chủ thể.",
+    "nâng cao": "làm sạch, phục hồi, tăng cường độ trong, tương phản, và chi tiết vi mô.",
+    "noise_reduction": { "method": "AI_deep_learning_and_detail_preserving", "strength": "cao" }
+  },
+  "hậu_kỳ": {
+    "sharpening": {
+      "policy": "adaptive_frequency_selective_sharpening_extreme_detail",
+      "amount": 0.5, "radius": 1.5, "threshold": 3
+    },
+    "Clarity": "cao", "Dehaze": "trung bình", "micro_contrast": "cực cao"
+  },
+  "đầu ra": {
+    "độ phân giải": "9256x6944", "dpi": 300, "định dạng": "TIFF", "độ_sâu_màu": "16-bit", "không gian_màu": "Adobe RGB"
+  },
+  "negative_prompt": [
+    "da nhựa", "da sáp", "quá mịn", "airbrushed", "mất kết cấu da", "hiệu ứng tranh vẽ", "nhân vật game",
+    "già hơn tuổi thật", "da nhăn nheo", "thay đổi tư thế", "đặc điểm Tây hóa", "6 ngón tay", "tay/chân bị biến dạng", "tỷ lệ cơ thể sai",
+    "màu sắc không chân thực (unrealistic colors)", "quá bão hòa", "ánh sáng phẳng", "tóc bệt",
+    "màu sắc nhợt nhạt, bạc màu", "ảnh bị nhiễu, có hạt", "mờ, không sắc nét", "phẳng, thiếu chiều sâu, không nổi khối", "kết quả trông giống ảnh cũ đã được tô màu",
+    "ảnh ám vàng", "ảnh ám nâu đỏ", "giữ lại tông màu đen trắng", "vẫn còn vết xước", "vẫn còn vết loang", "vết bẩn chưa được xóa", "nền bị hỏng",
+    "giữ lại rìa ảnh rách", "giữ lại mép giấy"
+  ]
+}`,
   oneClickFixLighting: 'Sửa ánh sáng',
-  oneClickFixLightingPrompt: `**AI TASK: Professional Portrait Relighting v4.0**
+  oneClickBoostColor: 'Tăng màu sắc',
+  oneClickBoostColorPrompt: `**AI TASK: Semantic Color Enhancement v4.0**
 
-You are a master AI lighting director for portrait photography. Your task is to relight the subject's face to create a professional, flattering, and dramatic studio portrait look, while leaving the background and clothing untouched.
+Your primary goal is to intelligently and realistically enhance the colors in the image by first understanding its content. You must perform a semantic analysis to identify different regions and apply context-specific adjustments. The final result should be vibrant and punchy, but still natural and believable.
 
-**NON-NEGOTIABLE CORE MANDATES (CRITICAL FAILURE IF VIOLATED):**
-1.  **ABSOLUTE DYNAMIC IDENTITY INTEGRATION v10.0:** The output **MUST** feature the **EXACT SAME PERSON**. You are forbidden from altering their fundamental facial structure, perceived weight, asymmetries, or unique features (moles, scars, eye shape, etc.). This is your highest priority.
-2.  **BACKGROUND & CLOTHING INTEGRITY:** The background and the subject's clothing **MUST REMAIN 100% UNCHANGED**. Only the lighting on the subject's face, neck, and hair is to be modified.
-3.  **PHOTOGRAPHIC REALISM:** The final image must look like a real, professionally-shot photograph, not a digital painting or an overly-processed image.
+**EXECUTION PROTOCOL (Strict Order):**
 
-**EXECUTION PROTOCOL (STRICT ORDER):**
-1.  **Isolate Subject:** Identify the primary person in the photograph.
-2.  **Analyze Facial Structure:** Understand the contours of the subject's face to apply light and shadow realistically.
-3.  **Apply Studio Lighting:** Re-render the lighting on the subject's face, neck, and hair. Create a soft, flattering main light source (key light) coming from a classic portrait angle (e.g., slightly above and to the side).
-4.  **Sculpt with Light & Shadow:** Generate soft, realistic shadows to add depth, dimension, and definition to the facial features (e.g., cheekbones, jawline). The result should be more three-dimensional.
-5.  **Seamless Integration:** The new lighting on the subject **MUST** blend flawlessly with the unaltered background and clothing. The transition must be invisible.
-6.  **Final Polish:** Perform a subtle enhancement to ensure the face is sharp and clear.
+1.  **Semantic Segmentation:** Analyze the image to identify and segment the following key elements:
+    *   **People:** Skin, hair, eyes, lips.
+    *   **Nature:** Sky, water (lakes, oceans), foliage (trees, grass, plants), flowers.
+    *   **Man-made Objects:** Buildings, vehicles, clothing.
+    *   **Foreground/Background:** Differentiate between the main subject and the background.
 
-**OUTPUT:** Return ONLY the final, relit photograph. Do not output any text.`,
-  oneClickBoostColor: 'Tăng cường màu sắc',
-  adjustmentTransformTitle: 'Biến đổi',
-  adjustmentRotateLeft: 'Xoay trái',
-  adjustmentRotateRight: 'Xoay phải',
-  adjustmentFlipHorizontal: 'Lật ngang',
-  adjustmentFlipVertical: 'Lật dọc',
-  adjustmentUpscale8K: 'Nâng cấp lên 8K',
-  adjustmentFaceRestore: 'Phục hồi khuôn mặt',
-  adjustmentFaceRestorePrompt: `**AI TASK: FORENSIC FACE RESTORATION & FULL IMAGE ENHANCEMENT v10.0**
+2.  **Context-Aware Color Correction (Apply these rules selectively based on segmentation):**
+    *   **Skin Tones:** Enhance warmth and richness to look healthy and natural. **Crucially, AVOID unnatural orange or red casts.** Preserve the original ethnicity and skin tone, just make it look better-lit and more vibrant.
+    *   **Sky:** If a sky is present, deepen the blues. If it's a sunset/sunrise, enhance the oranges, pinks, and purples. Remove any grayish haze.
+    *   **Foliage (Greens):** Boost the greens to be lush and vibrant, but avoid a neon or overly-saturated look. Introduce subtle variations in green tones.
+    *   **Water:** Enhance blues and cyans for clarity and depth. Add a touch of sparkle to highlights if it looks natural.
+    *   **Clothing & Objects:** Increase the saturation and richness of colors on clothing and key objects to make them pop, ensuring the color remains true to the original (e.g., a red car should be a richer red, not turn orange).
+    *   **Eyes & Hair:** Subtly enhance the natural color of eyes and the richness of hair tones. Add a hint of catchlight to eyes if it looks natural.
 
-**PRIMARY DIRECTIVE:** Your highest priority is the absolute, forensic-level preservation of the subject's identity and unique physical characteristics, dynamically integrated with any enhancements. This is non-negotiable.
+3.  **Global Harmonization:** After applying local adjustments, perform a final global color grading pass. Ensure all the enhanced colors work together harmoniously. Adjust overall saturation and contrast slightly to unify the image.
 
-**NON-NEGOTIABLE CORE MANDATES (DYNAMIC IDENTITY INTEGRATION):**
-1.  **IDENTITY & FACIAL STRUCTURE:** The output **MUST** feature the **EXACT SAME PERSON**. You are **STRICTLY FORBIDDEN** from beautifying, idealizing, or making the face more symmetrical/balanced (cân đối). **Asymmetry is KEY:** You **MUST** perfectly preserve all natural facial asymmetries (e.g., mặt lệch, miệng lệch).
-2.  **PHYSICAL ATTRIBUTES (BODY & FACE):** The final perceived weight must be true to the original. Do not make them look heavier or thinner. Preserve the original body shape and height. Preserve face shape and size (mặt to, mặt nhỏ), including features like sunken cheeks (má hóp), forehead height (trán cao, trán thấp), chin shape (cằm nhọn), etc.
-3.  **MICRO & MACRO FACIAL FEATURES (CRITICAL DETAIL LIST):** You **MUST** meticulously preserve with zero alteration:
-    -   **Eyes:** Preserve the exact, original eye shape, size, and angle (e.g., monolid (mắt một mí), double-lid (mắt hai mí), hooded (mắt híp)).
-    -   **Nose:** Preserve the original nose shape (e.g., mũi cao, mũi tẹt, mũi to).
-    -   **Mouth & Teeth:** Preserve unique dental structures like an overbite (răng hô) or snaggle teeth (răng khểnh).
-    -   **Skin Features:** Preserve permanent features like dimples (núm đồng tiền), moles, and scars.
-4.  **"SOUL" & MICRO-EXPRESSION PRESERVATION:** Beyond static features, you must identify and preserve the subtle "micro-expressions" and mood of the original subject to retain their personality and authenticity.
+**CRITICAL CONSTRAINTS:**
+- **Naturalism is key.** The final image must not look overly processed or fake.
+- **Preserve Identity.** For portraits, the person's identity, including skin tone and features, must be perfectly maintained.
+- **No Color Shifting.** Do not change original colors, only enhance them (e.g., a blue shirt should not become purple).`,
+  oneClickFixLightingPrompt: `**AI TASK: Advanced Lighting & Atmosphere Correction v2.0**
 
-**EXECUTION PROTOCOL (STRICT ORDER):**
-1.  **Analyze Face:** Identify blurry, out-of-focus, or low-resolution faces.
-2.  **Reconstruct Face:** Reconstruct lost facial details with extreme precision while strictly adhering to all identity mandates. Your goal is to add clarity and detail to the *existing* features, **NOT** to create new or "improved" ones. Generate natural, realistic skin texture.
-3.  **Integrate:** The restored face(s) must blend perfectly with the rest of the image's lighting and color.
-4.  **FINAL FULL-IMAGE ENHANCEMENT:** After restoring the face(s), you **MUST** perform a final enhancement pass on the **ENTIRE** image. Regenerate fine details, denoise, and boost clarity across the whole photograph to ensure the final result is cohesive and of the highest quality.
+**Primary Goal:** Analyze the image for complex lighting issues, including atmospheric conditions like haze, fog, or backlighting. Apply corrections to produce a clear, balanced, and dynamic photograph.
 
-**OUTPUT:** Return ONLY the final, restored photograph.`,
-  adjustmentPreset1: 'Làm mờ hậu cảnh',
-  adjustmentPlaceholder: "Hoặc mô tả một điều chỉnh (ví dụ: 'thay đổi nền thành một khu rừng')",
-  applyAdjustment: 'Áp dụng',
-  adjustmentPortraitTitle: 'Nâng cao chân dung',
-  adjustmentPortraitPreset1: 'Làm mịn da',
-  adjustmentPortraitPreset2: 'Thêm nụ cười',
-  adjustmentPortraitGentleSmile: 'Thêm cười mỉm',
-  adjustmentOpenEyes: 'Mở mắt',
-  adjustmentStraightenPosture: 'Chỉnh thẳng dáng',
-  adjustmentWhitenTeeth: 'Làm trắng răng',
-  adjustmentOldPhotoRestorationTitle: 'Phục chế ảnh cũ',
-  adjustmentFullRestore4K: 'Phục hồi toàn diện (4K)',
-  adjustmentFullRestore4KPrompt: `**NHIỆM VỤ AI: PHỤC CHẾ & NÂNG CAO ẢNH PHÁP Y v10.0**
+**Execution Protocol:**
 
-**CHỈ THỊ CHÍNH:** Ưu tiên cao nhất của bạn là bảo toàn tuyệt đối, ở cấp độ pháp y, danh tính và các đặc điểm thể chất độc đáo của tất cả các đối tượng, đồng thời tích hợp chúng một cách linh hoạt vào một bức ảnh được phục chế hoàn hảo.
+1.  **Atmospheric Analysis & Correction:**
+    *   **Identify Haze/Fog:** First, determine if the image suffers from atmospheric haze or fog that reduces contrast and desaturates colors.
+    *   **Dehaze:** If haze is detected, apply an intelligent dehaze algorithm. This must recover deep colors (e.g., rich greens in foliage, deep blues in the sky) and restore contrast without creating artificial halos or color shifts.
+    *   **Detail Recovery:** Crucially, focus on recovering fine details that were obscured by the atmospheric conditions.
 
-**YÊU CẦU CỐT LÕI KHÔNG THỂ THƯƠNG LƯỢNG (TÍCH HỢP DANH TÍNH ĐỘNG):**
-1.  **DANH TÍNH & CẤU TRÚC KHUÔN MẶT:** Kết quả **PHẢI** có **CHÍNH XÁC CÙNG MỘT NGƯỜI**. Bạn bị **NGHIÊM CẤM** làm đẹp, lý tưởng hóa, hoặc làm cho khuôn mặt cân đối hơn. **Sự bất đối xứng là CHÌA KHÓA:** Bạn **PHẢI** bảo tồn hoàn hảo tất cả các sự bất đối xứng tự nhiên của khuôn mặt (ví dụ: mặt lệch, miệng lệch).
-2.  **THUỘC TÍNH VẬT LÝ (CƠ THỂ & MẶT):** Cân nặng cảm nhận được cuối cùng phải đúng với ảnh gốc. Bảo tồn hình dáng cơ thể và chiều cao ban đầu. Bảo tồn hình dạng và kích thước khuôn mặt (mặt to, mặt nhỏ), bao gồm các đặc điểm như má hóp, chiều cao trán (trán cao, trán thấp), hình dạng cằm (cằm nhọn), v.v.
-3.  **CÁC ĐẶC ĐIỂM KHUÔN MẶT VI MÔ & VĨ MÔ (DANH SÁCH CHI TIẾT QUAN TRỌNG):** Bạn **PHẢI** bảo tồn tỉ mỉ với không một thay đổi nào:
-    -   **Mắt:** Bảo tồn chính xác hình dạng, kích thước và góc mắt ban đầu (ví dụ: mắt một mí, mắt hai mí, mắt híp).
-    -   **Nũi:** Bảo tồn hình dạng mũi ban đầu (ví dụ: mũi cao, mũi tẹt, mũi to).
-    -   **Miệng & Răng:** Bảo tồn các cấu trúc răng độc đáo như răng hô hoặc răng khểnh.
-    -   **Đặc điểm da:** Bảo tồn các đặc điểm vĩnh viễn như núm đồng tiền, nốt ruồi và sẹo, đồng thời tái tạo kết cấu da tự nhiên.
-4.  **BẢO TOÀN "LINH HỒN" & VI BIỂU CẢM:** Ngoài các đặc điểm tĩnh, bạn phải xác định và bảo tồn "vi biểu cảm" và tâm trạng tinh tế của đối tượng ban đầu để giữ lại tính cách và sự chân thực của họ.
+2.  **Exposure Balancing (Dynamic Range):**
+    *   **Highlight Recovery:** Pull back details from any overexposed areas (e.g., bright sky, reflections).
+    *   **Shadow Lifting:** Brighten shadowed areas to reveal hidden details, but maintain deep, rich black points to avoid a washed-out look.
 
-**GIAO THỨC THỰC HIỆN (THỨ TỰ NGHIÊM NGẶT):**
+3.  **Local Contrast Enhancement (Clarity):**
+    *   Apply micro-contrast adjustments to enhance the texture and three-dimensionality of the main subjects and mid-ground elements. This adds "punch" and makes the image pop.
 
-1.  **PHỤC HỒI & NÂNG CAO CỐT LÕI:** Đây là bước quan trọng nhất.
-    -   **Sửa chữa hư hỏng:** Sửa chữa tất cả các hư hỏng vật lý (vết xước, rách, đốm).
-    -   **Phục hồi độ rõ nét:** Sửa chữa mạnh mẽ tất cả các vùng bị mất nét, loại bỏ tất cả lóa và phản chiếu, và khử sương mù và giảm nhiễu triệt để.
-    -   **Tái tạo chi tiết:** Tái tạo chi tiết bị mất trên khuôn mặt, quần áo và nền một cách pháp y.
-    -   **Tô màu & Ánh sáng Nhận thức Ngữ cảnh:** Áp dụng màu sắc tự nhiên, hợp lý về mặt lịch sử. Phân tích bối cảnh để tạo ra ánh sáng mềm mại và chuyên nghiệp, hoàn chỉnh với bóng đổ và điểm sáng chân thực.
-2.  **NÂNG CẤP & LÀM SẮC NÉT CUỐI CÙNG (BƯỚC CUỐI CÙNG QUAN TRỌNG):**
-    -   Nâng cấp toàn bộ hình ảnh lên độ phân giải ít nhất 4K.
-    -   Áp dụng một lượt làm sắc nét mạnh mẽ cuối cùng để tối đa hóa độ rõ nét và chi tiết. Mục tiêu là làm cho kết quả cuối cùng sắc nét, chi tiết và sạch sẽ đến mức đặc biệt, trông giống như một bức ảnh hiện đại, **mới chụp**. **Tối đa hóa chi tiết đầu ra là mục tiêu chính của bước này.**
+4.  **Final Harmonization:**
+    *   Perform a final pass to ensure all adjustments blend seamlessly. The lighting should feel natural and cohesive across the entire image.
 
-**ĐẦU RA:** Chỉ trả về bức ảnh đã phục chế cuối cùng.`,
-  beautyTitle: 'Làm đẹp',
-  beautyDescription: 'Áp dụng các cải tiến làm đẹp tinh tế, thực tế cho ảnh chân dung.',
-  beautyApplyMakeup: 'Trang điểm',
-  beautySlimFace: 'Làm thon mặt',
-  beautyRemoveBlemishes: 'Xóa khuyết điểm',
-  beautyRemoveFreckles: 'Xóa tàn nhang',
-  idPhotoTitle: 'Tạo ảnh thẻ',
-  idPhotoDescription: 'Tạo ảnh thẻ chuyên nghiệp bằng cách chọn từ các tùy chọn bên dưới.',
-  idPhotoType: 'Loại',
-  idPhotoTypeStandard: 'Tiêu chuẩn',
-  idPhotoTypeNewborn: 'Trẻ sơ sinh',
-  idPhotoNewbornInfo: 'Đối với trẻ sơ sinh, các cài đặt về biểu cảm, trang phục và kiểu tóc được tự động tối ưu hóa để tuân thủ quy định.',
-  idPhotoGender: 'Giới tính',
-  idPhotoGenderMale: 'Nam',
-  idPhotoGenderFemale: 'Nữ',
-  idPhotoOutfit: 'Trang phục',
-  idPhotoOutfitSuit: 'Vest & Cà vạt',
-  idPhotoOutfitBlouse: 'Áo sơ mi nữ',
-  idPhotoOutfitAoDai: 'Áo dài',
-  idPhotoOutfitCollaredShirtM: 'Áo sơ mi có cổ',
-  idPhotoOutfitCollaredShirtF: 'Áo sơ mi có cổ',
-  idPhotoOutfitOfficeWear: 'Đồ công sở',
-  idPhotoHairstyle: 'Kiểu tóc',
-  idPhotoHairProfessional: 'Chuyên nghiệp',
-  idPhotoHairKeep: 'Giữ nguyên',
-  idPhotoHairShortNeat: 'Tóc ngắn gọn gàng',
-  idPhotoHairTiedBack: 'Buộc gọn gàng',
-  idPhotoHairNeatDown: 'Xõa gọn gàng',
-  idPhotoHairMaleNeat: 'Chải chuốt gọn gàng',
-  idPhotoHairMaleShort: 'Tóc ngắn công sở',
-  idPhotoHairMaleMedium: 'Tóc dài vừa',
-  idPhotoExpression: 'Biểu cảm',
-  idPhotoExpressionKeep: 'Giữ nguyên',
-  idPhotoExpressionNeutral: 'Trung tính',
-  idPhotoExpressionSmile: 'Mỉm cười',
-  idPhotoExpressionBigSmile: 'Cười tươi',
-  idPhotoBackgroundColor: 'Nền',
-  idPhotoBgWhite: 'Trắng',
-  idPhotoBgBlue: 'Xanh dương',
-  idPhotoBgGray: 'Xám',
-  idPhotoBgGreen: 'Xanh lá',
-  idPhotoSize: 'Kích thước',
-  idPhotoApply: 'Tạo ảnh thẻ',
-  idPhotoCustomPromptLabel: 'Hướng dẫn tùy chỉnh',
-  idPhotoCustomPromptPlaceholder: "ví dụ: 'thêm cà vạt màu xanh nhạt'",
-  filterTitle: 'Áp dụng bộ lọc',
-  filterPlaceholder: "Hoặc mô tả một bộ lọc tùy chỉnh (ví dụ: 'ánh sáng synthwave thập niên 80')",
-  applyFilter: 'Áp dụng',
-  filterSectionCamera: 'Giả lập máy ảnh',
-  filterCameraFuji: 'Phong cách Fujifilm',
-  filterCameraKodak: 'Phong cách Kodak',
-  filterCameraLeica: 'Phong cách Leica',
-  filterCameraCanon: 'Phong cách Canon',
-  filterSectionFilm: 'Phim & Cổ điển',
-  filterFilmVintage: 'Phim cổ điển',
+**Constraints:**
+- The result must look like a professionally corrected photograph, not an overly processed HDR image.
+- Avoid introducing noise or artifacts.
+- If people are present, their identity must be preserved.`,
+  filterTitle: 'Bộ lọc',
+  filterSectionCamera: 'Máy ảnh',
+  filterSectionFilm: 'Phim',
+  filterSectionArtistic: 'Nghệ thuật',
+  filterSectionDigital: 'Kỹ thuật số',
+  filterCameraFuji: 'Fuji',
+  filterCameraKodak: 'Kodak',
+  filterCameraLeica: 'Leica',
+  filterCameraCanon: 'Canon',
+  filterFilmVintage: 'Cổ điển',
   filterFilmBW: 'Đen trắng',
-  filterFilmSepia: 'Tông nâu đỏ',
+  filterFilmSepia: 'Nâu đỏ',
   filterFilmPolaroid: 'Polaroid',
-  filterSectionArtistic: 'Phong cách nghệ thuật',
-  filterArtisticOil: 'Tranh sơn dầu',
-  filterArtisticWatercolor: 'Tranh màu nước',
-  filterArtisticSketch: 'Phác thảo bút chì',
+  filterArtisticOil: 'Sơn dầu',
+  filterArtisticWatercolor: 'Màu nước',
+  filterArtisticSketch: 'Phác thảo',
   filterArtisticPopArt: 'Pop Art',
-  filterSectionColor: 'Chỉnh màu',
-  filterColorCinematic: 'Màu điện ảnh',
-  filterColorMoody: 'Màu tâm trạng',
-  filterColorGolden: 'Giờ vàng',
-  filterColorVibrant: 'Màu HDR rực rỡ',
-  filterColorCleanBright: 'Sạch sẽ & Tươi sáng',
-  filterColorSoftPortrait: 'Chân dung nhẹ nhàng',
-  filterColorDramaticPortrait: 'Chân dung kịch tính',
-  filterColorLushGreens: 'Cây cỏ tươi tốt',
-  filterColorAzureBlues: 'Biển trời xanh biếc',
-  filterColorAutumnGlow: 'Sắc thu ấm áp',
-  filterSectionDigital: 'Hiện đại & Kỹ thuật số',
   filterDigitalSynthwave: 'Synthwave',
   filterDigitalGlitch: 'Glitch',
   filterDigitalDuotone: 'Duotone',
   filterDigitalPixel: 'Pixel Art',
-  undo: 'Hoàn tác',
-  redo: 'Làm lại',
-  reset: 'Đặt lại',
-  uploadNew: 'Tải ảnh mới',
-  startOver: 'Làm lại từ đầu',
-  showTools: 'Hiện công cụ',
-  hideTools: 'Ẩn công cụ',
-  downloadImage: 'Tải xuống',
-  original: 'Gốc',
-  edited: 'Đã sửa',
-  zoomOut: 'Thu nhỏ',
-  resetZoom: 'Đặt lại thu phóng',
-  zoomIn: 'Phóng to',
-  compareSliderAria: 'Kéo để so sánh phiên bản trước và sau',
-  historyTitle: 'Lịch sử',
-  historyStep: 'Bước {step}',
-  historyOriginal: 'Gốc',
-  viewEdited: 'Xem ảnh đã sửa',
-  viewOriginal: 'Xem ảnh gốc',
-  insertErrorNoSubjects: 'Vui lòng thêm ít nhất một ảnh chủ thể để ghép.',
-  scanModalTitle: 'Tài liệu đã quét',
-  scanModalClose: 'Đóng',
-  scanDiscard: 'Hủy bỏ',
-  scanAdjustCorners: 'Điều chỉnh góc',
-  scanDownloadPdf: 'Tải PDF',
-  scanExportToWord: 'Xuất ra .docx',
-  scanExportToExcel: 'Xuất ra .xlsx',
-  scanSave: 'Lưu vào trình sửa',
-  scanModalZoomOut: 'Thu nhỏ',
-  scanModalResetZoom: 'Đặt lại thu phóng',
-  scanModalZoomIn: 'Phóng to',
+  filterPlaceholder: 'Mô tả bộ lọc hoặc hiệu ứng của riêng bạn...',
+  applyFilter: 'Áp dụng',
+  orSeparator: 'hoặc',
+  enhanceTitle: 'Nâng cao',
+  adjustmentPreset1: 'Làm mờ nền',
+  adjustmentPortraitPreset1: 'Làm mịn da',
+  adjustmentPortraitPreset2: 'Thêm nụ cười',
+  adjustmentPortraitGentleSmile: 'Nụ cười mỉm',
+  adjustmentOpenEyes: 'Mở mắt',
+  adjustmentStraightenPosture: 'Làm thẳng tư thế',
+  adjustmentWhitenTeeth: 'Làm trắng răng',
+  adjustmentRemoveBg: 'Xóa nền',
+  adjustmentUpscale8K: 'Nâng cấp 8K',
+  adjustmentUpscale8KPrompt: `{
+"version": "3.0_8K_upscale_restoration",
+"task": "image_restoration_and_upscaling",
+"notes": "Mục tiêu chính: Nâng cấp ảnh chất lượng thấp, mờ, nhiễu lên độ phân giải 8K. AI phải phân tích các khiếm khuyết (nhiễu, mờ, vỡ khối), loại bỏ chúng và tái tạo lại các chi tiết bị mất (vân da, sợi tóc, họa tiết vải) một cách siêu thực. Ưu tiên hàng đầu là giữ lại 100% nhận dạng gốc và tạo ra kết quả sắc nét, tự nhiên.",
+"processing_controls": {
+  "priority": "maximum_detail_enhancement_and_artifact_removal",
+  "identity_fidelity_strength": 1.0,
+  "detail_generation_realism": 1.0
+},
+"input_images": [
+  "REPLACE_WITH_LOW_QUALITY_IMAGE_ID"
+],
+"restoration_and_upscaling_pipeline": {
+  "step_1_analysis": {
+    "description": "Phân tích ảnh gốc để xác định các loại lỗi.",
+    "analyze_artifacts": ["jpeg_compression", "blurriness", "gaussian_noise", "color_banding", "low_resolution"]
+  },
+  "step_2_pre_restoration": {
+    "description": "Làm sạch ảnh gốc trước khi nâng cấp để tránh khuếch đại lỗi.",
+    "noise_reduction": {
+      "model": "advanced_deep_learning_denoiser",
+      "strength": "adaptive_to_image_content"
+    },
+    "compression_artifact_removal": {
+      "strength": "high",
+      "deblocking_filter": true
+    },
+    "blur_removal": {
+      "model": "deconvolution_or_gan_based_deblur",
+      "strength": "adaptive"
+    }
+  },
+  "step_3_detail_synthesis": {
+    "description": "Tái tạo thông minh các chi tiết không có trong ảnh gốc.",
+    "texture_synthesis_targets": [
+      "skin_pores_and_fine_lines",
+      "individual_hair_strands_and_eyelashes",
+      "fabric_weaves_and_stitching",
+      "architectural_textures (brick, wood)",
+      "natural_foliage_details (leaves, grass)"
+    ],
+    "realism_model": "photorealistic_generative_engine"
+  },
+  "step_4_upscaling": {
+    "description": "Phóng to ảnh lên độ phân giải mục tiêu.",
+    "upscaling_model": "esrgan_or_diffusion_based_upscaler",
+    "target_resolution": "8K (7680x4320)",
+    "tile_size": "512",
+    "tile_overlap": "64"
+  },
+  "step_5_post_processing": {
+    "description": "Tinh chỉnh cuối cùng sau khi nâng cấp.",
+    "final_sharpening": {
+      "method": "adaptive_unsharp_mask",
+      "strength": "light_to_moderate"
+    },
+    "color_and_tone_correction": {
+      "method": "auto_restore_natural_tones",
+      "vibrance_enhancement": "subtle"
+    }
+  }
+},
+"subject_restoration": {
+  "facial_restoration": {
+    "enabled": true,
+    "model": "dedicated_face_restoration_model (e.g., GFPGAN, CodeFormer)",
+    "fidelity": 1.0,
+    "keep_identity": true,
+    "facial_identity_locks": [
+      "face shape and proportions",
+      "facial_asymmetry",
+      "moles, scars, freckles",
+      "eye shape and color",
+      "nose shape",
+      "mouth shape"
+    ]
+  }
+},
+"output": {
+  "resolution": "7680x4320",
+  "dpi": 300,
+  "format": "PNG",
+  "color_space": "sRGB IEC61966-2.1",
+  "quality_level": "lossless",
+  "bit_depth": 16
+},
+"negative_prompt": [
+  "plastic skin", "waxy look", "oversmoothed", "loss of natural texture",
+  "halo effect", "over-sharpened edges", "glowing edges",
+  "uncanny valley effect", "distorted background faces", "morphed identity",
+  "generated artifacts", "repeated patterns", "unrealistic details",
+  "blurry patches", "watercolor effect", "painting-like", "cartoonish"
+]
+}`,
+  adjustmentFaceRestore: 'Phục hồi khuôn mặt',
+  adjustmentFaceRestorePrompt: 'Thực hiện một quá trình phục hồi pháp y trên tất cả các khuôn mặt trong ảnh. Tăng cường độ rõ nét, làm sắc nét các đặc điểm và tái tạo lại các chi tiết bị mất do chất lượng ảnh kém hoặc mờ. QUAN TRỌNG: Tuân thủ nghiêm ngặt Giao thức Tích hợp Danh tính Động v11.2. Không được làm đẹp, lý tưởng hóa hoặc thay đổi danh tính của người đó. Bạn phải bảo tồn hình khối ba chiều tự nhiên của khuôn mặt và không được làm phẳng mặt. Kết quả phải là cùng một người, chỉ với khuôn mặt rõ nét hơn nhiều.',
+  adjustmentPlaceholder: 'Mô tả điều chỉnh của bạn (ví dụ: "làm cho nền tối hơn")...',
+  applyAdjustment: 'Áp dụng',
+  idPhotoTitle: 'Ảnh thẻ',
+  idPhotoDescription: 'Tạo ảnh thẻ chuyên nghiệp tuân thủ các tiêu chuẩn.',
+  idPhotoType: 'Loại ảnh',
+  idPhotoTypeStandard: 'Tiêu chuẩn',
+  idPhotoTypeNewborn: 'Trẻ sơ sinh',
+  idPhotoGender: 'Giới tính',
+  idPhotoGenderMale: 'Nam',
+  idPhotoGenderFemale: 'Nữ',
+  idPhotoExpression: 'Biểu cảm',
+  idPhotoExpressionKeep: 'Giữ nguyên',
+  idPhotoExpressionNeutral: 'Nghiêm túc',
+  idPhotoExpressionSmile: 'Cười mỉm',
+  idPhotoExpressionBigSmile: 'Cười tươi',
+  idPhotoOutfit: 'Trang phục',
+  idPhotoOutfitSuit: 'Vest',
+  idPhotoOutfitBlouse: 'Áo sơ mi nữ',
+  idPhotoOutfitCollaredShirtM: 'Áo sơ mi nam',
+  idPhotoOutfitCollaredShirtF: 'Áo công sở nữ',
+  idPhotoOutfitAoDai: 'Áo dài',
+  idPhotoOutfitOfficeWear: 'Đồ công sở',
+  idPhotoHairstyle: 'Kiểu tóc',
+  idPhotoHairKeep: 'Giữ nguyên',
+  idPhotoHairShortNeat: 'Tóc ngắn gọn gàng',
+  idPhotoHairTiedBack: 'Tóc buộc cao',
+  idPhotoHairNeatDown: 'Tóc xõa gọn gàng',
+  idPhotoHairMaleNeat: 'Tóc nam gọn gàng',
+  idPhotoHairMaleShort: 'Tóc nam ngắn',
+  idPhotoHairMaleMedium: 'Tóc nam vừa',
+  idPhotoBackgroundColor: 'Màu nền',
+  idPhotoBgWhite: 'Trắng',
+  idPhotoBgBlue: 'Xanh',
+  idPhotoBgGray: 'Xám',
+  idPhotoBgGreen: 'Xanh lá',
+  idPhotoSize: 'Kích cỡ',
+  idPhotoApply: 'Tạo ảnh thẻ',
+  idPhotoNewbornInfo: 'Đối với ảnh trẻ sơ sinh, chỉ có các tùy chọn nền và kích cỡ được áp dụng để đảm bảo tuân thủ các quy định.',
+  idPhotoCustomPromptLabel: 'Yêu cầu tùy chỉnh (Tùy chọn)',
+  idPhotoCustomPromptPlaceholder: 'ví dụ: "thêm một chút tóc mái"',
+  expandTitle: 'Mở rộng',
+  expandDescription: 'Kéo các cạnh để mở rộng ảnh của bạn, sau đó mô tả những gì cần thêm vào.',
+  expandPlaceholder: 'Mô tả cảnh (ví dụ: "một bãi biển đầy nắng")...',
+  expandApply: 'Tạo',
+  expandMagic: 'Tự động',
+  expandAspectFree: 'Tự do',
+  insertTitle: 'Ghép ảnh',
+  insertDescription: 'Kết hợp nhiều người, phong cách và nền để tạo ra một hình ảnh hoàn toàn mới.',
+  insertSubject: 'Đối tượng (Người)',
+  insertUploadPlaceholder: 'Tải lên',
+  insertBackgroundOptional: 'Nền (Tùy chọn)',
+  insertClickToChange: 'Nhấp để thay đổi',
+  insertStyle: 'Phong cách (Tùy chọn)',
+  insertPromptPlaceholder: 'Mô tả cảnh và hành động...',
+  insertPromptPlaceholderInitial: 'Mô tả cảnh, đối tượng sẽ làm gì...',
+  insertApply: 'Kết hợp',
+  insertErrorNoSubjects: 'Vui lòng tải lên ít nhất một ảnh đối tượng.',
   scanTitle: 'Quét tài liệu',
-  scanDescription: 'Tự động sửa góc nhìn và nâng cao chất lượng ảnh tài liệu.',
+  scanDescription: 'Tự động làm thẳng, cắt và nâng cao chất lượng tài liệu.',
   scanEnhancement: 'Nâng cao',
   scanColor: 'Màu',
   scanGrayscale: 'Thang xám',
-  scanBW: 'Đen & Trắng',
+  scanBW: 'Đen trắng',
   scanRemoveShadows: 'Xóa bóng',
-  scanRemoveHandwriting: 'Xóa chữ viết tay',
   scanRestoreText: 'Phục hồi văn bản',
-  scanRestoreTextTooltip: 'Sử dụng AI để tái tạo và làm sắc nét văn bản bị mờ hoặc xuống cấp. Có thể làm thay đổi phông chữ gốc.',
+  scanRestoreTextTooltip: 'Tái tạo lại văn bản bị mờ hoặc không rõ ràng. Hữu ích cho các tài liệu chất lượng thấp.',
+  scanRemoveHandwriting: 'Xóa chữ viết tay',
   scanAuto: 'Quét tự động',
-  scanManual: 'Quét thủ công',
-  scanManualTitle: 'Điều chỉnh góc',
-  scanManualDescription: 'Kéo các góc để xác định vùng tài liệu, sau đó áp dụng quét.',
-  scanApplyManual: 'Áp dụng quét',
-  scanCancel: 'Hủy',
-  scanHistoryTitle: 'Các lần quét gần đây',
+  scanManual: 'Chỉnh sửa thủ công',
+  scanHistoryTitle: 'Lịch sử quét',
   scanHistoryReview: 'Xem lại bản quét',
-  expandTitle: 'Mở rộng sáng tạo',
-  expandDescription: 'Kéo các tay cầm để mở rộng khung ảnh, sau đó mô tả nội dung để lấp đầy vùng mới.',
-  expandPlaceholder: "ví dụ: 'thêm nhiều bầu trời xanh'",
-  expandApply: 'Mở rộng ảnh',
-  expandMagic: 'Mở rộng thần kỳ',
-  expandAspectFree: 'Tự do',
-  insertTitle: 'Ghép ảnh & Chèn',
-  insertDescription: 'Kết hợp nhiều hình ảnh. Thêm chủ thể, nền và tham chiếu phong cách để tạo ra một hình ảnh mới.',
-  insertSubject: 'Chủ thể (Các mục chính cần bao gồm)',
-  insertBackgroundOptional: 'Nền (Tùy chọn)',
-  insertStyle: 'Tham chiếu phong cách (Tùy chọn)',
-  insertUploadPlaceholder: 'Tải lên',
-  insertClickToChange: 'Nhấp để thay đổi',
-  insertPromptPlaceholder: 'ví dụ: các chủ thể cưỡi ngựa trên bãi biển nền',
-  insertPromptPlaceholderInitial: 'ví dụ: một con mèo đeo kính râm',
-  insertApply: 'Tạo ảnh',
-  insertUseSearch: 'Cải thiện lời nhắc với Google Search (cho các chủ đề gần đây)',
-  extractTitle: 'Trích xuất vật thể',
-  extractDescription: 'Mô tả một đối tượng trong ảnh để trích xuất nó với nền trong suốt.',
-  extractPlaceholder: "ví dụ: 'chiếc xe màu đỏ'",
+  scanModalTitle: 'Tài liệu đã quét',
+  scanModalClose: 'Đóng',
+  scanModalZoomIn: 'Phóng to',
+  scanModalZoomOut: 'Thu nhỏ',
+  scanModalResetZoom: 'Đặt lại thu phóng',
+  scanModalCompare: 'So sánh với bản gốc',
+  scanDiscard: 'Hủy bỏ',
+  scanAdjustCorners: 'Chỉnh sửa góc',
+  scanDownloadPdf: 'Tải PDF',
+  scanSave: 'Lưu & Sử dụng',
+  scanManualTitle: 'Chỉnh sửa góc',
+  scanManualDescription: 'Kéo các góc để khớp với các cạnh của tài liệu.',
+  scanApplyManual: 'Áp dụng',
+  scanCancel: 'Hủy',
+  scanExportToWord: 'Xuất sang Word',
+  scanExportToExcel: 'Xuất sang Excel',
+  extractTitle: 'Trích xuất',
+  extractDescription: 'Mô tả một vật thể trong ảnh để trích xuất nó với nền trong suốt.',
+  extractPlaceholder: 'ví dụ: "chiếc mũ đỏ", "người phụ nữ mặc váy xanh"',
   extractApply: 'Trích xuất',
-  extractResultTitle: 'Các vật thể đã trích xuất',
+  extractResultTitle: 'Vật thể đã trích xuất',
   extractHistoryTitle: 'Lịch sử trích xuất',
-  extractUseAsStyle: 'Dùng làm phong cách',
-  swapFaceTitle: 'Hoán đổi khuôn mặt',
-  swapFaceDescription: 'Thay thế một khuôn mặt trong ảnh chính bằng một khuôn mặt từ ảnh khác.',
-  swapFaceApply: 'Hoán đổi khuôn mặt',
-  swapFaceUploadPrompt: 'Tải ảnh có khuôn mặt mới',
-  faceSwapHowToTitle: 'Cách hoán đổi khuôn mặt',
-  faceSwapHowTo1_p1: 'Trong hộp',
-  faceSwapHowTo1_p2: ', nhấp vào số trên khuôn mặt bạn muốn thay thế.',
-  faceSwapHowTo2_p1: 'Tải ảnh lên hộp',
-  faceSwapHowTo2_p2: ' và chọn khuôn mặt mới.',
-  faceSwapHowTo3: 'Phải chọn cả khuôn mặt mục tiêu và khuôn mặt nguồn.',
-  faceSwapHowTo4_p1: 'Nhấp vào',
-  faceSwapHowTo4_p2: 'để tạo kết quả.',
-  faceSwapTargetTitle: 'Ảnh gốc',
-  faceSwapSourceTitle: 'Khuôn mặt mới',
-  faceSwapNoTargetImage: 'Tải một ảnh vào trình chỉnh sửa trước.',
-  faceSwapUploadFaceButton: 'Tải lên một khuôn mặt',
-  orSeparator: 'HOẶC',
-  studioTitle: 'Chế độ Studio',
-  studioDescription: 'Tạo một buổi chụp ảnh chuyên nghiệp. Mô tả một phong cách và nhận 3 kết quả khác nhau.',
-  studioPromptPlaceholder: "ví dụ: 'bìa tạp chí thời trang cổ điển thập niên 90'",
-  generatePhotoshoot: 'Tạo buổi chụp ảnh',
-  studioModalTitle: 'Kết quả buổi chụp ảnh của bạn',
-  studioModalLoading: 'Đang tạo buổi chụp ảnh của bạn... Việc này có thể mất một chút thời gian. Vui lòng đợi khi các ảnh mới xuất hiện bên dưới.',
-  studioSelectResult: 'Chọn',
-  studioDownloadResult: 'Tải xuống',
-  studioResultsTitle: 'Kết quả Studio',
-  compositeResultsTitle: 'Kết quả đã tạo',
-  adjustmentResultsTitle: 'Kết quả điều chỉnh',
-  idPhotoResultsTitle: 'Kết quả ảnh thẻ',
-  studioClearResults: 'Xóa',
-  studioPoseStyle: 'Kiểu tạo dáng',
+  extractUseAsStyle: 'Dùng làm Phong cách',
+  suggestionTitle: 'Đề xuất:',
+  suggestionRestoreFace: 'Phục hồi khuôn mặt',
+  suggestionFixLighting: 'Sửa ánh sáng',
+  suggestionPortraitTools: 'Công cụ chân dung',
+  suggestionDismiss: 'Bỏ qua',
+  historyOriginal: 'Ảnh gốc',
+  historyStep: 'Bước {step}',
+  historyCurrent: 'Hiện tại',
+  studioTitle: 'Studio',
+  studioDescription: 'Tạo ra các buổi chụp ảnh chuyên nghiệp bằng cách mô tả phong cách bạn muốn.',
+  studioPromptPlaceholder: 'ví dụ: "chụp ảnh thời trang cổ điển thập niên 90", "ảnh chân dung công sở"',
+  studioPromptPlaceholderStyle: 'Lệnh sẽ được tạo từ ảnh phong cách.',
+  studioPoseStyle: 'Phong cách tạo dáng',
   studioPoseStyleAutomatic: 'Tự động',
   studioPoseStyleDynamic: 'Năng động',
   studioPoseStyleCandid: 'Tự nhiên',
   studioPoseStyleFormal: 'Trang trọng',
   studioCameraAngle: 'Góc máy ảnh',
   studioAngleFront: 'Chính diện',
-  studioAngle34Left: 'Nghiêng 3/4 (T)',
-  studioAngle34Right: 'Nghiêng 3/4 (P)',
-  studioAngleProfileLeft: 'Nhìn nghiêng (T)',
-  studioAngleProfileRight: 'Nhìn nghiêng (P)',
+  studioAngle34Left: 'Góc 3/4 trái',
+  studioAngle34Right: 'Góc 3/4 phải',
+  studioAngleProfileLeft: 'Nhìn nghiêng trái',
+  studioAngleProfileRight: 'Nhìn nghiêng phải',
   studioAngleAbove: 'Góc cao',
   studioAngleBelow: 'Góc thấp',
-  suggestionTitle: 'Gợi ý:',
-  suggestionRestoreFace: 'Phục hồi khuôn mặt?',
-  suggestionFixLighting: 'Sửa ánh sáng?',
-  suggestionPortraitTools: 'Công cụ Chân dung',
-  suggestionDismiss: 'Bỏ qua',
+  generatePhotoshoot: 'Tạo bộ ảnh',
+  studioSelectResult: 'Chọn kết quả này',
+  studioDownloadResult: 'Tải xuống',
+  studioStyleInfluenceLabel: 'Mức độ ảnh hưởng phong cách',
+  tooltipRetouch: 'Chỉnh sửa & Trích xuất',
+  tooltipAdjust: 'Nâng cao & Bộ lọc',
+  tooltipIdPhoto: 'Ảnh thẻ',
+  tooltipExpand: 'Mở rộng',
+  tooltipInsert: 'Ghép ảnh',
+  tooltipScan: 'Quét tài liệu',
+  tooltipExtract: 'Trích xuất',
+  tooltipStudio: 'Studio',
+  zoomIn: 'Phóng to',
+  zoomOut: 'Thu nhỏ',
+  resetZoom: 'Đặt lại thu phóng',
+  viewOriginal: 'So sánh',
+  viewEdited: 'Xem ảnh đã sửa',
+  transformRotateCW: 'Xoay phải',
+  transformRotateCCW: 'Xoay trái',
+  transformFlipH: 'Lật ngang',
+  transformFlipV: 'Lật dọc',
+  compareSliderAria: 'Thanh trượt so sánh',
+  bottomToolbarOpenFullEditor: 'Mở trình chỉnh sửa đầy đủ',
+  retouchRemovePersonPrompt: 'XÓA NGƯỜI: Vui lòng xóa (các) người trong vùng được chỉ định. Tái tạo lại nền một cách siêu thực. Kết quả phải hoàn toàn liền mạch và trông như thể (các) người đó chưa bao giờ ở đó.',
+  retouchRemoveObjectPrompt: 'XÓA VẬT THỂ: Vui lòng xóa đối tượng trong vùng được chỉ định. Tái tạo lại nền một cách siêu thực. Kết quả phải hoàn toàn liền mạch và trông như thể đối tượng đó chưa bao giờ ở đó.',
+  retouchRemoveReflectionPrompt: 'XÓA PHẢN CHIẾU: Vui lòng xóa ánh sáng phản chiếu/lóa trong vùng được chỉ định. Tái tạo lại các chi tiết cơ bản một cách siêu thực. Kết quả phải hoàn toàn liền mạch.',
+  adjustmentPortraitTitle: 'Chân dung',
+  filterSectionColor: 'Màu sắc',
+  filterColorCinematic: 'Điện ảnh',
+  filterColorMoody: 'Tâm trạng',
+  filterColorGolden: 'Giờ vàng',
+  filterColorVibrant: 'Sống động',
+  filterColorCleanBright: 'Sạch & Sáng',
+  filterColorSoftPortrait: 'Chân dung mềm mại',
+  filterColorLushGreens: 'Cây xanh tươi tốt',
+  filterColorAzureBlues: 'Trời biển xanh biếc',
+  filterColorAutumnGlow: 'Thu vàng',
+  undo: 'Hoàn tác',
+  redo: 'Làm lại',
+  reset: 'Đặt lại',
+  downloadImage: 'Tải xuống',
+  hideTools: 'Ẩn công cụ',
+  showTools: 'Hiện công cụ',
+  startOver: 'Bắt đầu lại',
+  uploadNew: 'Tải ảnh mới',
+
+  adjustmentPortraitSmoothSkinPrompt: "Perform a subtle and professional skin smoothing on the subject. Retain natural skin texture, including pores. Do not make the skin look plastic or artificial. Preserve the person's identity and facial structure completely.",
+  adjustmentPortraitGentleSmilePrompt: "Subtly and realistically adjust the person's expression to a gentle, closed-mouth smile. Ensure the change is natural and engages the correct facial muscles, including a slight crinkle around the eyes (Duchenne smile). The person's identity must be perfectly preserved.",
+  adjustmentOpenEyesPrompt: "If the subject's eyes are partially or fully closed, realistically open them. The new eyes must perfectly match the subject's original eye color, shape, and identity.",
+  adjustmentWhitenTeethPrompt: "Subtly and realistically whiten the teeth of the person in the photo. Avoid an overly bright, unnatural look. The result should be a natural, healthy white. Preserve the person's identity.",
+  adjustmentPortraitBlurBgPrompt: "Apply a professional and aesthetically pleasing background blur (bokeh) to the image. The primary subject should remain perfectly sharp, while the background is smoothly and naturally blurred. The transition should be seamless, especially around the edges of the subject (hair, etc.).",
+  adjustmentRemoveBgPrompt: 'Perform a precision cutout of the primary subject and remove the background, replacing it with perfect transparency. The edges must be clean and professional.',
+  filterColorCinematicPrompt: "Apply a cinematic color grade. Emphasize teal and orange tones, deepen the shadows, and slightly desaturate the colors to create a moody, film-like aesthetic.",
+  filterColorVibrantPrompt: "Enhance the vibrancy and saturation of the image to make the colors pop. Boost the blues of the sky and the greens of nature for a lively, punchy look.",
+  filterColorGoldenPrompt: "Apply a warm, golden-hour glow to the image. Enhance yellow and orange tones, soften the highlights, and create a dreamy, sun-kissed atmosphere.",
+  filterColorMoodyPrompt: "Apply a dark and moody color grade. Desaturate the colors, crush the blacks to increase contrast, and add a subtle cool or green tint to the shadows for a dramatic, atmospheric feel.",
+  filterCameraFujiPrompt: "Apply a color grade that emulates the look of a classic Fujifilm camera. Focus on producing rich, deep greens, cinematic blues, and pleasing, natural skin tones, reminiscent of Fujifilm's film simulations.",
+  filterCameraKodakPrompt: "Apply a color grade that emulates the warm, vibrant, and slightly saturated look of Kodak film stocks like Portra or Kodachrome. Emphasize rich reds and yellows for a nostalgic, timeless feel.",
+  filterCameraLeicaPrompt: "Apply a color grade that emulates the signature Leica look. Focus on creating deep contrast, rich blacks, and natural, true-to-life colors with a subtle, three-dimensional pop.",
+  filterCameraCanonPrompt: "Apply a color grade that emulates the look of a Canon DSLR. Produce bright, clean colors with a focus on accurate and flattering skin tones, characteristic of Canon's color science.",
+  filterFilmVintagePrompt: 'Apply a vintage film look, with slightly faded colors, soft contrast, and a subtle warm tone.',
+  filterFilmBWPrompt: 'Convert the image to a high-contrast, dramatic black and white.',
+  filterFilmSepiaPrompt: 'Apply a classic sepia tone for a nostalgic, old-fashioned look.',
+  filterFilmPolaroidPrompt: 'Simulate a polaroid photo effect with washed-out colors, a slight vignette, and a characteristic color shift.',
+  filterArtisticOilPrompt: 'Transform the image into a textured oil painting with visible brushstrokes.',
+  filterArtisticWatercolorPrompt: 'Give the image a soft, blended watercolor effect with translucent colors.',
+  filterArtisticSketchPrompt: 'Convert the image into a detailed pencil sketch with cross-hatching and defined lines.',
+  filterArtisticPopArtPrompt: 'Apply a vibrant, high-contrast pop art style inspired by Andy Warhol, using bold, flat areas of color.',
+  filterDigitalSynthwavePrompt: 'Apply a vibrant 80s synthwave aesthetic with neon magenta and cyan glows, and subtle scan lines.',
+  filterDigitalGlitchPrompt: 'Transform the image with digital glitch effects and chromatic aberration.',
+  filterDigitalDuotonePrompt: 'Apply a stylish duotone effect using a bold color combination, like cyan and magenta.',
+  filterDigitalPixelPrompt: 'Convert the image into a retro 8-bit pixel art style.',
 };
 
+// Fix: Export the translations and the key type to make this file a module.
 export const translations = {
   vi,
 };

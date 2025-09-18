@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import type { Enhancement } from '../services/geminiService';
 
@@ -13,14 +13,22 @@ interface ScanPanelProps {
   isImageLoaded: boolean;
   scanHistory: string[];
   onReviewScan: (url: string) => void;
+  enhancement: Enhancement;
+  onEnhancementChange: (e: Enhancement) => void;
+  removeShadows: boolean;
+  onRemoveShadowsChange: (c: boolean) => void;
+  restoreText: boolean;
+  onRestoreTextChange: (c: boolean) => void;
+  removeHandwriting: boolean;
+  onRemoveHandwritingChange: (c: boolean) => void;
 }
 
-const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLoaded, scanHistory, onReviewScan }) => {
+const ScanPanel: React.FC<ScanPanelProps> = ({ 
+    onApplyScan, isLoading, isImageLoaded, scanHistory, onReviewScan,
+    enhancement, onEnhancementChange, removeShadows, onRemoveShadowsChange,
+    restoreText, onRestoreTextChange, removeHandwriting, onRemoveHandwritingChange
+}) => {
   const { t } = useTranslation();
-  const [enhancement, setEnhancement] = useState<Enhancement>('color');
-  const [removeShadows, setRemoveShadows] = useState<boolean>(true);
-  const [restoreText, setRestoreText] = useState<boolean>(false);
-  const [removeHandwriting, setRemoveHandwriting] = useState<boolean>(false);
 
   const enhancementOptions: { name: string; value: Enhancement }[] = [
     { name: t('scanColor'), value: 'color' },
@@ -40,7 +48,7 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
               {enhancementOptions.map(({ name, value }) => (
                 <button
                   key={value}
-                  onClick={() => setEnhancement(value)}
+                  onClick={() => onEnhancementChange(value)}
                   disabled={isLoading || !isImageLoaded}
                   className={`px-4 py-2 rounded-md text-base font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 ${
                     enhancement === value 
@@ -58,7 +66,7 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
                     type="checkbox"
                     id="remove-shadows-checkbox"
                     checked={removeShadows}
-                    onChange={(e) => setRemoveShadows(e.target.checked)}
+                    onChange={(e) => onRemoveShadowsChange(e.target.checked)}
                     disabled={isLoading || !isImageLoaded}
                     className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 ring-offset-gray-900 focus:ring-2 cursor-pointer disabled:cursor-not-allowed"
                 />
@@ -71,7 +79,7 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
                     type="checkbox"
                     id="remove-handwriting-checkbox"
                     checked={removeHandwriting}
-                    onChange={(e) => setRemoveHandwriting(e.target.checked)}
+                    onChange={(e) => onRemoveHandwritingChange(e.target.checked)}
                     disabled={isLoading || !isImageLoaded}
                     className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 ring-offset-gray-900 focus:ring-2 cursor-pointer disabled:cursor-not-allowed"
                 />
@@ -84,7 +92,7 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onApplyScan, isLoading, isImageLo
                     type="checkbox"
                     id="restore-text-checkbox"
                     checked={restoreText}
-                    onChange={(e) => setRestoreText(e.target.checked)}
+                    onChange={(e) => onRestoreTextChange(e.target.checked)}
                     disabled={isLoading || !isImageLoaded}
                     className="w-4 h-4 mt-0.5 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 ring-offset-gray-900 focus:ring-2 cursor-pointer disabled:cursor-not-allowed"
                 />

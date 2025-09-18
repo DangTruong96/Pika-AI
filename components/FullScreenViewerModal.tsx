@@ -39,11 +39,11 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const imageUrl = items[currentIndex];
     
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
     useEffect(() => {
         const handleResize = () => {
-            setIsDesktop(window.innerWidth >= 768);
+            setIsDesktop(window.innerWidth >= 1024);
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
@@ -131,7 +131,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         showControls();
         if ((e.target as HTMLElement).closest('button')) return;
-        e.stopPropagation();
+
         e.preventDefault();
 
         if (e.touches.length === 2) { // Pinch start
@@ -159,7 +159,6 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
 
     const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
         if ((e.target as HTMLElement).closest('button')) return;
-        e.stopPropagation();
         e.preventDefault();
 
         if (e.touches.length === 2 && pinchStartDistRef.current !== null) { // Pinch move
@@ -179,10 +178,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
 
     const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
         if ((e.target as HTMLElement).closest('button')) return;
-        e.stopPropagation();
-        e.preventDefault();
 
-        let isSwipe = false;
         // Swipe logic
         if (items.length > 1 && swipeStartRef.current && e.changedTouches.length === 1 && !isPanning && scale === 1) {
             const deltaX = e.changedTouches[0].clientX - swipeStartRef.current.x;
@@ -191,13 +187,12 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
             if (Math.abs(deltaX) > 50 && deltaY < 75) {
                 if (deltaX > 0) handlePrev();
                 else handleNext();
-                isSwipe = true;
             }
         }
         
-        // Double tap logic - only process if it wasn't a swipe
+        // Double tap logic
         const tapDelay = 300; // ms
-        if (!isSwipe && e.touches.length === 0) {
+        if (e.touches.length === 0) {
             if (doubleTapTimerRef.current === null) {
                 doubleTapTimerRef.current = window.setTimeout(() => {
                     doubleTapTimerRef.current = null;
@@ -265,11 +260,11 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                                 <div className="w-1/2 h-full relative flex items-center justify-center p-4">
                                     <img
                                         src={comparisonUrl}
-                                        alt={t('original')}
+                                        alt={t('historyOriginal')}
                                         className="w-full h-full object-contain pointer-events-none"
                                     />
                                     <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-10">
-                                        {t('original')}
+                                        {t('historyOriginal')}
                                     </div>
                                 </div>
                                 {/* Separator Line */}
@@ -278,11 +273,11 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                                 <div className="w-1/2 h-full relative flex items-center justify-center p-4">
                                     <img
                                         src={imageUrl}
-                                        alt={t('edited')}
+                                        alt={t('viewEdited')}
                                         className="w-full h-full object-contain pointer-events-none"
                                     />
                                      <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-10">
-                                        {t('edited')}
+                                        {t('viewEdited')}
                                     </div>
                                 </div>
                             </div>
@@ -291,14 +286,14 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                             <img
                                 key={`${currentIndex}-${isComparing}`}
                                 src={isComparing && comparisonUrl ? comparisonUrl : imageUrl}
-                                alt={isComparing ? t('original') : "Full screen result"}
+                                alt={isComparing ? t('historyOriginal') : "Full screen result"}
                                 className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl pointer-events-none animate-fade-in"
                             />
                         )}
                     </div>
                 </div>
                  <div className={`absolute top-4 left-4 bg-black/50 text-white text-sm font-bold py-1 px-3 rounded-md pointer-events-none z-[110] transition-opacity duration-300 ${isControlsVisible && !(isDesktop && isComparing) ? 'opacity-100' : 'opacity-0'}`}>
-                    {isComparing ? t('original') : (type === 'history' && currentIndex === 0 ? t('historyOriginal') : t('edited'))}
+                    {isComparing ? t('historyOriginal') : (type === 'history' && currentIndex === 0 ? t('historyOriginal') : t('viewEdited'))}
                 </div>
 
                 {items.length > 1 && (
@@ -313,34 +308,36 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                 )}
             </div>
 
-            <div className={`flex-shrink-0 w-full flex flex-col items-center justify-center gap-3 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] transition-opacity duration-300 ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={(e) => e.stopPropagation()}>
+            <div className={`flex-shrink-0 w-full flex flex-col items-center justify-center gap-2 sm:gap-3 p-2 sm:p-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] transition-opacity duration-300 ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={(e) => e.stopPropagation()}>
                 {items.length > 1 && (
                     <div className="flex items-center justify-center gap-2.5">
                         {items.map((_, index) => (
                             <button 
                                 key={index} 
                                 onClick={() => setCurrentIndex(index)}
-                                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${currentIndex === index ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}`} 
+                                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${currentIndex === index ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}`}
                                 aria-label={`Go to image ${index + 1}`}
                             />
                         ))}
                     </div>
                 )}
-                <div className="flex items-center justify-center gap-4">
-                     <button onClick={onClose} className="flex items-center justify-center text-center bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold p-3 rounded-full transition-all duration-200 ease-in-out active:scale-95 text-base" title={t('scanModalClose')}>
-                        <XMarkIcon className="w-6 h-6"/>
+                <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+                    <button onClick={onClose} className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base flex items-center gap-2">
+                        <XMarkIcon className="w-5 h-5"/>
                     </button>
-                     {canCompare && (
-                         <button onClick={() => { setIsComparing(p => !p); }} className="flex items-center justify-center text-center bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold p-3 rounded-full transition-all duration-200 ease-in-out active:scale-95 text-base" title={isComparing ? t('viewEdited') : t('viewOriginal')}>
-                            {isComparing ? <EyeSlashIcon className="w-6 h-6" /> : <EyeIcon className="w-6 h-6" />}
+                    {canCompare && (
+                         <button onClick={() => setIsComparing(p => !p)} className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base flex items-center gap-2">
+                            {isComparing ? <EyeSlashIcon className="w-5 h-5 text-cyan-400"/> : <EyeIcon className="w-5 h-5"/>}
+                            <span className="hidden sm:inline">{isComparing ? t('viewEdited') : t('historyOriginal')}</span>
                         </button>
-                     )}
-                     <button onClick={() => onDownload(imageUrl)} disabled={isComparing || scale > 1} className="flex items-center justify-center text-center bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold p-3 rounded-full transition-all duration-200 ease-in-out active:scale-95 text-base disabled:opacity-60" title={isComparing || scale > 1 ? undefined : t('downloadImage')}>
-                      <DownloadIcon className="w-6 h-6" />
+                    )}
+                    <button onClick={() => onDownload(imageUrl)} className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base flex items-center gap-2">
+                        <DownloadIcon className="w-5 h-5"/>
+                        <span className="hidden sm:inline">{t('downloadImage')}</span>
                     </button>
-                     <button onClick={() => onSelect(imageUrl, currentIndex)} disabled={isComparing || scale > 1} className="flex items-center justify-center text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-200 ease-in-out shadow-lg shadow-cyan-400/20 active:scale-95 text-base ring-1 ring-white/10 disabled:from-gray-600 disabled:to-gray-500 disabled:opacity-60">
-                        <CheckIcon className="w-5 h-5 mr-2" />
-                        <span>{t('studioSelectResult')}</span>
+                    <button onClick={() => onSelect(imageUrl, currentIndex)} className="text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-2.5 px-5 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 active:scale-95 text-base flex items-center gap-2">
+                        <CheckIcon className="w-5 h-5"/>
+                        <span className="hidden sm:inline">{t('studioSelectResult')}</span>
                     </button>
                 </div>
             </div>

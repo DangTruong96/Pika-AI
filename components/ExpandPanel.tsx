@@ -1,3 +1,5 @@
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -16,14 +18,14 @@ interface ExpandPanelProps {
   hasExpansion: boolean;
   imageDimensions: { width: number, height: number } | null;
   onSetAspectExpansion: (aspect: number | null) => void;
+  activeAspect: number | null;
 }
 
 const ExpandPanel: React.FC<ExpandPanelProps> = ({ 
   onApplyExpansion, isLoading, isImageLoaded, prompt, 
-  onPromptChange, hasExpansion, onSetAspectExpansion 
+  onPromptChange, hasExpansion, onSetAspectExpansion, activeAspect
 }) => {
   const { t } = useTranslation();
-  const [activeAspect, setActiveAspect] = React.useState<number | null>(null);
 
   const handleApply = () => {
     if (hasExpansion) {
@@ -32,7 +34,6 @@ const ExpandPanel: React.FC<ExpandPanelProps> = ({
   };
 
   const handleAspectClick = (aspectValue: number | null) => {
-    setActiveAspect(aspectValue);
     onSetAspectExpansion(aspectValue);
   };
   
@@ -73,7 +74,7 @@ const ExpandPanel: React.FC<ExpandPanelProps> = ({
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
           placeholder={t('expandPlaceholder')}
-          className="bg-white/5 border border-white/10 text-gray-200 rounded-lg p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base focus:bg-white/10"
+          className="bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 lg:p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base lg:text-lg focus:bg-white/10"
           disabled={isLoading || !isImageLoaded}
         />
 

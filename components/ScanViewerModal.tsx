@@ -114,7 +114,7 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalIma
             <>
                 <img
                     src={(isComparing && originalImageUrl) ? originalImageUrl : imageUrl}
-                    alt={isComparing ? t('original') : t('scanModalTitle')}
+                    alt={isComparing ? t('historyOriginal') : t('scanModalTitle')}
                     className={`transition-transform duration-100 ease-out shadow-2xl border border-white/10 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
                     style={{
                       transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
@@ -124,7 +124,7 @@ const ScanViewerModal: React.FC<ScanViewerModalProps> = ({ imageUrl, originalIma
                     onMouseDown={handleMouseDown}
                 />
                 <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md text-white text-sm font-bold py-1 px-3 rounded-md pointer-events-none z-[111]">
-                    {isComparing ? t('original') : t('scanModalTitle')}
+                    {isComparing ? t('historyOriginal') : t('scanModalTitle')}
                 </div>
             </>
         ) : (

@@ -1,3 +1,5 @@
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -5,7 +7,7 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BullseyeIcon, BrushIcon, PhotoIcon, UserCircleIcon, SparklesIcon, TagIcon } from './icons';
+import { BullseyeIcon, BrushIcon, PhotoIcon, UserCircleIcon, SparklesIcon, TagIcon, UndoIcon } from './icons';
 
 export type SelectionMode = 'point' | 'brush' | 'extract';
 export type BrushMode = 'draw' | 'erase';
@@ -14,6 +16,7 @@ interface RetouchPanelProps {
   onApplyRetouch: (promptOverride?: string) => void;
   isLoading: boolean;
   isHotspotSelected: boolean;
+  onClearHotspot: () => void;
   selectionMode: SelectionMode;
   onSelectionModeChange: (mode: SelectionMode) => void;
   brushMode: BrushMode;
@@ -29,8 +32,6 @@ interface RetouchPanelProps {
   onApplyExtract: () => void;
   extractPrompt: string;
   onExtractPromptChange: (prompt: string) => void;
-  extractedItemsFiles: File[];
-  extractedItemUrls: string[];
   extractHistoryFiles: File[][];
   extractedHistoryItemUrls: string[][];
   onUseExtractedAsStyle: (file: File) => void;
@@ -40,12 +41,22 @@ interface RetouchPanelProps {
 const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
   const { t } = useTranslation();
   const { 
-    onApplyRetouch, isLoading, isHotspotSelected, selectionMode, onSelectionModeChange, 
+    onApplyRetouch, isLoading, isHotspotSelected, onClearHotspot, selectionMode, onSelectionModeChange, 
     brushMode, onBrushModeChange, brushSize, onBrushSizeChange, onClearMask, isImageLoaded, 
     isMaskPresent, prompt, onPromptChange, promptInputRef,
-    onApplyExtract, extractPrompt, onExtractPromptChange, extractedItemsFiles, extractedItemUrls, 
-    extractHistoryFiles, extractedHistoryItemUrls, onUseExtractedAsStyle, onDownloadExtractedItem
+    onApplyExtract, extractPrompt, onExtractPromptChange, extractHistoryFiles, 
+    extractedHistoryItemUrls, onUseExtractedAsStyle, onDownloadExtractedItem
   } = props;
+
+  const allExtractedItems = React.useMemo(() => {
+    return extractHistoryFiles.flatMap((fileSet, setIndex) =>
+      fileSet.map((file, itemIndex) => ({
+        file,
+        url: extractedHistoryItemUrls[setIndex]?.[itemIndex] || '',
+        key: `${setIndex}-${itemIndex}-${file.lastModified}`
+      }))
+    ).filter(item => item.url);
+  }, [extractHistoryFiles, extractedHistoryItemUrls]);
 
   const handleRetouchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +72,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
       }
   };
 
-  const isPointModeReady = selectionMode === 'point' && isHotspotSelected;
-  const isBrushModeReady = selectionMode === 'brush';
-  const canType = isImageLoaded && (isPointModeReady || isBrushModeReady);
-
-  const canGenerateRetouch = (isPointModeReady || (isBrushModeReady && isMaskPresent)) && isImageLoaded && !!prompt.trim();
+  const canGenerateRetouch = isImageLoaded && !!prompt.trim();
   const canGenerateExtract = isImageLoaded && !isLoading && !!extractPrompt.trim();
 
 
@@ -131,16 +138,27 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
       <p className="text-sm text-gray-400 text-center">{selectionMode === 'extract' ? t('extractDescription') : t('retouchDescription')}</p>
       
       {selectionMode !== 'extract' ? (
-        <form onSubmit={handleRetouchFormSubmit} className={`w-full flex-col items-center gap-3 ${selectionMode === 'point' ? 'hidden md:flex' : 'flex'}`}>
+        <form onSubmit={handleRetouchFormSubmit} className="w-full flex flex-col items-center gap-3">
           <div className="w-full flex items-center gap-2">
+              {selectionMode === 'point' && isHotspotSelected && (
+                <button
+                    type="button"
+                    onClick={onClearHotspot}
+                    className="flex-shrink-0 bg-white/5 text-white font-bold p-4 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                    aria-label="Back"
+                    title="Back"
+                >
+                    <UndoIcon className="w-5 h-5" />
+                </button>
+              )}
               <input
                 ref={promptInputRef}
                 type="text"
                 value={prompt}
                 onChange={(e) => onPromptChange(e.target.value)}
-                placeholder={canType ? t('retouchPlaceholderGenerative') : t('retouchPlaceholder')}
-                className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base focus:bg-white/10"
-                disabled={isLoading || !isImageLoaded || (selectionMode === 'point' && !isHotspotSelected)}
+                placeholder={isImageLoaded ? t('retouchPlaceholderGenerative') : t('retouchPlaceholder')}
+                className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 lg:p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base lg:text-lg focus:bg-white/10"
+                disabled={isLoading || !isImageLoaded}
               />
               <button
                 type="submit"
@@ -160,7 +178,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
                       value={extractPrompt}
                       onChange={(e) => onExtractPromptChange(e.target.value)}
                       placeholder={t('extractPlaceholder')}
-                      className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base focus:bg-white/10"
+                      className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 lg:p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base lg:text-lg focus:bg-white/10"
                       disabled={isLoading || !isImageLoaded}
                   />
                   <button
@@ -173,86 +191,43 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
               </div>
           </form>
     
-          {extractedItemUrls.length > 0 && (
-              <div className="w-full pt-4 mt-4 border-t border-white/10 flex flex-col items-center gap-4">
-                  <h4 className="text-md font-semibold text-gray-300">{t('extractResultTitle')}</h4>
-                  <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {extractedItemUrls.map((url, index) => (
-                          <div key={index} className="flex flex-col gap-2">
-                              <div 
-                                  className="w-full aspect-square rounded-lg bg-black/20 p-2 border border-white/10"
-                                  style={{ 
-                                      backgroundImage: 'repeating-conic-gradient(rgba(255,255,255,0.1) 0% 25%, transparent 0% 50%)',
-                                      backgroundSize: '16px 16px'
-                                  }}
-                              >
-                                  <img src={url} alt={`${t('extractResultTitle')} ${index + 1}`} className="w-full h-full object-contain"/>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                  <button
-                                      onClick={() => onUseExtractedAsStyle(extractedItemsFiles[index])}
-                                      disabled={isLoading}
-                                      className="w-full text-xs text-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-                                      title={t('extractUseAsStyle')}
-                                  >
-                                      {t('extractUseAsStyle')}
-                                  </button>
-                                  <button
-                                      onClick={() => onDownloadExtractedItem(extractedItemsFiles[index])}
-                                      disabled={isLoading}
-                                      className="w-full text-xs text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-                                      title={t('downloadImage')}
-                                  >
-                                      {t('downloadImage')}
-                                  </button>
-                              </div>
-                          </div>
-                      ))}
+          {allExtractedItems.length > 0 && (
+            <div className="w-full pt-4 mt-4 border-t border-white/10 flex flex-col items-center gap-4">
+              <h4 className="text-md font-semibold text-gray-300">{t('extractHistoryTitle')}</h4>
+              <div className="w-full grid grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-2">
+                {allExtractedItems.map(item => (
+                  <div key={item.key} className="flex flex-col gap-2">
+                    <div 
+                      className="w-full aspect-square rounded-lg bg-black/20 p-2 border border-white/10"
+                      style={{ 
+                          backgroundImage: 'repeating-conic-gradient(rgba(255,255,255,0.1) 0% 25%, transparent 0% 50%)',
+                          backgroundSize: '16px 16px'
+                      }}
+                    >
+                      <img src={item.url} alt={`Extracted item ${item.key}`} className="w-full h-full object-contain"/>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => onUseExtractedAsStyle(item.file)}
+                        disabled={isLoading}
+                        className="w-full text-xs text-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                        title={t('extractUseAsStyle')}
+                      >
+                        {t('extractUseAsStyle')}
+                      </button>
+                      <button
+                        onClick={() => onDownloadExtractedItem(item.file)}
+                        disabled={isLoading}
+                        className="w-full text-xs text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                        title={t('downloadImage')}
+                      >
+                        {t('downloadImage')}
+                      </button>
+                    </div>
                   </div>
+                ))}
               </div>
-          )}
-
-          {extractedHistoryItemUrls.length > 0 && (
-              <div className="w-full pt-4 mt-4 border-t border-white/10 flex flex-col items-center gap-4">
-                  <h4 className="text-md font-semibold text-gray-300">{t('extractHistoryTitle')}</h4>
-                  <div className="w-full flex flex-col gap-4 max-h-64 overflow-y-auto pr-2">
-                      {extractedHistoryItemUrls.map((urlSet, setIndex) => (
-                          <div key={setIndex} className="w-full grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {urlSet.map((url, itemIndex) => (
-                                  <div key={`${setIndex}-${itemIndex}`} className="flex flex-col gap-2">
-                                      <div 
-                                          className="w-full aspect-square rounded-lg bg-black/20 p-2 border border-white/10"
-                                          style={{ 
-                                              backgroundImage: 'repeating-conic-gradient(rgba(255,255,255,0.1) 0% 25%, transparent 0% 50%)',
-                                              backgroundSize: '16px 16px'
-                                          }}
-                                      >
-                                          <img src={url} alt={`History item ${setIndex}-${itemIndex}`} className="w-full h-full object-contain"/>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-2">
-                                          <button
-                                              onClick={() => onUseExtractedAsStyle(extractHistoryFiles[setIndex][itemIndex])}
-                                              disabled={isLoading}
-                                              className="w-full text-xs text-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-                                              title={t('extractUseAsStyle')}
-                                          >
-                                              {t('extractUseAsStyle')}
-                                          </button>
-                                          <button
-                                              onClick={() => onDownloadExtractedItem(extractHistoryFiles[setIndex][itemIndex])}
-                                              disabled={isLoading}
-                                              className="w-full text-xs text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-                                              title={t('downloadImage')}
-                                          >
-                                              {t('downloadImage')}
-                                          </button>
-                                      </div>
-                                  </div>
-                              ))}
-                          </div>
-                      ))}
-                  </div>
-              </div>
+            </div>
           )}
         </div>
       )}

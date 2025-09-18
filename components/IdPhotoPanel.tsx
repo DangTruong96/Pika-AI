@@ -7,16 +7,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { type IdPhotoOptions } from '../services/geminiService';
 import Spinner from './Spinner';
+import type { Gender } from '../App';
 
 interface IdPhotoPanelProps {
   onApplyIdPhoto: (options: IdPhotoOptions) => void;
   isLoading: boolean;
   isImageLoaded: boolean;
   currentImage: File | null;
+  gender: Gender;
+  onGenderChange: (gender: Gender) => void;
 }
 
 type PhotoType = 'standard' | 'newborn';
-type Gender = 'male' | 'female';
 type Expression = 'neutral' | 'smile' | 'keep' | 'big-smile';
 type Outfit = 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai' | 'office-wear';
 type Background = 'white' | 'blue' | 'gray' | 'green';
@@ -52,36 +54,41 @@ const SegmentedControl = <T extends string>({ label, options, selected, onSelect
     </div>
 );
 
-const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, isImageLoaded, currentImage }) => {
+const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, isImageLoaded, currentImage, gender, onGenderChange }) => {
   const { t } = useTranslation();
 
   const [photoType, setPhotoType] = useState<PhotoType>('standard');
-  const [gender, setGender] = useState<Gender>('female');
   const [expression, setExpression] = useState<Expression>('keep');
-  const [outfit, setOutfit] = useState<Outfit>('blouse');
+  const [outfit, setOutfit] = useState<Outfit>(gender === 'male' ? 'collared-shirt-m' : 'blouse');
   const [background, setBackground] = useState<Background>('white');
   const [hair, setHair] = useState<Hair>('keep');
   const [size, setSize] = useState<Size>('3x4');
   const [customPrompt, setCustomPrompt] = useState('');
 
   const handleGenderChange = useCallback((newGender: Gender) => {
-    setGender(newGender);
-    setHair('keep');
-    // Automatically switch to a suitable default outfit using functional update
-    setOutfit(prevOutfit => {
-      if (newGender === 'male') {
-          if (prevOutfit === 'ao-dai' || prevOutfit === 'blouse') {
-            return 'suit';
-          }
-      } else { // female
-          if (prevOutfit === 'suit') {
-            return 'blouse';
-          }
-      }
-      return prevOutfit; // No change needed
-    });
-  }, []);
+    onGenderChange(newGender);
+  }, [onGenderChange]);
   
+  // Effect to sync outfit and hair when gender prop changes from parent (e.g., quick actions)
+  useEffect(() => {
+    // When gender changes, check if the current outfit is gender-specific and incorrect.
+    // If so, switch to the default outfit for the new gender.
+    setOutfit(prevOutfit => {
+      const isFemaleOutfit = ['ao-dai', 'blouse', 'collared-shirt-f'].includes(prevOutfit);
+      const isMaleOutfit = ['suit', 'collared-shirt-m'].includes(prevOutfit);
+
+      if (gender === 'male' && isFemaleOutfit) {
+        return 'collared-shirt-m'; // User requested default for male
+      }
+      if (gender === 'female' && isMaleOutfit) {
+        return 'blouse'; // Default for female
+      }
+      // If current outfit is unisex (office-wear) or already correct for gender, keep it.
+      return prevOutfit;
+    });
+    setHair('keep'); // Always reset hair style on gender change for simplicity
+  }, [gender]);
+
   // Effect to reset custom prompt when image changes
   useEffect(() => {
     setCustomPrompt('');
@@ -109,13 +116,13 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
 
   const outfitOptions: { value: Outfit, label: string }[] = gender === 'male'
     ? [
-        { value: 'suit', label: t('idPhotoOutfitSuit') },
         { value: 'collared-shirt-m', label: t('idPhotoOutfitCollaredShirtM') },
+        { value: 'suit', label: t('idPhotoOutfitSuit') },
         { value: 'office-wear', label: t('idPhotoOutfitOfficeWear') },
       ]
     : [
-        { value: 'ao-dai', label: t('idPhotoOutfitAoDai') },
         { value: 'blouse', label: t('idPhotoOutfitBlouse') },
+        { value: 'ao-dai', label: t('idPhotoOutfitAoDai') },
         { value: 'collared-shirt-f', label: t('idPhotoOutfitCollaredShirtF') },
         { value: 'office-wear', label: t('idPhotoOutfitOfficeWear') },
       ];

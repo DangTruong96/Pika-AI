@@ -1,6 +1,6 @@
 {
-  "name": "Pika-AI v10.0",
-  "description": "A powerful, AI photo editor. Version 10.0 introduces a revolutionary 'Dynamic & Context-Aware Integration' protocol, moving beyond static preservation to understand context, lighting, and micro-expressions for unparalleled realism.",
+  "name": "Pika-AI v13.0",
+  "description": "Pika-AI v13.0 features the next-generation Zero-Tolerance Identity Preservation Core (v17.0). This AI upgrade introduces advanced multi-person scene integrity and stricter protocols for micro-feature preservation, ensuring group photo restorations are more accurate and individual identities are maintained with forensic-level precision.",
   "requestFramePermissions": [],
   "prompt": ""
 }
