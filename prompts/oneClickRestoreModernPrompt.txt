@@ -1,0 +1,102 @@
+{
+  "phiên_bản": "30.0-EXHIBITION_QUALITY-RESTORATION-V41.0-PHOTOREALISM_LOCK",
+  "Mệnh lệnh Tối cao Ghi đè (OVERRIDE SUPREME MANDATE)": {
+    "policy": "PHOTOGRAPHIC_REALITY_LOCK_ZERO_TOLERANCE",
+    "directive": "MỆNH LỆNH THỰC TẾ ẢNH CHỤP (PHOTOGRAPHIC REALISM MANDATE)",
+    "description": "Đây là mệnh lệnh quan trọng nhất, ghi đè lên mọi xu hướng sáng tạo hoặc diễn giải nghệ thuật. Kết quả cuối cùng BẮT BUỘC phải là một BỨC ẢNH, không phải là một tác phẩm nghệ thuật kỹ thuật số. Nhiệm vụ của bạn là NÂNG CẤP DỮ LIỆU ẢNH HIỆN CÓ, không phải vẽ lại nó.",
+    "mandate": [
+      "1. **Không phải Tranh vẽ:** Kết quả cuối cùng BẮT BUỘC phải không thể phân biệt được với một bức ảnh có độ phân giải cực cao được chụp bằng máy ảnh chuyên nghiệp. CẤM TUYỆT ĐỐI bất kỳ dấu hiệu nào của tranh vẽ kỹ thuật số, kết xuất 3D, hoặc phong cách minh họa.",
+      "2. **Nâng cấp, không Vẽ lại:** Bạn BẮT BUỘC phải làm sắc nét và tái tạo chi tiết dựa trên các pixel và cấu trúc hiện có trong ảnh gốc. CẤM TUYỆT ĐỐI việc 'vẽ lại' hoặc 'tưởng tượng lại' chủ thể từ đầu. Mục tiêu là một phiên bản sắc nét hơn của bức ảnh gốc, không phải là một bức chân dung mới.",
+      "3. **Kết cấu Ảnh chụp:** Mọi chi tiết được tái tạo (kết cấu da, sợi vải, sợi tóc) phải có vẻ ngoài tự nhiên, không hoàn hảo của một bức ảnh thực, không phải là sự hoàn hảo của một kết xuất đồ họa."
+    ],
+    "failure_condition": "THẤT BẠI NGHIÊM TRỌNG: Kết quả trông giống như một bức tranh, hình minh họa, hoặc có vẻ được 'vẽ lại' thay vì là một bức ảnh được nâng cấp."
+  },
+  "Mục tiêu Tối thượng (Master Objective)": "Nâng cấp và Phục chế TOÀN BỘ ẢNH thành một bức ảnh kỹ thuật số chất lượng triển lãm. Kết quả BẮT BUỘC phải đạt được độ chân thực và chi tiết của một bức ảnh chụp bằng máy ảnh kỹ thuật số hiện đại.",
+  "Mệnh lệnh Đồng nhất Toàn bộ Ảnh (ZERO-TOLERANCE)": {
+    "policy": "PRIORITY_OVERRIDE_MANDATE",
+    "description": "CẤM TUYỆT ĐỐI việc chỉ phục hồi khuôn mặt và bỏ qua phần còn lại của ảnh. Toàn bộ ảnh — chủ thể, quần áo, tóc, nền — BẮT BUỘC phải được phục hồi và nâng cấp với cùng một mức độ chi tiết và sắc nét.",
+    "failure_condition": "THẤT BẠI NGHIÊM TRỌNG: Khuôn mặt sắc nét hơn đáng kể so với quần áo, tóc, hoặc nền."
+  },
+  "bước_0_xoay_khung_hình_bắt_buộc": {
+    "policy": "BẮT_BUỘC_VÀ_ƯU_TIÊN_HÀNG_ĐẦU",
+    "description": "Phân tích và xoay TOÀN BỘ KHUNG HÌNH để đảm bảo hướng thẳng đứng chính xác."
+  },
+  "bước_1_sửa_phối_cảnh_và_làm_thẳng_bắt_buộc": {
+    "policy": "BẮT_BUỘC_SAU_KHI_XOAY",
+    "description": "Xác định bốn góc của tờ giấy ảnh gốc và thực hiện một phép biến đổi phối cảnh để làm cho nó hoàn toàn hình chữ nhật và thẳng."
+  },
+  "bước_2_tách_nền_và_cắt_cúp_thông_minh": {
+    "policy": "ZERO_TOLERANCE_NON-NEGOTIABLE_REQUIREMENT",
+    "description": "Cắt cúp một cách hoàn hảo để LOẠI BỎ TOÀN BỘ môi trường xung quanh tờ giấy ảnh (ví dụ: mặt bàn, tay người cầm).",
+    "mandate": "Kết quả cuối cùng CHỈ ĐƯỢỢC PHÉP chứa nội dung BÊN TRỌNG bức ảnh gốc đã được làm thẳng."
+  },
+  "bước_3_xử_lý_nền_tuyệt_đối": {
+    "policy": "ZERO_TOLERANCE_FORENSIC_BACKGROUND_PROTOCOL",
+    "description": "Phân tích nền gốc sau khi cắt cúp. Quy tắc này là tuyệt đối.",
+    "rule_A_plain_background": "MỆNH LỆNH KHÔNG KHOAN NHƯỢNG: Nếu nền gốc là một phông nền đơn giản, trống trơn, hoặc kiểu studio, BẠN BẮT BUỘC phải thay thế nó bằng một phông nền studio hoàn toàn sạch sẽ, đồng nhất (xám trung tính hoặc xanh dương). CẤM TUYỆT ĐỐI, và coi là THẤT BẠI NGHIÊM TRỌNG, việc 'sáng tạo' hoặc thêm bất kỳ yếu tố nào vào nền này (KHÔNG CÓ hoa, cây cối, nhà cửa, con đường, bầu trời, mây).",
+    "rule_B_scene_background": "CHỈ KHI nền gốc chứa một cảnh vật thực tế, BẠN MỚI ĐƯỢỢC phép phục hồi và nâng cao chi tiết của cảnh vật đó. KHÔNG ĐƯỢỢC thay đổi các yếu tố chính của cảnh."
+  },
+  "mô_phỏng_máy_ảnh": {
+    "look_and_feel": "Mô phỏng giao diện của máy ảnh kỹ thuật số medium format như Phase One hoặc Hasselblad, kết hợp với độ sắc nét của ống kính Sony G Master.",
+    "đặc_tính": "Chi tiết vi mô cực cao, màu sắc HDR trong trẻo và chân thực."
+  },
+  "ràng_buộc_chủ_thể": {
+    "description": "Tuân thủ GIAO THỨC BẢO TOÀN DANH TÍNH LÕI v41.0 được chèn vào."
+  },
+  "chỉnh sửa": {
+    "phục_hồi_chi_tiết_hư_hỏng": {
+      "policy": "forensic_level_damage_reconstruction_ZERO_TOLERANCE",
+      "strength": "cực cao",
+      "targets": ["scratches", "tears", "creases", "stains", "white_dots", "color_fading", "digital_noise", "blur"],
+      "method": "Loại bỏ tất cả các khuyết điểm một cách toàn diện."
+    },
+    "da": {
+      "tái_tạo_khối_3d_cho_khuôn_mặt": {
+        "policy": "MANDATORY_FACIAL_RE_LIGHTING_FOR_VOLUME",
+        "mandate": "TÁI TẠO lại ánh sáng trên khuôn mặt để tạo cảm giác chiều sâu 3D (nổi khối)."
+      },
+      "chống_hiện_vật_ai_bắt_buộc": "TÁI TẠO và NÂNG CAO kết cấu da tự nhiên. CẤM da 'nhựa'.",
+      "undertone_correction": {
+        "policy": "restore_healthy_clear_bright_asian_skin_tone",
+        "mandate": "Tái tạo tông màu da sáng hồng trong trẻo cho người Châu Á. NGHIÊM CẤM da bị vàng, sậm, xỉn màu."
+      }
+    },
+    "tóc": { "hoàn thiện": "Tái tạo pháp y ở cấp độ từng sợi tóc, sắc nét và rõ ràng." },
+    "quần áo_và_vật_thể": {
+      "policy": "hyperrealistic_material_and_texture_rendering",
+      "preservation_policy": "ZERO_TOLERANCE_PRESERVATION",
+      "mandate": "Giữ nguyên tuyệt đối và tái tạo lại MỌI chi tiết của trang phục gốc, bao gồm tất cả các lớp (ví dụ: áo sơ mi, áo lót).",
+      "uniformAndInsigniaProtocol_v1_0": {
+        "policy": "FORENSIC_RECONSTRUCTION_MANDATE_ZERO_TOLERANCE",
+        "mandate": "Nếu trang phục là quân phục, BẮT BUỘC phải tái tạo lại một cách pháp y TẤT CẢ các quân hàm (ví dụ: sao, vạch) với độ chính xác tuyệt đối."
+      }
+    }
+  },
+  "ánh sáng_và_màu_sắc": {
+    "khử_ám_màu": { "policy": "auto_neutralize_color_casts", "strength": "cực cao" },
+    "ánh sáng": {
+      "thiết lập": "ánh sáng tự nhiên, cân bằng, rõ ràng.",
+      "white_balance": "trung tính chính xác (5500K)"
+    },
+    "chỉnh_màu": { "vibrance": "tăng đáng kể", "saturation": "tăng đáng kể" }
+  },
+  "hậu_kỳ": {
+    "sharpening": { "policy": "adaptive_frequency_selective_sharpening_extreme_detail" },
+    "micro_contrast": "cực cao"
+  },
+  "đầu ra": {
+    "độ phân giải": "8192x5464",
+    "dpi": 300
+  },
+  "negative_prompt": [
+    "tranh vẽ", "ảnh vẽ", "minh họa", "kết xuất 3D", "phong cách nghệ thuật", "vẽ lại", "không phải ảnh chụp",
+    "ghép cảnh", "phong cách ảnh thờ", "thêm hoa vào nền", "thêm nhà vào nền", "thêm cây vào nền", "tạo nền mới hoàn toàn", "phông nền nhân tạo",
+    "da nhựa", "da sáp", "quá mịn", "hiệu ứng tranh vẽ",
+    "thay đổi tỷ lệ khuôn mặt", "mặt béo", "khuôn mặt đối xứng hoàn hảo", "làm cho khuôn mặt đối xứng",
+    "thay đổi chiều dài cằm", "làm ngắn cằm",
+    "đóng miệng đang hé", "thay đổi biểu cảm miệng",
+    "màu sắc không chân thực", "ánh sáng phẳng", "màu sắc nhợt nhạt", "mờ",
+    "ảnh ám vàng", "ảnh ám nâu đỏ", "vẫn còn vết xước",
+    "mất áo lót", "mất quân hàm"
+  ]
+}

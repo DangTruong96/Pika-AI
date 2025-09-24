@@ -1,0 +1,59 @@
+{restorationAddendum}
+{identityCore}
+{physicalInteractionEngine}
+{unificationEngine}
+{forensicReconstructionEngine}
+{bodyformAndSilhouetteIntegrity}
+{photorealisticLightingEngine}
+
+**OBJECT INTEGRATION PROTOCOL v1.0 (MANDATORY IF '--- OBJECT ---' IMAGES ARE PROVIDED)**
+-   **DIRECTIVE:** If you are provided with one or more images labeled "--- OBJECT X ---", you MUST execute this protocol. If no such images are provided, ignore this section completely.
+-   **NATURE OF INPUTS:** These "OBJECT" images are NOT style references. They contain physical items (e.g., jewelry, cars, phones, furniture) that MUST be photorealistically extracted and placed into the final scene.
+-   **EXECUTION:**
+    1.  **EXTRACT:** Isolate the primary object from each "OBJECT" image. The background of the object image must be discarded.
+    2.  **INTEGRATE:** Place the extracted object(s) into the scene described by the "USER SCENE PROMPT".
+    3.  **INTERACT:** The objects MUST interact realistically with the subjects and the environment. This includes, but is not limited to:
+        -   **Scale & Position:** Place the object logically within the scene at a correct relative scale.
+        -   **Lighting:** The object must be re-lit to match the scene's lighting direction, color, and intensity.
+        -   **Physics:** The object must cast appropriate shadows onto the environment and other subjects. Subjects may cast shadows onto the object. Reflections must be rendered where appropriate.
+        -   **Interaction (if applicable):** If the prompt implies interaction (e.g., "a person holding a phone"), the subject's pose MUST be adjusted to interact with the object naturally.
+-   **PRIORITY:** This protocol takes precedence over the "OUTFIT DESCRIPTION". The subject's final clothing should complement the integrated objects.
+
+**AI TASK: Professional Photoshoot Generation v6.0 (Absolute ID Lock)**
+
+**OBJECTIVE:** Using the 'IDENTITY PRESERVATION CORE' and the 'PHYSICAL INTERACTION ENGINE' as your absolute primary directives, generate a hyper-realistic photoshoot image by placing the preserved subject from the input image into a new scene described by the user's prompts.
+
+**SCENE INTERPRETATION MANDATE (ZERO-TOLERANCE):**
+- **Goal:** The final image must look like a professionally captured photograph, NOT a 'behind-the-scenes' view of a photo shoot.
+- **Absolute Prohibition:** You are STRICTLY FORBIDDEN from rendering any photography or studio equipment in the final image. This includes, but is not limited to: cameras, lenses, tripods, lighting stands, softboxes, umbrellas, reflectors, backdrops/backdrop stands, computers, or any other visible studio gear.
+- **Background Rule:** The background of the image must be the scene or setting described in the 'USER SCENE PROMPT'. It must NEVER be the inside of a photo studio with equipment visible.
+
+**ADDENDUM: ABSOLUTE FACIAL LOCK & DYNAMIC POSE PROTOCOL v3.0 (NON-NEGOTIABLE OVERRIDE)**
+1.  **TOTAL HEAD LOCK (ZERO-TOLERANCE):** You are **STRICTLY FORBIDDEN** from altering **ANY** aspect of the subject's face or head. This is a non-negotiable lock on facial structure, unique markers (scars, moles), all features (eyes, nose, mouth, etc.), and **EXPRESSION**. The expression from the original photo **MUST BE PRESERVED**. The head from the input image should be treated as a single, immutable 3D object to be relit in the new scene.
+2.  **FORENSIC RECONSTRUCTION MANDATE:** The `forensicReconstructionEngine` **MUST** be applied to the locked head to ensure it is rendered with hyper-realistic detail and sharpness in the final scene. Any blurriness, lack of detail, or "AI look" in the face is a **CRITICAL FAILURE**.
+3.  **DYNAMIC BODY POSE:** You **MUST** generate a **NEW**, natural, and contextually appropriate body pose that fits the mood of the 'USER SCENE PROMPT'. The locked head must be naturally attached to this new body pose.
+    -   **Natural Object Interaction:** When the pose involves interacting with an object (e.g., holding a phone, leaning on a car), the interaction **MUST** be natural, functional, and believable. A person must hold an object in a way that is common in real life. Awkward, physically impossible, or nonsensical interactions are a **CRITICAL FAILURE**.
+4.  **DIVERSITY IN MULTIPLE RESULTS:** This task is often run multiple times. It is **MANDATORY** that each generated image is unique. You **MUST** introduce variations in the subject's **BODY POSE** and the scene's subtle details (e.g., background elements, lighting nuances) for each generation. Do NOT vary the face.
+
+**SUBJECT IDENTIFICATION & HANDLING (GROUP PHOTO PROTOCOL):**
+-   Your 'SUBJECT IMAGE' may contain one or more people.
+-   You **MUST** identify **EVERY** person in the image.
+-   The 'IDENTITY PRESERVATION CORE' applies individually and with maximum priority to **EACH** person identified.
+-   Your task is to place **ALL** identified subjects into the new scene. Any person from the original image missing from the final output constitutes a task failure.
+
+{criticalDirective}
+
+**EXECUTION PROTOCOL:**
+1.  **Analyze & Restore Subjects:** Perform the 'FOUNDATIONAL SUBJECT RESTORATION' protocol on the entire input 'SUBJECT IMAGE', enhancing all people present.
+2.  **Extract Facial Data:** Perform Forensic Facial Data Extraction on **EACH** restored subject as mandated by the CORE protocol.
+3.  **Analyze Text Prompts:** Synthesize the 'USER SCENE PROMPT' and 'OUTFIT DESCRIPTION' as creative guidelines.
+4.  **Construct Scene:** Create a new, original scene and environment based **exclusively** on the text descriptions.
+5.  **Apply Poses:** Generate new, interactive, and natural body poses for all subjects according to the 'ABSOLUTE FACIAL LOCK & DYNAMIC POSE PROTOCOL'.
+6.  **Apply Outfits (WARDROBE REPLACEMENT MANDATE):** This is a mandatory step. You MUST replace the clothing worn by the subjects in the 'SUBJECT IMAGE'. Dress all subjects in new, appropriate attire as described in "{outfitDescription}". The clothing must be rendered *on the subjects' bodies* and drape realistically, conforming to their new poses. The original clothing must be completely discarded and replaced.
+7.  **Render with 1:1 Structural Mapping:** Produce a final image with photorealistic lighting, textures, and details, rendering **EACH** subject using their extracted facial data to ensure 100% fidelity under the new scene's lighting and with their new pose, adhering strictly to the Occlusion Engine rules.
+
+**USER SCENE PROMPT (Guideline):**
+"{prompt}"
+
+**OUTFIT DESCRIPTION (Guideline):**
+"{outfitDescription}"

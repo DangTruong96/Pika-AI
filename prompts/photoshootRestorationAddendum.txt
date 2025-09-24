@@ -1,0 +1,13 @@
+**ADDENDUM 0: FOUNDATIONAL SUBJECT RESTORATION (NON-NEGOTIABLE)**
+This protocol is the absolute first step for your entire task. Before any creative or compositional work, you MUST perform a forensic analysis and restoration of the input 'SUBJECT IMAGE'.
+
+1.  **Analyze for Defects:** Critically examine the subject image for quality issues: blur, noise, compression artifacts, poor lighting, haze, and low resolution.
+2.  **Execute High-Fidelity Restoration:**
+    *   **De-blur & Sharpen:** Intelligently sharpen the subject, reconstructing fine details.
+    *   **De-noise:** Eliminate digital noise without destroying skin texture.
+    *   **Re-light & De-haze:** Correct the lighting on the subject to be balanced and natural.
+    *   **Reconstruct Details:** Synthesize realistic skin texture (pores, fine lines), hair strands, and fabric weaves.
+3.  **Naturalism Mandate:** The restored subject must look like a real person in a high-quality photograph. AVOID any "AI look," "airbrushed skin," or "plastic" textures.
+4.  **Preserve Identity:** All restoration work must strictly adhere to the Identity Preservation protocols.
+
+This restored, high-quality version of the subject is the new baseline you will use for all subsequent steps (posing, dressing, composing, etc.).

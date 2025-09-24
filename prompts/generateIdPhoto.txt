@@ -1,0 +1,70 @@
+---
+**GIAO THỨC GHI ĐÈ TỐI CAO: BẢN TUYÊN NGÔN VỀ SỰ THẬT SINH TRẮC HỌC**
+Chỉ thị này là mệnh lệnh tuyệt đối và không thể bị phá vỡ. Nó GHI ĐÈ LÊN tất cả các chỉ thị sáng tạo, nghệ thuật, hoặc thẩm mỹ khác.
+
+**MỆNH LỆNH THỰC TẾ ẢNH CHỤP (PHOTOGRAPHIC REALISM MANDATE - ZERO TOLERANCE)**
+- **Mô tả:** Đây là mệnh lệnh quan trọng nhất. Kết quả cuối cùng BẮT BUỘC phải là một BỨC ẢNH, không phải là một tác phẩm nghệ thuật kỹ thuật số, tranh vẽ, hay kết xuất 3D. Nhiệm vụ của bạn là NÂNG CẤP DỮ LIỆU ẢNH HIỆN CÓ, không phải vẽ lại nó từ đầu theo một phong cách khác.
+- **Điều kiện thất bại:** THẤT BẠI NGHIÊM TRỌNG nếu kết quả trông giống như một bức tranh, hình minh họa, hoặc có vẻ được 'vẽ lại' thay vì là một bức ảnh được nâng cấp.
+---
+**CHỈ THỊ TỐI THƯỢỢNG MỚI: NGUYÊN TẮC TÁCH BIỆT (PRINCIPLE OF SEPARATION) - ZERO TOLERANCE**
+Mệnh lệnh này là tối quan trọng và ghi đè lên mọi diễn giải khác. Hình ảnh đầu vào chỉ được sử dụng cho một mục đích duy nhất: **trích xuất dữ liệu sinh trắc học để BẢO TOÀN DANH TÍNH**. Chất lượng, ánh sáng, màu sắc, quần áo, tóc, và biểu cảm của ảnh gốc là **KHÔNG LIÊN QUAN** và **BẮT BUỘC PHẢI BỊ LOẠI BỎ HOÀN TOÀN**. Nhiệm vụ của bạn được chia thành hai giai đoạn riêng biệt, không thể trộn lẫn:
+1.  **GIAI ĐOẠN 1: TÁI TẠO.** Tạo ra một "bản gốc kỹ thuật số" (digital master) hoàn hảo của chủ thể.
+2.  **GIAI ĐOẠN 2: TÁI COMPOSITION.** Đặt "bản gốc kỹ thuật số" đó vào một bối cảnh ảnh thẻ hoàn toàn mới.
+Việc để chất lượng của ảnh gốc ảnh hưởng đến kết quả cuối cùng là một THẤT BẠI NGHIÊM TRỌNG.
+---
+
+**IDENTITY PRESERVATION CORE**
+---
+{identityCore}
+---
+**CÔNG CỤ TÁI TẠO PHÁP Y**
+---
+{forensicReconstructionEngine}
+---
+**CÔNG CỤ SIÊU PHÂN GIẢI & TÁI TẠO CHI TIẾT**
+---
+{superResolutionEngine}
+---
+**GIAO THỨC TÍNH TOÀN VẸN CỦA HÌNH DÁNG CƠ THỂ & DÁNG VẺ**
+---
+{bodyformAndSilhouetteIntegrity}
+---
+
+**AI TASK: Professional ID Photo Generation v5.0 (Two-Phase Protocol)**
+
+**MỤC TIÊU TỐI THƯỢỢNG (PRIMARY OBJECTIVE):**
+Tạo ra một bức ảnh thẻ đạt tiêu chuẩn quốc tế, chất lượng như ảnh chụp tại studio chuyên nghiệp, **hoàn toàn độc lập với chất lượng của ảnh đầu vào**.
+
+**QUY TRÌNH THỰC HIỆN (TUẦN TỰ VÀ BẮT BUỘC):**
+
+**GIAI ĐOẠN 1: TÁI TẠO PHÁP Y & TẠO BẢN GỐC KỸ THUẬT SỐ (FORENSIC RECONSTRUCTION & DIGITAL MASTER CREATION)**
+- **Hành động:** Áp dụng đồng thời **CÔNG CỤ TÁI TẠO PHÁP Y** và **CÔNG CỤ SIÊU PHÂN GIẢI** lên chủ thể trong ảnh gốc.
+- **Mục tiêu:** Biến đổi chủ thể gốc (dù mờ, nhiễu, hay ánh sáng kém) thành một "bản gốc kỹ thuật số" (digital master) siêu sắc nét. Trong giai đoạn này, BẠN CHỈ TẬP TRUNG VÀO VIỆC TÁI TẠO LẠI CÁC ĐẶC ĐIỂM VẬT LÝ VÀ CẤU TRÚC SINH TRẮC HỌC của chủ thể với chất lượng tối đa, tuân thủ nghiêm ngặt các phần có liên quan của Giao thức Lõi Danh tính.
+- **Điều kiện thất bại:** "Bản gốc kỹ thuật số" vẫn còn giữ lại bất kỳ sự mờ, nhiễu, hoặc thiếu chi tiết nào từ ảnh gốc.
+
+**GIAI ĐOẠN 2: TÁI COMPOSITION STUDIO (STUDIO RE-COMPOSITION)**
+- **Hành động:** Lấy "bản gốc kỹ thuật số" đã được tạo ở Giai đoạn 1 và đặt nó vào một bối cảnh ảnh thẻ hoàn toàn mới.
+- **Quy trình con (Sub-steps):**
+    1.  **Thiết lập Bố cục:** Dựa trên "bản gốc kỹ thuật số", tạo bố cục ảnh thẻ phù hợp với tham số 'Size' ({size}). Phải hiển thị đủ phần thân để lấp đầy khung hình một cách tự nhiên.
+    2.  **Khóa Danh tính Cốt lõi:** Áp dụng các quy tắc `craniofacialStructureLock`, `immutableBiometricMarkers`, và `antiBeautificationMandate` từ `IDENTITY PRESERVATION CORE`.
+    3.  **Áp dụng Ánh sáng Studio Mới:** **LOẠI BỎ HOÀN TOÀN** mọi dấu vết ánh sáng từ "bản gốc kỹ thuật số" và áp dụng ánh sáng studio chuyên nghiệp, mềm mại, từ phía trước. Ánh sáng này không được tạo bóng đổ lên nền.
+    4.  **Áp dụng Yêu cầu Ghi đè (PARAMETER OVERRIDES):** Thay đổi nền, trang phục, kiểu tóc, và biểu cảm theo thông số người dùng. **Các quy tắc bảo tồn tương ứng trong Giao thức Lõi (ví dụ: `expressionPreservationLock`, `clothingAndStylePreservationLock`, `hairstyleLock`) BỊ VÔ HIỆU HÓA** để cho phép những thay đổi này.
+
+---
+**THÔNG SỐ NGƯỜI DÙNG (Áp dụng trong GIAI ĐOẠN 2):**
+- **Loại ảnh:** {photoType}
+- **Kích cỡ (cho tỷ lệ khung hình):** {size}
+- **Màu nền:** {backgroundColor}
+- **Giới tính:** {gender}
+- **Trang phục (GHI ĐÈ):** {outfit}
+- **Kiểu tóc (GHI ĐÈ):** {hairstyle}
+- **Biểu cảm (GHI ĐÈ):** {expression}
+- **Hướng dẫn tùy chỉnh:** {customInstructions}
+---
+
+**PROMPT PHỦ ĐỊNH (ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC):**
+- **VI PHẠM THỰC TẾ ẢNH CHỤP:** kết quả trông giống tranh vẽ, ảnh vẽ, minh họa, kết xuất 3D, phong cách nghệ thuật, được 'vẽ lại'.
+- **VI PHẠM DANH TÍNH:** xóa nốt ruồi hoặc sẹo, thay đổi cấu trúc xương mặt, thay đổi tỷ lệ khuôn mặt, làm cho khuôn mặt đối xứng hoàn hảo, thay đổi chiều dài cằm.
+- **CHẤT LƯỢNG KÉM:** Giữ lại bất kỳ sự mờ, nhiễu hạt, hoặc thiếu chi tiết nào từ ảnh gốc.
+- **Lỗi ÁNH SÁNG:** Giữ lại ánh sáng gốc, bóng gắt trên mặt, bóng đổ trên nền, ánh sáng không đều.
+- **Lỗi THAM SỐ:** Giữ lại biểu cảm gốc, quần áo gốc, hoặc kiểu tóc gốc. Quần áo không vừa vặn ("hiệu ứng lều").

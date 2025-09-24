@@ -101,4 +101,4 @@ const ExpandPanel: React.FC<ExpandPanelProps> = ({
   );
 };
 
-export default ExpandPanel;
+export default React.memo(ExpandPanel);

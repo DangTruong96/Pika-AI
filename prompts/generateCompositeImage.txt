@@ -1,0 +1,40 @@
+{identityCore}
+{physicalInteractionEngine}
+{unificationEngine}
+{forensicReconstructionEngine}
+{bodyformAndSilhouetteIntegrity}
+{photorealisticLightingEngine}
+
+**AI TASK: Professional Group Photoshoot Composition v10.0 (ZERO-TOLERANCE ID & COUNT LOCK)**
+
+**CRITICAL OVERRIDE DIRECTIVE (HIGHEST PRIORITY):**
+This is a group composition task. This prompt's directives, especially regarding subject count and the strict separation between identity preservation and body posing, take precedence over any conflicting rules in the foundational protocols (`identityCore`).
+
+**1. SUBJECT COUNT & MAPPING PROTOCOL (ZERO-TOLERANCE - NON-NEGOTIABLE):**
+   - **PRE-ANALYSIS (MANDATORY FIRST STEP):** Count the number of "--- SUBJECT X ---" labels you have received. Let this number be `N`. You MUST confirm this count before proceeding.
+   - **EXECUTION MANDATE:** The final generated image **MUST** contain **EXACTLY `N`** people. No more, no less.
+   - **IDENTITY MAPPING:** The person corresponding to "SUBJECT 1" in the output **MUST** be an exact facial match to the person in the "SUBJECT 1" input image, and so on for all subjects (`SUBJECT 2` -> `SUBJECT 2`, etc.).
+   - **FAILURE CONDITION:** Generating an image with a number of people different from `N`, or with any person missing, duplicated, or having the wrong identity, is a complete task failure.
+
+**2. ABSOLUTE FACIAL LOCK & DYNAMIC POSE PROTOCOL (OVERRIDE & CLARIFICATION):**
+   - **(A) WHAT IS LOCKED (THE ENTIRE HEAD - ZERO-TOLERANCE):**
+     - The `identityCore` protocol is the highest priority and applies individually to **EACH** subject.
+     - **TOTAL HEAD LOCK (NEW MANDATE):** This is a non-negotiable lock on each subject's entire head. You are **STRICTLY FORBIDDEN** from altering **ANY** aspect of the face or head, including but not limited to: facial structure, unique markers (scars, moles), eyes, nose, mouth, lips, chin, cheeks, eyelashes, eyebrows, face length, and **EXPRESSION**. The expression from the original photo **MUST BE PRESERVED**. Each head from the input images should be treated as a single, immutable 3D object to be relit in the new scene.
+     - **FORENSIC RECONSTRUCTION MANDATE:** The `forensicReconstructionEngine` **MUST** be applied to each locked head to ensure it is rendered with hyper-realistic detail and sharpness in the final scene. Any blurriness or lack of detail in any face is a **CRITICAL FAILURE**.
+   - **(B) WHAT IS DYNAMIC (POSE ONLY):**
+     - You **MUST** generate **NEW**, natural, and contextually appropriate body poses for **EACH SUBJECT** that fit the mood of the scene. The group's interaction must be cohesive and believable. The locked head (from step A) must be naturally attached to the new body pose.
+     - **Natural Object Interaction:** When poses involve interacting with objects, the interaction **MUST** be natural, functional, and believable. A person must hold an object in a way that is common in real life. Awkward, physically impossible, or nonsensical interactions are a **CRITICAL FAILURE**.
+
+**3. WARDROBE PROTOCOL:**
+   - **MANDATE (WARDROBE REPLACEMENT):** You **MUST** completely discard the clothing from the original subject photos. You **MUST** dress all subjects in new attire based **EXCLUSIVELY** on the "OUTFIT DESCRIPTION". The new clothing must be rendered *on the subjects' bodies*, conforming to their new poses and interacting realistically with the environment and each other.
+
+**4. SCENE INTERPRETATION MANDATE:**
+   - **Goal:** The final image must look like a professionally captured photograph, NOT a 'behind-the-scenes' view.
+   - **Prohibition:** You are **STRICTLY FORBIDDEN** from rendering any photography or studio equipment (cameras, lights, backdrops, etc.). The background must be the scene described by the user.
+
+---
+**USER SCENE PROMPT (Guideline):**
+"{prompt}"
+---
+**OUTFIT DESCRIPTION (Guideline):**
+"{outfitDescription}"

@@ -3,4 +3,4 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-// This component was removed as the associated feature was deprecated.
+// This component is deprecated and no longer used.

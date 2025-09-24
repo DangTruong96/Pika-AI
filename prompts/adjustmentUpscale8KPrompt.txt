@@ -1,0 +1,130 @@
+{
+  "phiên_bản": "24.0-ADAPTIVE_SUPER_RESOLUTION-8K-V43.0-PHOTOREALISM_LOCK",
+  "Mệnh lệnh Tối cao Ghi đè (OVERRIDE SUPREME MANDATE)": {
+    "policy": "PHOTOGRAPHIC_REALITY_LOCK_ZERO_TOLERANCE",
+    "directive": "MỆNH LỆNH THỰC TẾ ẢNH CHỤP (PHOTOGRAPHIC REALISM MANDATE)",
+    "description": "Đây là mệnh lệnh quan trọng nhất, ghi đè lên mọi xu hướng sáng tạo hoặc diễn giải nghệ thuật. Kết quả cuối cùng BẮT BUỘC phải là một BỨC ẢNH, không phải là một tác phẩm nghệ thuật kỹ thuật số. Nhiệm vụ của bạn là NÂNG CẤP DỮ LIỆU ẢNH HIỆN CÓ, không phải vẽ lại nó.",
+    "mandate": [
+      "1. **Không phải Tranh vẽ:** Kết quả cuối cùng BẮT BUỘC phải không thể phân biệt được với một bức ảnh có độ phân giải cực cao được chụp bằng máy ảnh chuyên nghiệp. CẤM TUYỆT ĐỐI bất kỳ dấu hiệu nào của tranh vẽ kỹ thuật số, kết xuất 3D, hoặc phong cách minh họa.",
+      "2. **Nâng cấp, không Vẽ lại:** Bạn BẮT BUỘC phải làm sắc nét và tái tạo chi tiết dựa trên các pixel và cấu trúc hiện có trong ảnh gốc. CẤM TUYỆT ĐỐI việc 'vẽ lại' hoặc 'tưởng tượng lại' chủ thể từ đầu. Mục tiêu là một phiên bản sắc nét hơn của bức ảnh gốc, không phải là một bức chân dung mới.",
+      "3. **Kết cấu Ảnh chụp:** Mọi chi tiết được tái tạo (kết cấu da, sợi vải, sợi tóc) phải có vẻ ngoài tự nhiên, không hoàn hảo của một bức ảnh thực, không phải là sự hoàn hảo của một kết xuất đồ họa."
+    ],
+    "failure_condition": "THẤT BẠI NGHIÊM TRỌNG: Kết quả trông giống như một bức tranh, hình minh họa, hoặc có vẻ được 'vẽ lại' thay vì là một bức ảnh được nâng cấp."
+  },
+  "Mục tiêu chính": "Thực thi CÔNG CỤ SIÊU PHÂN GIẢI & TÁI TẠO CHI TIẾT v2.0 để biến đổi hình ảnh đầu vào thành một bức ảnh kỹ thuật số 8K, chất lượng như ảnh chụp, trong trẻo và sống động.",
+  "Mệnh lệnh Đồng nhất Toàn bộ Ảnh (ZERO-TOLERANCE)": {
+    "policy": "PRIORITY_OVERRIDE_MANDATE",
+    "description": "CẤM TUYỆT ĐỐI việc chỉ phục hồi khuôn mặt và bỏ qua phần còn lại của ảnh. Toàn bộ ảnh — chủ thể, quần áo, tóc, nền, và mọi chi tiết từ tiền cảnh đến hậu cảnh — BẮT BUỘC phải được phục hồi và nâng cấp với cùng một mức độ chi tiết và sắc nét. Điều này đặc biệt quan trọng đối với ảnh chụp toàn thân và ảnh phong cảnh.",
+    "failure_condition": "THẤT BẠI NGHIÊM TRỌNG: Khuôn mặt sắc nét hơn đáng kể so với quần áo, tóc, hoặc nền."
+  },
+  "bước_0_phân_loại_ảnh_và_chiến_lược_thích_ứng": {
+    "policy": "BẮT_BUỘC_VÀ_QUAN_TRỌNG_NHẤT",
+    "description": "Trước khi thực hiện bất kỳ hành động nào, bạn BẮT BUỘC phải phân loại hình ảnh đầu vào và chọn một trong các chiến lược nâng cấp sau đây. Việc áp dụng sai chiến lược là một THẤT BẠI NGHIÊM TRỌNG.",
+    "CHIẾN_LƯỢC_A_CHÂN_DUNG_CẬN_CẢNH": {
+      "điều_kiện": "Ảnh chụp chủ yếu là khuôn mặt và vai của một hoặc nhiều người.",
+      "trọng_tâm_thực_hiện": "Tập trung tối đa vào các chi tiết vi mô trên khuôn mặt, tóc và da như đã mô tả trong phần 'chỉnh sửa'. Nền có thể được làm mờ nhẹ một cách tự nhiên (bokeh) để làm nổi bật chủ thể, trừ khi nền cũng có các chi tiết quan trọng."
+    },
+    "CHIẾN_LƯỢC_B_TOÀN_THÂN_VÀ_ẢNH_NHÓM": {
+      "điều_kiện": "Ảnh chụp toàn bộ cơ thể của một hoặc nhiều người, thấy rõ từ đầu đến chân.",
+      "trọng_tâm_thực_hiện": "Áp dụng Mệnh lệnh Đồng nhất Toàn bộ Ảnh một cách tuyệt đối. Chi tiết trên khuôn mặt phải được nâng cấp (theo quy tắc trong phần 'chỉnh sửa'), nhưng phải dành sự quan tâm tương đương để tái tạo kết cấu của TOÀN BỘ trang phục, giày dép, và các bề mặt mà họ đang đứng hoặc tương tác. Độ sắc nét phải đồng đều từ đầu đến chân. CẤM TUYỆT ĐỐI việc chỉ làm nét khuôn mặt và bỏ qua phần còn lại của cơ thể và trang phục."
+    },
+    "CHIẾN_LƯỢC_C_PHONG_CẢNH_VÀ_KIẾN_TRÚC": {
+      "điều_kiện": "Ảnh chụp chủ yếu là cảnh quan thiên nhiên, thành phố, hoặc kiến trúc, có thể có hoặc không có người ở xa.",
+      "trọng_tâm_thực_hiện": "Tập trung vào việc làm sắc nét toàn bộ khung hình (edge-to-edge sharpness). Tái tạo chi tiết của các yếu tố tự nhiên (lá cây, kết cấu đá, gợn nước) và nhân tạo (kết cấu gạch, cửa sổ). Loại bỏ sương mù (dehaze) để tăng độ trong và chiều sâu. Nếu có người trong ảnh, chỉ nâng cấp họ như một phần của cảnh quan tổng thể, không cần tập trung quá mức vào chi tiết khuôn mặt trừ khi họ là chủ thể chính."
+    }
+  },
+  "bước_1_xoay_khung_hình_bắt_buộc": {
+    "policy": "BẮT_BUỘC_VÀ_ƯU_TIÊN_HÀNG_ĐẦU",
+    "description": "Phân tích và xoay TOÀN BỘ KHUNG HÌNH để đảm bảo hướng thẳng đứng chính xác."
+  },
+  "bước_2_sửa_phối_cảnh_và_làm_thẳng_bắt_buộc": {
+    "policy": "BẮT_BUỘC_SAU_KHI_XOAY",
+    "description": "Xác định bốn góc của tờ giấy ảnh gốc và thực hiện một phép biến đổi phối cảnh để làm cho nó hoàn toàn hình chữ nhật và thẳng."
+  },
+  "bước_3_tách_nền_và_cắt_cúp_thông_minh": {
+    "policy": "ZERO_TOLERANCE_NON-NEGOTIABLE_REQUIREMENT",
+    "description": "Cắt cúp một cách hoàn hảo để LOẠI BỎ TOÀN BỘ môi trường xung quanh tờ giấy ảnh (ví dụ: mặt bàn, tay người cầm).",
+    "mandate": "Kết quả cuối cùng CHỈ ĐƯỢỢC PHÉP chứa nội dung BÊN TRỌNG bức ảnh gốc đã được làm thẳng."
+  },
+  "bước_4_xử_lý_nền_tuyệt_đối": {
+    "policy": "ZERO_TOLERANCE_FORENSIC_BACKGROUND_PROTOCOL",
+    "description": "Phân tích nền gốc sau khi cắt cúp. Quy tắc này là tuyệt đối.",
+    "rule_A_plain_background": "MỆNH LỆNH KHÔNG KHOAN NHƯỢNG: Nếu nền gốc là một phông nền đơn giản, trống trơn, hoặc kiểu studio, BẠN BẮT BUỘC phải thay thế nó bằng một phông nền studio hoàn toàn sạch sẽ, đồng nhất (xám trung tính hoặc xanh dương). CẤM TUYỆT ĐỐI, và coi là THẤT BẠI NGHIÊM TRỌNG, việc 'sáng tạo' hoặc thêm bất kỳ yếu tố nào vào nền này (KHÔNG CÓ hoa, cây cối, nhà cửa, con đường, bầu trời, mây).",
+    "rule_B_scene_background": "CHỈ KHI nền gốc chứa một cảnh vật thực tế, BẠN MỚI ĐƯỢỢC phép phục hồi và nâng cao chi tiết của cảnh vật đó. KHÔNG ĐƯỢỢC thay đổi các yếu tố chính của cảnh."
+  },
+  "mô_phỏng_máy_ảnh": {
+    "brand_model": "Sony A7R V",
+    "look": "Siêu sắc nét, màu sắc HDR trong trẻo và sống động, chi tiết vi mô cực cao, không nhiễu hạt (low ISO)."
+  },
+  "ràng_buộc_chủ_thể": {
+    "description": "Tuân thủ GIAO THỨC BẢO TOÀN DANH TÍNH LÕI v41.0 được chèn vào."
+  },
+  "chỉnh sửa": {
+    "phục_hồi_chi_tiết_hư_hỏng": {
+      "policy": "forensic_level_damage_reconstruction_ZERO_TOLERANCE",
+      "strength": "cực cao",
+      "targets": ["scratches", "tears", "creases", "stains", "white_dots", "color_fading", "digital_noise", "blur"],
+      "method": "Loại bỏ tất cả các khuyết điểm một cách toàn diện."
+    },
+    "da": {
+      "tái_tạo_khối_3d_cho_khuôn_mặt": {
+        "policy": "MANDATORY_FACIAL_RE_LIGHTING_FOR_VOLUME",
+        "mandate": "TÁI TẠO lại ánh sáng trên khuôn mặt để tạo cảm giác chiều sâu 3D (nổi khối)."
+      },
+      "chống_hiện_vật_ai_bắt_buộc": "TÁI TẠO và NÂNG CAO kết cấu da tự nhiên. CẤM da 'nhựa'.",
+      "giao_thức_phân_tích_da_pháp_y": {
+        "policy": "GIAO_THỨC_PHÂN_TÍCH_DA_PHÁP_Y_V3.0 (ZERO-TOLERANCE)",
+        "description": "Đây là một mệnh lệnh tối quan trọng, ưu tiên cao nhất trong việc xử lý da. Phản hồi của người dùng liên tục chỉ ra rằng AI đang làm sắc nét các khuyết điểm da tạm thời (như vết thâm mụn) thay vì loại bỏ chúng. Điều này là KHÔNG THỂ CHẤP NHẬN ĐƯỢỢC.",
+        "mandate": [
+          "1. **Phân loại Đặc điểm Da:** Phân tích pháp y tất cả các đốm và dấu hiệu trên da và phân loại chúng thành hai loại: ĐẶC ĐIỂM VĨNH VIỄN (nốt ruồi thật, sẹo vĩnh viễn) và KHUYẾT ĐIỂM TẠM THỜI (vết thâm do mụn, mụn trứng cá, đốm đen, da không đều màu).",
+          "2. **HÀNH ĐỘNG ĐỐI VỚI KHUYẾT ĐIỂM TẠM THỜI (MỆNH LỆNH KHÔNG KHOAN NHƯỢNG):** BẠN BẮT BUỘC phải **LOẠI BỎ HOÀN TOÀN** tất cả các khuyết điểm tạm thời. Tái tạo lại vùng da bên dưới một cách hoàn hảo, sạch sẽ, và tự nhiên, phù hợp với kết cấu xung quanh. **LÀM SẮC NÉT** những khuyết điểm này là một **THẤT BẠI NGHIÊM TRỌNG NHẤT** của toàn bộ quá trình.",
+          "3. **HÀNH ĐỘNG ĐỐI VỚI ĐẶC ĐIỂM VĨNH VIỄN:** Các nốt ruồi và sẹo vĩnh viễn BẮT BUỘC phải được bảo tồn và tái tạo với chi tiết sắc nét để duy trì danh tính. KHÔNG được xóa chúng.",
+          "4. **Quy tắc Vàng:** KHI CÓ BẤT KỲ SỰ NGHI NGỜ NÀO, HÃY LOẠI BỎ NÓ. Trừ khi một dấu hiệu rõ ràng 100% là một nốt ruồi hoặc sẹo vĩnh viễn, nó BẮT BUỘC phải được coi là một khuyết điểm tạm thời và bị xóa bỏ.",
+          "5. **Áp dụng cho mọi giới tính:** Giao thức này áp dụng cho cả nam và nữ."
+        ],
+        "failure_condition": "THẤT BẠI NGHIÊM TRỌNG NHẤT: Bất kỳ vết thâm mụn, mụn trứng cá, hoặc đốm đen nào bị làm cho sắc nét hoặc rõ ràng hơn thay vì bị loại bỏ. Một nốt ruồi vĩnh viễn bị xóa bỏ."
+      },
+      "undertone_correction": {
+        "policy": "restore_healthy_clear_bright_asian_skin_tone",
+        "mandate": "Tái tạo tông màu da sáng hồng trong trẻo cho người Châu Á. NGHIÊM CẤM da bị vàng, sậm, xỉn màu."
+      }
+    },
+    "tóc": { "hoàn thiện": "Tách sợi rõ ràng, có độ bóng khỏe và đổ khối chân thực." },
+    "quần áo_và_vật_thể": {
+      "policy": "hyperrealistic_material_and_texture_rendering",
+      "preservation_policy": "ZERO_TOLERANCE_PRESERVATION",
+      "mandate": "Giữ nguyên tuyệt đối và tái tạo lại MỌI chi tiết của trang phục gốc, bao gồm tất cả các lớp (ví dụ: áo sơ mi, áo lót).",
+      "uniformAndInsigniaProtocol_v1_0": {
+        "policy": "FORENSIC_RECONSTRUCTION_MANDATE_ZERO_TOLERANCE",
+        "mandate": "Nếu trang phục là quân phục, BẮT BUỘC phải tái tạo lại một cách pháp y TẤT CẢ các quân hàm (ví dụ: sao, vạch) với độ chính xác tuyệt đối."
+      }
+    }
+  },
+  "ánh sáng_và_màu_sắc": {
+    "khử_ám_màu": { "policy": "auto_neutralize_color_casts", "strength": "cực cao" },
+    "ánh sáng": {
+      "thiết lập": "ánh sáng tự nhiên, cân bằng, rõ ràng.",
+      "white_balance": "trung tính chính xác (5500K)"
+    },
+    "chỉnh_màu": { "vibrance": "tăng đáng kể", "saturation": "tăng nhẹ" }
+  },
+  "hậu_kỳ": {
+    "sharpening": { "policy": "adaptive_frequency_selective_sharpening_extreme_detail" },
+    "micro_contrast": "cực cao"
+  },
+  "đầu ra": { "độ phân giải": "7680x4320", "dpi": 300 },
+  "negative_prompt": [
+    "tranh vẽ", "ảnh vẽ", "minh họa", "kết xuất 3D", "phong cách nghệ thuật", "vẽ lại", "không phải ảnh chụp",
+    "ghép cảnh", "phong cách ảnh thờ", "thêm hoa vào nền", "thêm nhà vào nền", "thêm cây vào nền", "tạo nền mới hoàn toàn", "phông nền nhân tạo",
+    "da nhựa", "da sáp", "quá mịn", "hiệu ứng tranh vẽ",
+    "thay đổi tỷ lệ khuôn mặt", "mặt béo", "khuôn mặt đối xứng hoàn hảo", "làm cho khuôn mặt đối xứng",
+    "thay đổi chiều dài cằm", "làm ngắn cằm",
+    "đóng miệng đang hé", "thay đổi biểu cảm miệng",
+    "màu sắc không chân thực", "ánh sáng phẳng", "màu sắc nhợt nhạt", "mờ",
+    "ảnh ám vàng", "ảnh ám nâu đỏ", "vẫn còn vết xước",
+    "mất áo lót", "mất quân hàm",
+    "tạo nốt ruồi giả", "vết bẩn thành nốt ruồi", "đốm đen trên mặt", "giữ lại vết bẩn trên mặt",
+    "làm nét vết thâm", "làm nét mụn", "giữ lại khuyết điểm da",
+    "nhiễu hạt", "noise", "artifacts", "tạo thêm nhiễu hạt", "kết cấu không tự nhiên", "vỡ hạt", "chất lượng thấp"
+  ]
+}

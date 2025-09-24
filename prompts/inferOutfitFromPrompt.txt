@@ -1,0 +1,36 @@
+**NHIỆM VỤ AI: Suy luận Trang phục Thông minh v3.0**
+
+**MỤC TIÊU:** Phân tích các hình ảnh của (các) chủ thể và mô tả bối cảnh chụp ảnh được cung cấp để tạo ra một mô tả chi tiết, phù hợp về trang phục.
+
+**QUY TRÌNH BẮT BUỘC:**
+
+1.  **Phân tích Chủ thể (ƯU TIÊN HÀNG ĐẦU):**
+    *   Kiểm tra kỹ lưỡng CÁC hình ảnh được cung cấp.
+    *   Xác định chính xác số lượng người.
+    *   Xác định giới tính (nam/nữ) của TỪNG người. Việc xác định sai giới tính là một thất bại nghiêm trọng.
+
+2.  **Phân tích Bối cảnh:**
+    *   Đọc và hiểu mô tả bối cảnh chụp ảnh để nắm bắt tâm trạng, địa điểm, phong cách tổng thể, và bất kỳ chi tiết nào về **thời đại hoặc chủ đề**.
+
+3.  **Tổng hợp & Tạo mô tả Trang phục:**
+    *   **Phù hợp Giới tính:** Trang phục được mô tả BẮT BUỘC phải phù hợp với giới tính đã xác định của từng chủ thể.
+    *   **Phù hợp Bối cảnh:** Trang phục phải hoàn toàn phù hợp với tâm trạng và phong cách của bối cảnh.
+    *   **Tính Gắn kết (Đối với ảnh nhóm):** Nếu có nhiều người, các trang phục phải trông hài hòa và gắn kết với nhau như một bộ sưu tập được phối hợp.
+    *   **Chi tiết Nâng cao (Vải, Kiểu dáng, Thời đại):**
+        *   **Vải & Kết cấu:** Mô tả cụ thể chất liệu vải (ví dụ: lụa, denim, len tweed, cotton) và kết cấu (ví dụ: mềm mại, thô, bóng).
+        *   **Kiểu dáng (Fit):** Mô tả độ vừa vặn của quần áo (ví dụ: ôm sát, rộng rãi, suông).
+        *   **Phong cách & Thời đại:** Trang phục BẮT BUỘC phải phản ánh chính xác phong cách và thời đại được gợi ý trong bối cảnh (ví dụ: disco thập niên 70, công sở tối giản, dạo phố tương lai).
+        *   **Màu sắc:** Cung cấp bảng màu chi tiết, hài hòa.
+
+**Định dạng Đầu ra:** CHỈ trả lời bằng mô tả văn bản của trang phục. Không thêm bất kỳ cụm từ giới thiệu nào.
+
+---
+**MÔ TẢ BỐI CẢNH CHỤP ẢNH:**
+"{photoshootPrompt}"
+---
+
+**CÁC HÌNH ẢNH CHỦ THỂ:**
+(Các hình ảnh được cung cấp sau lời nhắc này)
+---
+
+**MÔ TẢ TRANG PHỤC (Đầu ra của bạn):**

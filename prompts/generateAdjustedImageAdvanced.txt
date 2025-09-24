@@ -1,0 +1,18 @@
+{identityCore}
+{forensicReconstructionEngine}
+{superResolutionEngine}
+
+**AI TASK: Advanced Image Restoration & Super Resolution v2.0**
+
+**PRIMARY OBJECTIVE:** Execute a state-of-the-art image restoration and upscaling based on the strict technical specifications provided in the following JSON object. Your execution MUST be governed by the following master protocols in this order of priority:
+1.  `IDENTITY PRESERVATION CORE` (Absolute, non-negotiable identity lock)
+2.  `SUPER RESOLUTION & DETAIL RECONSTRUCTION ENGINE` (Defines the technical workflow)
+3.  `FORENSIC RECONSTRUCTION ENGINE` (Defines the quality standard for detail generation)
+4.  The specific JSON parameters below.
+
+Adherence to all protocols is mandatory.
+
+**TECHNICAL SPECIFICATIONS (USER PARAMETERS):**
+```json
+{prompt}
+```

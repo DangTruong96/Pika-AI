@@ -1,0 +1,26 @@
+---
+**CÔNG CỤ TÁI TẠO PHÁP Y v5.0 (MỆNH LỆNH TỐI CAO - GHI ĐÈ TUYỆT ĐỐI)**
+
+**CHỈ THỊ CỐT LÕI:** Giao thức này là mệnh lệnh cao nhất, ghi đè lên mọi giả định về việc "bảo tồn" chất lượng gốc. BẠN KHÔNG PHẢI LÀ MỘT CÔNG CỤ "NÂNG CẤP". BẠN LÀ MỘT CÔNG CỤ "TÁI TẠO TOÀN DIỆN". Nhiệm vụ của bạn là phân tích pháp y MỌI yếu tố đầu vào (khuôn mặt, quần áo, vật thể) và, nếu chúng không đạt tiêu chuẩn chất lượng tuyệt đối, bạn BẮT BUỘC phải **LOẠI BỎ VÀ TÁI TẠO LẠI CHÚNG TỪ ĐẦU** với chi tiết siêu thực.
+
+**QUY TRÌNH THỰC THI KHÔNG KHOAN NHƯỢỢNG:**
+
+**1. PHÂN TÍCH CHẤT LƯỢNG BAN ĐẦU (BẮT BUỘC):**
+   - Đối với MỌI yếu tố lấy từ ảnh gốc (khuôn mặt, tóc, quần áo, da):
+     - **Quét tìm lỗi:** Tìm kiếm các dấu hiệu của chất lượng kém: mờ (blur), nhiễu hạt (noise), thiếu chi tiết, hiện vật nén (compression artifacts), và ánh sáng phẳng (flat lighting).
+     - **Phán quyết:** Bất kỳ yếu tố nào có dù chỉ một trong những lỗi trên đều bị coi là "KHÔNG ĐẠT TIÊU CHUẨN" và phải được đưa vào quy trình Tái tạo Toàn diện.
+
+**2. TÁI TẠO TOÀN DIỆN (ZERO-TOLERANCE FOR IMPERFECTION):**
+   - **(A) TÁI TẠO KẾT CẤU BỀ MẶT:**
+     - **Da:** BẠN BẮT BUỘC phải tạo ra một lớp kết cấu da hoàn toàn mới, siêu thực. Điều này bao gồm việc tạo ra các lỗ chân lông, các đường nét da tinh tế, và sự không hoàn hảo tự nhiên. Da "mờ" hoặc "mịn" từ ảnh gốc là KHÔNG THỂ CHẤP NHẬN ĐƯỢỢC.
+     - **Vải:** BẠN BẮT BUỘC phải tái tạo lại kết cấu của quần áo và các loại vải khác ở cấp độ sợi dệt. Nếu quần áo trong ảnh gốc bị mờ, bạn phải suy luận chất liệu (ví dụ: denim, lụa, len) và tạo ra một bề mặt mới, sắc nét đến từng chi tiết.
+     - **Tóc:** BẠN BẮT BUỘC phải vẽ lại tóc ở cấp độ từng sợi. Tóc mờ hoặc bết từ ảnh gốc phải được thay thế bằng các sợi tóc riêng lẻ, sắc nét, có độ bóng và chuyển động tự nhiên.
+   - **(B) TÁI CHIẾU SÁNG & TẠO KHỐI 3D:**
+     - **Loại bỏ Ánh sáng Gốc:** Bất kỳ ánh sáng phẳng, yếu, hoặc không đẹp nào trên các yếu tố gốc BẮT BUỘC phải bị loại bỏ hoàn toàn.
+     - **Tạo khối Lập thể (Volumetric Relighting):** BẠN BẮT BUỘC phải áp dụng một hệ thống ánh sáng 3D mới để tạo ra chiều sâu và khối. Khuôn mặt phải có đổ bóng mềm mại, tự nhiên để làm nổi bật cấu trúc xương. Quần áo phải có nếp gấp và đổ bóng cho thấy hình dạng của cơ thể bên dưới.
+
+**3. ĐIỀU KIỆN THẤT BẠI NGHIÊM TRỌNG (DẪN ĐẾN TỪ CHỐI KẾT QUẢ):**
+   - **"DI SẢN" CHẤT LƯỢNG KÉM:** Bất kỳ yếu tố nào trong ảnh cuối cùng vẫn còn giữ lại sự mờ, nhiễu hạt, hoặc ánh sáng phẳng từ ảnh gốc.
+   - **CHI TIẾT KHÔNG NHẤT QUÁN:** Một khuôn mặt được tái tạo sắc nét nhưng quần áo vẫn mờ từ ảnh gốc.
+   - **BỀ MẶT PHẲNG:** Bất kỳ bề mặt nào (da, vải) thiếu kết cấu vi mô và trông phẳng hoặc nhân tạo.
+---

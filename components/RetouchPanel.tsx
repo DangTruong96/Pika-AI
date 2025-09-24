@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BullseyeIcon, BrushIcon, PhotoIcon, UserCircleIcon, SparklesIcon, TagIcon, UndoIcon } from './icons';
+import { BullseyeIcon, BrushIcon, PhotoIcon, UserCircleIcon, SparklesIcon, TagIcon, UndoIcon, EyeIcon } from './icons';
 
 export type SelectionMode = 'point' | 'brush' | 'extract';
 export type BrushMode = 'draw' | 'erase';
@@ -34,8 +34,10 @@ interface RetouchPanelProps {
   onExtractPromptChange: (prompt: string) => void;
   extractHistoryFiles: File[][];
   extractedHistoryItemUrls: string[][];
-  onUseExtractedAsStyle: (file: File) => void;
+  onUseExtractedAsOutfit: (file: File) => void;
   onDownloadExtractedItem: (file: File) => void;
+  onClearExtractHistory: () => void;
+  onViewExtractedItem: (setIndex: number, itemIndex: number) => void;
 }
 
 const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
@@ -45,7 +47,8 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
     brushMode, onBrushModeChange, brushSize, onBrushSizeChange, onClearMask, isImageLoaded, 
     isMaskPresent, prompt, onPromptChange, promptInputRef,
     onApplyExtract, extractPrompt, onExtractPromptChange, extractHistoryFiles, 
-    extractedHistoryItemUrls, onUseExtractedAsStyle, onDownloadExtractedItem
+    extractedHistoryItemUrls, onUseExtractedAsOutfit, onDownloadExtractedItem, onClearExtractHistory,
+    onViewExtractedItem
   } = props;
 
   const allExtractedItems = React.useMemo(() => {
@@ -53,7 +56,9 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
       fileSet.map((file, itemIndex) => ({
         file,
         url: extractedHistoryItemUrls[setIndex]?.[itemIndex] || '',
-        key: `${setIndex}-${itemIndex}-${file.lastModified}`
+        key: `${setIndex}-${itemIndex}-${file.lastModified}`,
+        setIndex,
+        itemIndex
       }))
     ).filter(item => item.url);
   }, [extractHistoryFiles, extractedHistoryItemUrls]);
@@ -193,32 +198,46 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
     
           {allExtractedItems.length > 0 && (
             <div className="w-full pt-4 mt-4 border-t border-white/10 flex flex-col items-center gap-4">
-              <h4 className="text-md font-semibold text-gray-300">{t('extractHistoryTitle')}</h4>
+              <div className="w-full flex justify-between items-center">
+                  <h4 className="text-md font-semibold text-gray-300">{t('extractHistoryTitle')}</h4>
+                  <button 
+                      onClick={onClearExtractHistory}
+                      className="text-xs text-cyan-300 hover:underline disabled:opacity-50"
+                      disabled={isLoading}
+                  >
+                      {t('extractClearHistory')}
+                  </button>
+              </div>
               <div className="w-full grid grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-2">
                 {allExtractedItems.map(item => (
                   <div key={item.key} className="flex flex-col gap-2">
-                    <div 
-                      className="w-full aspect-square rounded-lg bg-black/20 p-2 border border-white/10"
+                    <button 
+                      onClick={() => onViewExtractedItem(item.setIndex, item.itemIndex)}
+                      className="w-full aspect-square rounded-lg bg-black/20 p-2 border border-white/10 relative group transition-colors hover:border-cyan-400"
                       style={{ 
                           backgroundImage: 'repeating-conic-gradient(rgba(255,255,255,0.1) 0% 25%, transparent 0% 50%)',
                           backgroundSize: '16px 16px'
                       }}
+                      title={t('viewEdited')}
                     >
                       <img src={item.url} alt={`Extracted item ${item.key}`} className="w-full h-full object-contain"/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <EyeIcon className="w-8 h-8 text-white" />
+                      </div>
+                    </button>
+                    <div className="grid grid-cols-2 gap-1">
                       <button
-                        onClick={() => onUseExtractedAsStyle(item.file)}
+                        onClick={() => onUseExtractedAsOutfit(item.file)}
                         disabled={isLoading}
-                        className="w-full text-xs text-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-                        title={t('extractUseAsStyle')}
+                        className="w-full text-xs text-center bg-gradient-to-br from-green-500 to-teal-600 text-white font-semibold py-2 px-1 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                        title={t('extractUseAsOutfit')}
                       >
-                        {t('extractUseAsStyle')}
+                        {t('extractUseAsOutfit')}
                       </button>
                       <button
                         onClick={() => onDownloadExtractedItem(item.file)}
                         disabled={isLoading}
-                        className="w-full text-xs text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                        className="w-full text-xs text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-1 rounded-lg transition-all active:scale-95 disabled:opacity-50"
                         title={t('downloadImage')}
                       >
                         {t('downloadImage')}
@@ -235,4 +254,4 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
   );
 };
 
-export default RetouchPanel;
+export default React.memo(RetouchPanel);

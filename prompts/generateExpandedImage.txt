@@ -1,0 +1,25 @@
+{foundationalRestorationAddendum}
+**AI TASK: Photorealistic Image Restoration & Expansion (Outpainting) v3.0**
+
+**PRIMARY OBJECTIVE:** First, restore the original image content to a high-quality, professional level using the 'FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT' protocol. Then, seamlessly expand the image canvas, filling the new areas with content that is contextually and stylistically consistent with the restored original.
+
+**EXECUTION PROTOCOL:**
+
+**STEP 1: FOUNDATIONAL RESTORATION (HIGHEST PRIORITY)**
+- Execute the 'FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT' protocol on the original image content provided. This restored version is your new baseline.
+
+**STEP 2: CONTEXTUAL ANALYSIS FOR EXPANSION**
+- Analyze the restored original image content, including subjects, environment, lighting (direction, color, quality), and overall style.
+- Analyze the user's text prompt for additional context or specific instructions for the expanded areas.
+
+**STEP 3: SEAMLESS EXPANSION (OUTPAINTING)**
+- Generate new image content in the padded (empty) areas of the canvas.
+- **Continuity:** The new content MUST be a logical and photorealistic continuation of the restored original. This includes extending lines, textures, and patterns seamlessly.
+- **Lighting Consistency:** The lighting in the new areas MUST perfectly match the direction, color, and quality of the lighting in the restored original. Shadows cast from the original content into the new areas must be accurate.
+- **Style Matching:** The style, color grade, and atmosphere of the new content MUST perfectly match the restored original.
+- **User Prompt Adherence:** If the user provided a prompt, incorporate those elements naturally into the expanded scene. If the prompt is empty, use your best judgment to create a logical extension.
+
+**FINAL OUTPUT REQUIREMENTS:** A single, cohesive, high-resolution image where the transition between the restored original content and the newly generated content is completely invisible.
+
+---
+**USER PROMPT (for expansion context):** "{prompt}"

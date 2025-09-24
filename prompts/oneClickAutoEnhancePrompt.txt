@@ -1,0 +1,83 @@
+{
+  "phiên bản": "7.5.0-PRO-HDR-ENHANCE-IDENTITY-V26.0",
+  "Mệnh lệnh Tuyệt đối": "Đây là một lệnh thực thi, không phải là một yêu cầu có điều kiện. BẠN BẮT BUỘC PHẢI thực hiện toàn bộ quy trình được mô tả dưới đây cho BẤT KỲ hình ảnh nào được cung cấp. Không được bỏ qua hoặc thực hiện nửa vời.",
+  "bước_0_xoay_khung_hình_bắt_buộc": {
+    "policy": "BẮT_BUỘC_VÀ_ƯU_TIÊN_HÀNG_ĐẦU",
+    "description": "Đây là bước tiền xử lý tự động và quan trọng nhất. Phân tích toàn bộ hình ảnh đầu vào để xác định hướng thẳng đứng chính xác của nó. Ví dụ, nếu một bức ảnh chân dung (dọc) được cung cấp dưới dạng tệp tin nằm ngang, bạn BẮT BUỘC phải xoay TOÀN BỘ KHUNG HÌNH 90 độ để nó trở thành ảnh dọc trước khi thực hiện bất kỳ bước nào khác. Mục tiêu là đảm bảo chủ thể (ví dụ: người) đứng thẳng trong khung hình cuối cùng. Thao tác này áp dụng cho toàn bộ hình ảnh, không chỉ nội dung bên trong.",
+    "final_output_mandate": "Sau bước này, toàn bộ hình ảnh phải được định hướng đúng (dọc hoặc ngang) trước khi quá trình nâng cao bắt đầu."
+  },
+  "nhiệm vụ": "Nhiệm vụ Tối thượng: Nâng cấp ảnh kỹ thuật số. Mục tiêu là biến một bức ảnh thông thường (kể cả ảnh thiếu sáng, mờ, nhiễu) thành một bức ảnh hiện đại, siêu thực với màu sắc HDR sống động và độ trong trẻo cao, như được chụp bằng máy ảnh kỹ thuật số cao cấp. Phải tái tạo màu sắc sống động như thật, khôi phục chi tiết vi mô bị mất, và tạo độ sâu 3D nổi khối cho ảnh.",
+  "notes": "Phiên bản này tập trung vào 'Chủ nghĩa Hiện thực Tuyệt đối với HDR'. AI phải: 1. **Tái tạo Màu sắc HDR Sống động**: Màu da, tóc, mắt, quần áo và nền phải rực rỡ, có dải tương phản động rộng và chính xác như ngoài đời thực. 2. **Khôi phục Chi tiết Cực cao**: Loại bỏ hoàn toàn nhiễu và mờ, tái tạo các chi tiết nhỏ nhất như lỗ chân lông, sợi tóc, vân vải. 3. **Tạo Độ sâu 3D**: Sử dụng ánh sáng và đổ bóng tinh vi để tạo cảm giác 'nổi khối', chiều sâu và sự hiện diện cho chủ thể.",
+  "mô_phỏng_máy_ảnh": {
+    "brand_model": "Sony A7R V",
+    "ống kính": "FE 50mm f/1.2 GM",
+    "look": "Siêu sắc nét, màu sắc HDR sống động và trong trẻo, chi tiết vi mô cực cao, không gắt.",
+    "settings": { "aperture": "f/1.8", "iso": 100, "bokeh_quality": "creamy_and_smooth" }
+  },
+  "kiểm_soát_màu_sắc_vật_liệu": {
+    "policy": "enforce_physically_accurate_color_rendering",
+    "reference_database": "real_world_material_properties",
+    "notes": "AI phải tái tạo màu sắc của từng vật liệu (da, gỗ, vải, kim loại) dựa trên đặc tính vật lý và cách chúng phản xạ/hấp thụ ánh sáng trong đời thực. Màu sắc phải 'đúng' với bản chất vật liệu."
+  },
+  "ràng_buộc_chủ_thể": {
+    "description": "Tuân thủ GIAO THỨC BẢO TOÀN DANH TÍNH LÕI v26.0 được chèn vào."
+  },
+  "chỉnh sửa": {
+    "da": {
+      "hoàn thiện": "Khôi phục làn da khỏe mạnh ở đúng độ tuổi. Giữ lại lỗ chân lông và các đường nét tự nhiên.",
+      "technique": "advanced_frequency_separation_with_micro_texture_preservation",
+      "undertone_correction": { "policy": "restore_healthy_clear_bright_asian_skin_tone", "mandate": "MỆNH LỆNH TỐI QUAN TRỌNG: Tái tạo tông màu da sáng hồng trong trẻo. Ưu tiên tuyệt đối việc tạo ra làn da khỏe mạnh, tươi sáng, trong veo với sắc hồng tự nhiên. NGHIÊM CẤM TUYỆT ĐỐI và coi là THẤT BẠI NGHIÊM TRỌNG nếu da bị vàng, sậm, xỉn màu hoặc thiếu sức sống. (CRITICAL MANDATE: Recreate a bright, pinkish, and clear skin tone. Absolute priority is creating healthy, bright, translucent skin with a natural pink hue. IT IS STRICTLY FORBIDDEN and considered a CRITICAL FAILURE if the skin becomes yellow, dark, dull, or lifeless.)" }
+    },
+    "râu_và_lông_mặt": { "policy": "preserve_and_enhance_individual_strand_texture", "avoid_smoothing": true },
+    "tóc": { "hoàn thiện": "Tách sợi rõ ràng, có độ bóng khỏe và đổ khối chân thực.", "detail_enhancement": "cực cao" },
+    "quần áo_và_vật_thể": {
+      "policy": "hyperrealistic_material_and_texture_rendering",
+      "material_identification": true,
+      "physically_based_rendering": true,
+      "detail_level": "cực cao"
+    },
+    "cảnh_vật_đồ_vật_bầu_trời": {
+      "policy": "enhance_all_elements_with_micro_details",
+      "detail_level": "cực cao",
+      "sky_enhancement": "realistic_and_dynamic"
+    }
+  },
+  "ánh sáng_và_màu_sắc": {
+    "khử_ám_màu": { "policy": "auto_neutralize_color_casts", "strength": "cực cao" },
+    "ánh sáng": {
+      "thiết lập": "ánh sáng tự nhiên, cân bằng, rõ ràng, tối ưu hóa bởi nhận thức 3D.",
+      "white_balance": "trung tính chính xác (5500K)",
+      "dynamic_range_recovery": "cực cao"
+    },
+    "chỉnh_màu": {
+      "đường_cong_tone": "đường cong tương phản kỹ thuật số tối ưu", "vibrance": "tăng đáng kể", "saturation": "tăng nhẹ"
+    }
+  },
+  "lý lịch": {
+    "preserve_original": true,
+    "nâng cao": "làm sạch, phục hồi, và tăng cường đáng kể độ trong, tương phản, và chi tiết vi mô của nền. Loại bỏ các khuyết điểm nhỏ hoặc các yếu tố gây xao lãng nếu nó cải thiện bố cục tổng thể, nhưng phải duy trì cảnh và cấu trúc gốc.",
+    "noise_reduction": { "method": "AI_deep_learning_and_detail_preserving", "strength": "cao" }
+  },
+  "hậu_kỳ": {
+    "sharpening": {
+      "policy": "adaptive_frequency_selective_sharpening_extreme_detail",
+      "amount": 0.5, "radius": 1.5, "threshold": 3
+    },
+    "Clarity": "cao", "Dehaze": "trung bình", "micro_contrast": "cực cao"
+  },
+  "đầu ra": {
+    "độ phân giải": "9256x6944", "dpi": 300, "định dạng": "TIFF", "độ_sâu_màu": "16-bit", "không gian_màu": "Adobe RGB"
+  },
+  "negative_prompt": [
+    "da nhựa", "da sáp", "quá mịn", "airbrushed", "mất kết cấu da", "hiệu ứng tranh vẽ", "nhân vật game",
+    "già hơn tuổi thật", "da nhăn nheo", "thay đổi tư thế", "đặc điểm Tây hóa", "6 ngón tay", "tay/chân bị biến dạng",
+    "mặt béo", "mặt phúng phính", "tăng thể tích khuôn mặt",
+    "mặt bị ngắn lại", "mặt bị tròn hơn", "thay đổi tỷ lệ khuôn mặt", "cằm tròn", "cằm bị ngắn lại", "cằm bị đầy đặn hơn", "mất V-line", "lý tưởng hóa khuôn mặt", "má phúng phính", "mất đường viền hàm", "khuôn mặt đầy đặn", "má bầu bĩnh", "làm tròn đường viền hàm", "vân môi giả trên trẻ sơ sinh", "đường gạch dọc ở giữa môi dưới của trẻ sơ sinh",
+    "màu sắc không chân thực (unrealistic colors)",
+    "màu vật liệu sai (incorrect material color)",
+    "màu gỗ nhân tạo (artificial wood color)",
+    "màu da sai lệch (inaccurate skin tones)",
+    "quá bão hòa", "ánh sáng phẳng", "tóc bệt",
+    "màu sắc nhợt nhạt, bạc màu", "ảnh bị nhiễu, có hạt", "mờ, không sắc nét", "phẳng, thiếu chiều sâu, không nổi khối"
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "name": "Pika-AI v13.0",
-  "description": "Pika-AI v13.0 features the next-generation Zero-Tolerance Identity Preservation Core (v17.0). This AI upgrade introduces advanced multi-person scene integrity and stricter protocols for micro-feature preservation, ensuring group photo restorations are more accurate and individual identities are maintained with forensic-level precision.",
+  "name": "Pika-AI v1.0",
+  "description": "Pika-AI v1.0 introduces a Modular Core Architecture. Instead of shared technology prompts, each function (Retouch, Adjust, Studio, etc.) now uses its own dedicated set of core protocols (e.g., Identity, Forensic Reconstruction). This isolates functions, ensuring that updates to one tool do not affect another, and allows for future, tool-specific optimizations.",
   "requestFramePermissions": [],
   "prompt": ""
 }

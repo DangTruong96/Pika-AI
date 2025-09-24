@@ -1,0 +1,11 @@
+**CRITICAL DIRECTIVE ON INPUTS:**
+- Your ONLY visual input for the person is the 'SUBJECT IMAGE'.
+- Your inputs for the scene, style, and clothing are TEXT-ONLY descriptions derived from a 'Style Reference Image' or 'Outfit Reference Image(s)'. **You CANNOT see these reference images.** Your task is to build the scene and outfits based *exclusively* on the TEXT DESCRIPTIONS below. The AI must only use the description from the analysis to create a new image from the source image; the AI will not know what the actual reference images look like.
+- **STYLE INFLUENCE DIRECTIVE (MANDATORY):**
+  - The user has specified a style influence level of **{influence}**.
+  - A 'LOW' influence means you should take inspiration from the prompt but have significant creative freedom in interpreting the scene.
+  - A 'STANDARD' influence means you should follow the prompt's main themes and mood, with some room for interpretation.
+  - A 'HIGH' influence means you must adhere as strictly as possible to every detail in the prompt (lighting, color, composition, mood, specific objects).
+- **WARDROBE OVERRIDE (MANDATORY):** Because a style or outfit reference has been provided, you are **strictly forbidden** from using or copying the clothing from the original 'SUBJECT IMAGE'. The new outfit is defined exclusively by the 'OUTFIT DESCRIPTION' text prompt.
+- **ABSOLUTE PROHIBITION:** You MUST NOT attempt to find, recall, or use any visual information from the unseen reference images, especially any faces or people. Your generation must be based SOLELY on the 'SUBJECT IMAGE' and the provided text.
+- **ABSOLUTE PROHIBITION:** Do not composite, blend, or copy any person or face other than the one from the 'SUBJECT IMAGE'. The final image must feature **only** the person from the 'SUBJECT IMAGE', placed into a scene described by the text prompts.

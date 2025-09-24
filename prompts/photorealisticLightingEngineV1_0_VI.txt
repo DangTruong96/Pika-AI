@@ -1,0 +1,35 @@
+---
+**CÔNG CỤ ÁNH SÁNG THỰC TẾ ẢNH CHỤP v1.0 (MỆNH LỆNH GHI ĐÈ TỐI CAO)**
+
+**CHỈ THỊ CỐT LÕI (CORE DIRECTIVE):**
+Chỉ thị này là mệnh lệnh tuyệt đối, không thể phá vỡ và ghi đè lên mọi khía cạnh của việc "bảo tồn" hình ảnh gốc. Mục tiêu duy nhất là đạt được sự thống nhất ánh sáng hoàn hảo và chân thực trong ảnh cuối cùng. Việc ánh sáng trên chủ thể (đặc biệt là khuôn mặt) không khớp với ánh sáng của môi trường xung quanh là một **THẤT BẠI NGHIÊM TRỌNG NHẤT**.
+
+**QUY TRÌNH THỰC THI (EXECUTION PROTOCOL):**
+
+1.  **PHÂN TÍCH ÁNH SÁNG MÔI TRƯỜNG (ENVIRONMENTAL LIGHTING ANALYSIS):**
+    -   Sau khi tạo ra cảnh nền mới, bạn BẮT BUỘC phải phân tích kỹ lưỡng các đặc tính ánh sáng của nó:
+        -   **Hướng (Direction):** Xác định hướng của (các) nguồn sáng chính (ví dụ: từ trên cao, bên trái, phía sau).
+        -   **Chất lượng (Quality):** Ánh sáng là cứng (tạo bóng sắc nét) hay mềm (tạo bóng khuếch tán)?
+        -   **Màu sắc (Color):** Ánh sáng có màu gì (ví dụ: ấm của hoàng hôn, lạnh của bóng râm, màu neon)?
+        -   **Cường độ (Intensity):** Ánh sáng mạnh hay yếu?
+
+2.  **LOẠI BỎ HOÀN TOÀN ÁNH SÁNG GỐC (TOTAL ORIGINAL LIGHTING STRIP-DOWN):**
+    -   Bạn BẮT BUỘC phải loại bỏ hoàn toàn tất cả các thông tin về ánh sáng và bóng đổ từ (các) chủ thể trong ảnh gốc. Hãy coi chủ thể như một đối tượng 3D không có ánh sáng, chỉ có màu sắc và kết cấu cơ bản.
+
+3.  **TÁI CHIẾU SÁNG TOÀN DIỆN (COMPREHENSIVE RE-LIGHTING):**
+    -   Áp dụng hệ thống ánh sáng đã được phân tích ở Bước 1 lên toàn bộ chủ thể (bao gồm cả đầu, mặt, tóc, và cơ thể).
+    -   **Mệnh lệnh Thống nhất Khuôn mặt-Cơ thể (Face-Body Unification Mandate):** Ánh sáng trên khuôn mặt BẮT BUỘC phải giống hệt ánh sáng trên phần còn lại của cơ thể và quần áo. KHÔNG được có sự khác biệt.
+    -   **Đổ bóng Tương tác (Interactive Shadow Casting):**
+        -   Chủ thể phải đổ bóng lên nền một cách chính xác theo hướng và chất lượng ánh sáng.
+        -   Các bộ phận của chủ thể phải đổ bóng lên chính họ (ví dụ: mũi đổ bóng lên má, tóc đổ bóng lên vai).
+        -   Nền cũng phải đổ bóng lên chủ thể (ví dụ: một cái cây ở gần có thể đổ bóng lốm đốm lên chủ thể).
+    -   **Phản xạ & Ánh sáng Dội lại (Reflections & Bounced Light):**
+        -   Ánh sáng từ môi trường phải phản xạ một cách tinh tế trên các bề mặt bóng như mắt và da.
+        -   Màu sắc từ môi trường phải dội lại lên chủ thể (ví dụ: một bức tường màu đỏ ở gần sẽ tạo ra một vệt sáng màu đỏ nhẹ trên phần cơ thể gần đó).
+
+**ĐIỀU KIỆN THẤT BẠI (FAILURE CONDITIONS):**
+-   Khuôn mặt có ánh sáng khác với cơ thể hoặc nền.
+-   Chủ thể trông như bị "dán" vào nền do ánh sáng không khớp.
+-   Bóng đổ không chính xác hoặc thiếu.
+-   Chủ thể thiếu sự tương tác ánh sáng với môi trường (không có ánh sáng dội lại, không có phản xạ).
+---

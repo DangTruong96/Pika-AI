@@ -7,19 +7,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BrushIcon, IdCardIcon, AdjustmentsIcon, MagicWandIcon, ExpandIcon, PlusCircleIcon, DocumentScannerIcon, TagIcon, SparklesIcon, UsersIcon, UserCircleIcon, RedoIcon, UndoIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, ChevronDownIcon, UploadIcon, XMarkIcon } from './icons';
-// Fix: Import Gender type from App.tsx
-import type { Tab, Gender } from '../App';
+// Fix: Removed unused AdjustmentsIcon import.
+import { BrushIcon, IdCardIcon, ExpandIcon, SparklesIcon, UsersIcon, XMarkIcon, UploadIcon, EyeIcon } from './icons';
+import type { Tab, Gender } from '../hooks/usePika';
 import RetouchPanel, { SelectionMode, BrushMode } from './RetouchPanel';
 import IdPhotoPanel from './IdPhotoPanel';
 import AdjustmentPanel from './AdjustmentPanel';
 import ExpandPanel from './ExpandPanel';
-import CompositePanel from './CompositePanel';
-import ScanPanel from './ScanPanel';
-import ManualScanPanel from './ManualScanPanel';
-import type { Enhancement, IdPhotoOptions } from '../services/geminiService';
-
-export type PoseStyle = 'automatic' | 'dynamic' | 'candid' | 'formal';
+import type { IdPhotoOptions } from '../services/geminiService';
 
 interface EditorSidebarProps {
   className?: string;
@@ -27,11 +22,9 @@ interface EditorSidebarProps {
   isLoading: boolean;
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
-  // FIX: (components/EditorSidebar.tsx line 285) Add missing `currentImage` prop to be passed to child components.
   currentImage: File | null;
   onApplyRetouch: (promptOverride?: string) => void;
   onApplyIdPhoto: (options: IdPhotoOptions) => void;
-  // Fix: Add missing props for ID Photo panel
   idPhotoGender: Gender;
   onIdPhotoGenderChange: (gender: Gender) => void;
   onApplyAdjustment: (prompt: string) => void;
@@ -43,28 +36,14 @@ interface EditorSidebarProps {
   hasExpansion: boolean;
   onSetAspectExpansion: (aspect: number | null) => void;
   imageDimensions: { width: number, height: number } | null;
-  onApplyComposite: () => void;
-  insertSubjectFiles: File[];
-  onInsertSubjectFilesChange: (files: File[] | ((currentFiles: File[]) => File[])) => void;
-  insertStyleFiles: File[];
-  onInsertStyleFilesChange: (files: File[]) => void;
-  insertBackgroundFile: File | null;
-  onInsertBackgroundFileChange: (file: File | null) => void;
-  insertPrompt: string;
-  onInsertPromptChange: (prompt: string) => void;
-  onApplyScan: (enhancement: Enhancement, removeShadows: boolean, restoreText: boolean, removeHandwriting: boolean) => void;
-  onApplyManualScan: () => void;
-  onEnterManualMode: () => boolean;
-  onCancelManualMode: () => void;
-  scanHistory: string[];
-  onReviewScan: (url: string) => void;
   onApplyExtract: () => void;
   extractPrompt: string;
   onExtractPromptChange: (prompt: string) => void;
   extractHistoryFiles: File[][];
   extractedHistoryItemUrls: string[][];
-  onUseExtractedAsStyle: (file: File) => void;
+  onUseExtractedAsOutfit: (file: File) => void;
   onDownloadExtractedItem: (file: File) => void;
+  onClearExtractHistory: () => void;
   isMaskPresent: boolean;
   clearMask: () => void;
   retouchPrompt: string;
@@ -78,55 +57,41 @@ interface EditorSidebarProps {
   setBrushSize: (size: number) => void;
   isHotspotSelected: boolean;
   onClearHotspot: () => void;
-  isManualScanMode: boolean;
-  setIsManualScanMode: (isManual: boolean) => void;
   onRequestFileUpload: () => void;
   studioPrompt: string;
   onStudioPromptChange: (prompt: string) => void;
-  studioPoseStyle: PoseStyle;
-  onStudioPoseStyleChange: (style: PoseStyle) => void;
   onApplyStudio: () => void;
   studioStyleFile: File | null;
   onStudioStyleFileChange: (file: File | null) => void;
   studioStyleInfluence: number;
   onStudioStyleInfluenceChange: (value: number) => void;
-  scanEnhancement: Enhancement;
-  onScanEnhancementChange: (e: Enhancement) => void;
-  scanRemoveShadows: boolean;
-  onScanRemoveShadowsChange: (c: boolean) => void;
-  scanRestoreText: boolean;
-  onScanRestoreTextChange: (c: boolean) => void;
-  scanRemoveHandwriting: boolean;
-  onScanRemoveHandwritingChange: (c: boolean) => void;
+  studioOutfitFiles: File[];
+  onStudioAddOutfitFile: (file: File) => void;
+  onStudioRemoveOutfitFile: (index: number) => void;
+  studioSubjects: File[];
+  onStudioAddSubject: (file: File) => void;
+  onStudioRemoveSubject: (index: number) => void;
   expandActiveAspect: number | null;
-  onGenerateCreativePrompt: (context: 'studio' | 'insert') => void;
+  onGenerateCreativePrompt: () => void;
+  onViewExtractedItem: (setIndex: number, itemIndex: number) => void;
 }
 
 export const TABS_CONFIG = [
     { id: 'retouch', icon: BrushIcon, tooltip: 'tooltipRetouch' },
     { id: 'adjust', icon: SparklesIcon, tooltip: 'tooltipAdjust' },
     { id: 'studio', icon: UsersIcon, tooltip: 'tooltipStudio' },
-    { id: 'insert', icon: PlusCircleIcon, tooltip: 'tooltipInsert' },
     { id: 'idphoto', icon: IdCardIcon, tooltip: 'tooltipIdPhoto' },
     { id: 'expand', icon: ExpandIcon, tooltip: 'tooltipExpand' },
-    { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
 ];
 
-const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoaded' | 'studioPrompt' | 'onStudioPromptChange' | 'studioPoseStyle' | 'onStudioPoseStyleChange' | 'onApplyStudio' | 'studioStyleFile' | 'onStudioStyleFileChange' | 'studioStyleInfluence' | 'onStudioStyleInfluenceChange' | 'onGenerateCreativePrompt'>> = 
-({ isLoading, isImageLoaded, studioPrompt, onStudioPromptChange, studioPoseStyle, onStudioPoseStyleChange, onApplyStudio, studioStyleFile, onStudioStyleFileChange, studioStyleInfluence, onStudioStyleInfluenceChange, onGenerateCreativePrompt }) => {
+const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoaded' | 'studioPrompt' | 'onStudioPromptChange' | 'onApplyStudio' | 'studioStyleFile' | 'onStudioStyleFileChange' | 'studioStyleInfluence' | 'onStudioStyleInfluenceChange' | 'onGenerateCreativePrompt' | 'studioSubjects' | 'onStudioAddSubject' | 'onStudioRemoveSubject' | 'currentImage' | 'studioOutfitFiles' | 'onStudioAddOutfitFile' | 'onStudioRemoveOutfitFile'>> = React.memo(
+({ isLoading, isImageLoaded, studioPrompt, onStudioPromptChange, onApplyStudio, studioStyleFile, onStudioStyleFileChange, studioStyleInfluence, onStudioStyleInfluenceChange, onGenerateCreativePrompt, studioSubjects, onStudioAddSubject, onStudioRemoveSubject, currentImage, studioOutfitFiles, onStudioAddOutfitFile, onStudioRemoveOutfitFile }) => {
     const { t } = useTranslation();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onApplyStudio();
     };
-    
-    const poseOptions: { value: PoseStyle, label: string }[] = [
-        { value: 'automatic', label: t('studioPoseStyleAutomatic') },
-        { value: 'dynamic', label: t('studioPoseStyleDynamic') },
-        { value: 'candid', label: t('studioPoseStyleCandid') },
-        { value: 'formal', label: t('studioPoseStyleFormal') },
-    ];
 
     const handleStyleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -135,7 +100,21 @@ const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoade
         e.target.value = '';
     };
 
-    const StylePreview: React.FC<{ file: File }> = ({ file }) => {
+    const handleOutfitFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            onStudioAddOutfitFile(e.target.files[0]);
+        }
+        e.target.value = '';
+    };
+
+    const handleSubjectFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0] && isImageLoaded) {
+            onStudioAddSubject(e.target.files[0]);
+        }
+        e.target.value = '';
+    };
+
+    const Preview: React.FC<{ file: File }> = ({ file }) => {
         const [url, setUrl] = useState<string | null>(null);
         useEffect(() => {
             const objectUrl = URL.createObjectURL(file);
@@ -144,14 +123,44 @@ const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoade
         }, [file]);
 
         if (!url) return null;
-        return <img src={url} alt="Style Reference" className="w-full h-full object-cover" />;
+        return <img src={url} alt="Preview" className="w-full h-full object-cover" />;
     };
+    
+    const allSubjects = currentImage ? [currentImage, ...studioSubjects] : [];
 
     return (
         <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
             <h3 className="text-lg font-semibold text-gray-200">{t('studioTitle')}</h3>
             <p className="text-sm text-gray-400 -mt-2 text-center">{t('studioDescription')}</p>
             <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-3">
+                
+                 <div className="w-full flex flex-col items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-300">{t('studioSubjectsCount', { count: allSubjects.length, max: 7 })}</span>
+                    <div className="w-full flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                        {allSubjects.map((subject, index) => (
+                            <div key={index} className="relative w-16 h-16 rounded-lg flex-shrink-0 bg-black/20 overflow-hidden border border-white/10">
+                                <Preview file={subject} />
+                                {index > 0 && !isLoading && (
+                                <button
+                                    type="button"
+                                    onClick={() => onStudioRemoveSubject(index - 1)}
+                                    className="absolute -top-1 -right-1 p-0.5 bg-black/70 rounded-full text-white hover:bg-red-500 transition-colors"
+                                    title={t('remove')}
+                                >
+                                    <XMarkIcon className="w-4 h-4" />
+                                </button>
+                                )}
+                            </div>
+                        ))}
+                        {isImageLoaded && allSubjects.length < 7 && (
+                            <label htmlFor="studio-subject-file-input" className="w-16 h-16 flex-shrink-0 rounded-lg border-2 border-dashed border-white/20 hover:border-cyan-500 flex items-center justify-center cursor-pointer transition-colors" title={t('studioAddSubject')}>
+                                <UploadIcon className="w-6 h-6 text-gray-400" />
+                            </label>
+                        )}
+                        <input id="studio-subject-file-input" type="file" className="hidden" accept="image/*" onChange={handleSubjectFileChange} disabled={isLoading || !isImageLoaded || allSubjects.length >= 7} />
+                    </div>
+                </div>
+
                 <div className="w-full flex items-center gap-2">
                     <input
                         type="text"
@@ -163,7 +172,7 @@ const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoade
                     />
                     <button 
                         type="button" 
-                        onClick={() => onGenerateCreativePrompt('studio')}
+                        onClick={onGenerateCreativePrompt}
                         disabled={isLoading || !isImageLoaded}
                         className="p-4 bg-white/5 rounded-lg text-cyan-300 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title={t('suggestionTitle')}
@@ -171,54 +180,66 @@ const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoade
                         <SparklesIcon className="w-6 h-6" />
                     </button>
                 </div>
-                
-                <div className="w-full flex flex-col items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-300">{t('studioPoseStyle')}</span>
-                    <div className="flex items-center justify-center gap-1 rounded-lg bg-black/30 p-1 flex-wrap">
-                        {poseOptions.map(({ value, label }) => (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => onStudioPoseStyleChange(value)}
-                                disabled={isLoading || !isImageLoaded}
-                                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${studioPoseStyle === value ? 'bg-white/15 text-white shadow-sm' : 'bg-transparent hover:bg-white/10 text-gray-300'}`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
 
-                <div className="w-full flex flex-col items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-300">{t('insertStyle')}</span>
-                    <div className="flex items-center justify-center gap-2">
-                         <label htmlFor="studio-style-file-input" className={`relative w-24 h-24 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-colors ${studioStyleFile ? 'border-cyan-500' : 'border-dashed border-white/20 hover:border-cyan-500'}`}>
-                            {studioStyleFile ? (
-                                <>
-                                    <StylePreview file={studioStyleFile} />
-                                    <button type="button" onClick={() => onStudioStyleFileChange(null)} className="absolute top-1 right-1 p-0.5 bg-black/50 rounded-full text-white hover:bg-red-500"><XMarkIcon className="w-4 h-4"/></button>
-                                </>
-                            ): (
-                                <UploadIcon className="w-8 h-8 text-gray-400"/>
+                <div className="w-full flex items-start justify-center gap-4">
+                    <div className="flex-1 flex flex-col items-center gap-2">
+                        {/* Fix: Corrected the translation key from 'insertStyle' to 'studioStyle' to resolve a TypeScript error. */}
+                        <span className="text-sm font-semibold text-gray-300">{t('studioStyle')}</span>
+                        <div className="flex items-center justify-center gap-2">
+                             <label htmlFor="studio-style-file-input" className={`relative w-24 h-24 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-colors overflow-hidden bg-black/20 ${studioStyleFile ? 'border-cyan-500' : 'border-dashed border-white/20 hover:border-cyan-500'}`}>
+                                {studioStyleFile ? (
+                                    <>
+                                        <Preview file={studioStyleFile} />
+                                        <button type="button" onClick={(e) => { e.preventDefault(); onStudioStyleFileChange(null); }} className="absolute top-1 right-1 p-0.5 bg-black/50 rounded-full text-white hover:bg-red-500"><XMarkIcon className="w-4 h-4"/></button>
+                                    </>
+                                ): (
+                                    <UploadIcon className="w-8 h-8 text-gray-400"/>
+                                )}
+                            </label>
+                            <input id="studio-style-file-input" type="file" className="hidden" accept="image/*" onChange={handleStyleFileChange} />
+
+                            {studioStyleFile && (
+                                <div className="flex-grow flex flex-col items-center gap-2 bg-white/5 p-2 rounded-lg">
+                                    <label htmlFor="style-influence-slider" className="text-xs font-medium text-gray-300">{t('studioStyleInfluenceLabel')}: {Math.round(studioStyleInfluence * 100)}%</label>
+                                    <input
+                                        id="style-influence-slider"
+                                        type="range"
+                                        min="0.1"
+                                        max="1.0"
+                                        step="0.05"
+                                        value={studioStyleInfluence}
+                                        onChange={(e) => onStudioStyleInfluenceChange(parseFloat(e.target.value))}
+                                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                                    />
+                                </div>
                             )}
-                        </label>
-                        <input id="studio-style-file-input" type="file" className="hidden" accept="image/*" onChange={handleStyleFileChange} />
-
-                        {studioStyleFile && (
-                            <div className="flex-grow flex flex-col items-center gap-2 bg-white/5 p-2 rounded-lg">
-                                <label htmlFor="style-influence-slider" className="text-xs font-medium text-gray-300">{t('studioStyleInfluenceLabel')}: {Math.round(studioStyleInfluence * 100)}%</label>
-                                <input
-                                    id="style-influence-slider"
-                                    type="range"
-                                    min="0.1"
-                                    max="1.0"
-                                    step="0.05"
-                                    value={studioStyleInfluence}
-                                    onChange={(e) => onStudioStyleInfluenceChange(parseFloat(e.target.value))}
-                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                                />
-                            </div>
-                        )}
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-300">{t('studioObjects')}</span>
+                        <div className="w-full flex flex-wrap items-center justify-center gap-2 p-1 min-h-[6rem]">
+                            {studioOutfitFiles.map((file, index) => (
+                                <div key={index} className="relative w-20 h-20 rounded-lg flex-shrink-0 bg-black/20 overflow-hidden border border-cyan-500">
+                                    <Preview file={file} />
+                                    {!isLoading && (
+                                        <button
+                                            type="button"
+                                            onClick={() => onStudioRemoveOutfitFile(index)}
+                                            className="absolute -top-1 -right-1 p-0.5 bg-black/70 rounded-full text-white hover:bg-red-500 transition-colors"
+                                            title={t('remove')}
+                                        >
+                                            <XMarkIcon className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            {isImageLoaded && studioOutfitFiles.length < 3 && (
+                                <label htmlFor="studio-outfit-file-input" className="w-20 h-20 flex-shrink-0 rounded-lg border-2 border-dashed border-white/20 hover:border-cyan-500 flex items-center justify-center cursor-pointer transition-colors">
+                                    <UploadIcon className="w-8 h-8 text-gray-400" />
+                                </label>
+                            )}
+                        </div>
+                        <input id="studio-outfit-file-input" type="file" className="hidden" accept="image/*" onChange={handleOutfitFileChange} disabled={isLoading || !isImageLoaded || studioOutfitFiles.length >= 3} />
                     </div>
                 </div>
                 
@@ -232,13 +253,12 @@ const StudioPanel: React.FC<Pick<EditorSidebarProps, 'isLoading' | 'isImageLoade
             </form>
         </div>
     );
-};
+});
 
 const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const { className, isImageLoaded, isLoading, activeTab, setActiveTab } = props;
   const { t } = useTranslation();
   const tabsContainerRef = useRef<HTMLDivElement>(null);
-  const isMobile = window.innerWidth < 1024;
 
   const handleWheel = (e: WheelEvent) => {
     if (tabsContainerRef.current) {
@@ -271,10 +291,6 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   }, [activeTab]);
 
   const renderActivePanel = () => {
-    if (props.isManualScanMode && activeTab === 'scan') {
-        return <ManualScanPanel onApply={props.onApplyManualScan} onCancel={props.onCancelManualMode} isLoading={isLoading} />;
-    }
-
     switch (activeTab) {
       case 'retouch':
         return <RetouchPanel 
@@ -299,8 +315,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
           onExtractPromptChange={props.onExtractPromptChange}
           extractHistoryFiles={props.extractHistoryFiles}
           extractedHistoryItemUrls={props.extractedHistoryItemUrls}
-          onUseExtractedAsStyle={props.onUseExtractedAsStyle}
+          onUseExtractedAsOutfit={props.onUseExtractedAsOutfit}
           onDownloadExtractedItem={props.onDownloadExtractedItem}
+          onClearExtractHistory={props.onClearExtractHistory}
+          onViewExtractedItem={props.onViewExtractedItem}
         />;
       case 'idphoto':
         return <IdPhotoPanel
@@ -331,50 +349,25 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
           imageDimensions={props.imageDimensions}
           activeAspect={props.expandActiveAspect}
         />;
-      case 'insert':
-        return <CompositePanel
-          onApplyComposite={props.onApplyComposite}
-          isLoading={isLoading}
-          subjectFiles={props.insertSubjectFiles}
-          onSubjectFilesChange={props.onInsertSubjectFilesChange}
-          styleFiles={props.insertStyleFiles}
-          onStyleFilesChange={props.onInsertStyleFilesChange}
-          backgroundFile={props.insertBackgroundFile}
-          onBackgroundFileChange={props.onInsertBackgroundFileChange}
-          prompt={props.insertPrompt}
-          onPromptChange={props.onInsertPromptChange}
-          onGenerateCreativePrompt={() => props.onGenerateCreativePrompt('insert')}
-        />;
-      case 'scan':
-        return <ScanPanel
-            onApplyScan={props.onApplyScan}
-            isLoading={isLoading}
-            isImageLoaded={isImageLoaded}
-            scanHistory={props.scanHistory}
-            onReviewScan={props.onReviewScan}
-            enhancement={props.scanEnhancement}
-            onEnhancementChange={props.onScanEnhancementChange}
-            removeShadows={props.scanRemoveShadows}
-            onRemoveShadowsChange={props.onScanRemoveShadowsChange}
-            restoreText={props.scanRestoreText}
-            onRestoreTextChange={props.onScanRestoreTextChange}
-            removeHandwriting={props.scanRemoveHandwriting}
-            onRemoveHandwritingChange={props.onScanRemoveHandwritingChange}
-        />;
       case 'studio':
         return <StudioPanel
             isLoading={isLoading}
             isImageLoaded={isImageLoaded}
+            currentImage={props.currentImage}
             studioPrompt={props.studioPrompt}
             onStudioPromptChange={props.onStudioPromptChange}
-            studioPoseStyle={props.studioPoseStyle}
-            onStudioPoseStyleChange={props.onStudioPoseStyleChange}
             onApplyStudio={props.onApplyStudio}
             studioStyleFile={props.studioStyleFile}
             onStudioStyleFileChange={props.onStudioStyleFileChange}
             studioStyleInfluence={props.studioStyleInfluence}
             onStudioStyleInfluenceChange={props.onStudioStyleInfluenceChange}
-            onGenerateCreativePrompt={() => props.onGenerateCreativePrompt('studio')}
+            studioOutfitFiles={props.studioOutfitFiles}
+            onStudioAddOutfitFile={props.onStudioAddOutfitFile}
+            onStudioRemoveOutfitFile={props.onStudioRemoveOutfitFile}
+            onGenerateCreativePrompt={props.onGenerateCreativePrompt}
+            studioSubjects={props.studioSubjects}
+            onStudioAddSubject={props.onStudioAddSubject}
+            onStudioRemoveSubject={props.onStudioRemoveSubject}
         />;
       default:
         return null;
@@ -387,8 +380,9 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       <div className="w-full flex items-center justify-center p-1 bg-black/20 rounded-2xl border border-white/10 mb-3 sticky top-2 z-10">
           <div ref={tabsContainerRef} className="flex items-center gap-1.5 overflow-x-auto pb-1.5 -mb-1.5">
               {TABS_CONFIG.map(tab => {
-                  const isTabDisabled = !isImageLoaded && !['insert', 'studio'].includes(tab.id);
+                  const isTabDisabled = !isImageLoaded && !['studio'].includes(tab.id);
                   const isActive = activeTab === tab.id && !isTabDisabled;
+                  const label = isTabDisabled ? t('uploadImage') : t(tab.tooltip as any);
                   
                   const handleTabClick = () => {
                       if (isTabDisabled) {
@@ -407,7 +401,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
                           className={`relative p-3 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-300 ease-in-out transform disabled:opacity-50 disabled:cursor-not-allowed ${
                               isActive ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30' : 'bg-white/5 text-gray-300 hover:bg-white/10'
                           }`}
-                          title={isTabDisabled ? t('uploadImage') : t(tab.tooltip as any)}
+                          title={label}
+                          aria-label={label}
                       >
                           <tab.icon className="w-6 h-6" />
                       </button>
@@ -422,4 +417,4 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   );
 };
 
-export default EditorSidebar;
+export default React.memo(EditorSidebar);

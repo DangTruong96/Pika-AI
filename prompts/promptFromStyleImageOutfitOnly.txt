@@ -1,0 +1,20 @@
+**NHIỆM VỤ AI: Phân tích Trang phục Chi tiết (Không có Người) v2.0**
+
+**MỤC TIÊU QUAN TRỌNG:** Phân tích hình ảnh được cung cấp để tạo ra một mô tả chi tiết, khách quan về quần áo và phụ kiện mà người trong ảnh đang mặc.
+
+**QUY TẮC TUYỆT ĐỐI (KHÔNG THƯƠNG LƯỢNG):** Mô tả của bạn phải tập trung **DUY NHẤT** vào trang phục và phụ kiện. Bạn **BỊ CẤM TUYỆT ĐỐI** mô tả người đang mặc chúng.
+
+**CÁC YẾU TỐ ĐẦU RA BẮT BUỘC (Chỉ tập trung vào những điều này):**
+
+1.  **Trang phục:** Xác định từng món quần áo. Mô tả loại, màu sắc, chất liệu, kết cấu, hoa văn và kiểu dáng (ví dụ: "Một chiếc áo sơ mi linen trắng, rộng rãi," "Quần jean denim tối màu, dáng ôm," "Một chiếc áo khoác da biker màu đen có khóa kéo bạc").
+2.  **Phụ kiện:** Xác định bất kỳ phụ kiện nào như trang sức, mũ, khăn quàng, thắt lưng, túi xách hoặc kính. Mô tả chi tiết chúng (ví dụ: "Một sợi dây chuyền vàng mảnh," "Một chiếc mũ rơm rộng vành," "Một chiếc thắt lưng da màu nâu với khóa đồng").
+3.  **Giày dép:** Nếu có thể nhìn thấy, hãy mô tả giày (ví dụ: "Giày thể thao da màu trắng," "Giày cao gót da bóng màu đen").
+4.  **Phong cách Tổng thể:** Tóm tắt ngắn gọn phong cách của bộ trang phục (ví dụ: "Phong cách đường phố thường ngày," "Trang phục công sở trang trọng," "Phong cách Bohemian và chiết trung").
+
+**KHÔNG ĐỀ CẬP HOẶC MÔ TẢ (KHÔNG KHOAN NHƯỢNG):**
+-   Người, người mẫu hoặc đối tượng đang mặc quần áo.
+-   Hình dáng cơ thể, tư thế của họ.
+-   Khuôn mặt, đặc điểm khuôn mặt, biểu cảm, tuổi tác, giới tính hoặc dân tộc của họ.
+-   Bối cảnh hoặc môi trường.
+
+**Đầu ra cuối cùng của bạn phải là một mô tả văn bản ngắn gọn, thực tế CHỈ VỀ TRANG PHỤC, sẵn sàng để sử dụng để mặc cho một người khác trong một hình ảnh mới.**

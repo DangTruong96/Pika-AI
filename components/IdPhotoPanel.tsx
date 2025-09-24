@@ -1,3 +1,5 @@
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -7,7 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { type IdPhotoOptions } from '../services/geminiService';
 import Spinner from './Spinner';
-import type { Gender } from '../App';
+import type { Gender } from '../hooks/usePika';
 
 interface IdPhotoPanelProps {
   onApplyIdPhoto: (options: IdPhotoOptions) => void;
@@ -26,33 +28,38 @@ type Hair = 'keep' | 'professional-short' | 'professional-tied-back' | 'professi
 type Size = '3x4' | '4x6' | '2x2' | '3.5x4.5' | '5x5';
 
 
-const SegmentedControl = <T extends string>({ label, options, selected, onSelect, disabled }: {
+// Fix: Correctly define a generic memoized component to accept type arguments.
+interface SegmentedControlProps<T extends string> {
     label: string;
     options: { value: T; label: string }[];
     selected: T;
     onSelect: (value: T) => void;
     disabled: boolean;
-}) => (
-    <div className="w-full flex flex-col items-center gap-2">
-        <span className="text-sm font-medium text-gray-300">{label}:</span>
-        <div className="flex items-center justify-center gap-1 rounded-lg bg-black/30 p-1 flex-wrap">
-            {options.map(({ value, label: optionLabel }) => (
-                <button
-                    key={value}
-                    onClick={() => onSelect(value)}
-                    disabled={disabled}
-                    className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 ${
-                        selected === value
-                            ? 'bg-white/15 text-white shadow-sm'
-                            : 'bg-transparent hover:bg-white/10 text-gray-300'
-                    }`}
-                >
-                    {optionLabel}
-                </button>
-            ))}
+}
+
+const SegmentedControl = React.memo(function SegmentedControl<T extends string>({ label, options, selected, onSelect, disabled }: SegmentedControlProps<T>) {
+    return (
+        <div className="w-full flex flex-col items-center gap-2">
+            <span className="text-sm font-medium text-gray-300">{label}:</span>
+            <div className="flex items-center justify-center gap-1 rounded-lg bg-black/30 p-1 flex-wrap">
+                {options.map(({ value, label: optionLabel }) => (
+                    <button
+                        key={value}
+                        onClick={() => onSelect(value)}
+                        disabled={disabled}
+                        className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 ${
+                            selected === value
+                                ? 'bg-white/15 text-white shadow-sm'
+                                : 'bg-transparent hover:bg-white/10 text-gray-300'
+                        }`}
+                    >
+                        {optionLabel}
+                    </button>
+                ))}
+            </div>
         </div>
-    </div>
-);
+    );
+}) as <T extends string>(props: SegmentedControlProps<T>) => React.ReactElement;
 
 const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, isImageLoaded, currentImage, gender, onGenderChange }) => {
   const { t } = useTranslation();
@@ -149,42 +156,41 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
       <p className="text-sm text-gray-400 -mt-2 text-center">{t('idPhotoDescription')}</p>
       
       <div className="w-full flex flex-col items-center gap-4">
-          <SegmentedControl
+          <SegmentedControl<PhotoType>
               label={t('idPhotoType')}
               options={[
                 { value: 'standard', label: t('idPhotoTypeStandard') }, 
                 { value: 'newborn', label: t('idPhotoTypeNewborn') }, 
               ]}
               selected={photoType}
-              // Fix: Wrapped state setter in a lambda to resolve TypeScript inference issue.
-              onSelect={(value) => setPhotoType(value)}
+              onSelect={setPhotoType}
               disabled={isLoading || !isImageLoaded}
           />
           
           {photoType === 'standard' ? (
             <div className="w-full flex flex-col items-center gap-4 animate-fade-in">
-              <SegmentedControl
+              <SegmentedControl<Gender>
                   label={t('idPhotoGender')}
                   options={[{ value: 'female', label: t('idPhotoGenderFemale') }, { value: 'male', label: t('idPhotoGenderMale') }]}
                   selected={gender}
                   onSelect={handleGenderChange}
                   disabled={isLoading || !isImageLoaded}
               />
-              <SegmentedControl
+              <SegmentedControl<Outfit>
                   label={t('idPhotoOutfit')}
                   options={outfitOptions}
                   selected={outfit}
-                  onSelect={(value) => setOutfit(value)}
+                  onSelect={setOutfit}
                   disabled={isLoading || !isImageLoaded}
               />
-               <SegmentedControl
+               <SegmentedControl<Hair>
                   label={t('idPhotoHairstyle')}
                   options={gender === 'male' ? maleHairOptions : femaleHairOptions}
                   selected={hair}
-                  onSelect={(value) => setHair(value)}
+                  onSelect={setHair}
                   disabled={isLoading || !isImageLoaded}
               />
-              <SegmentedControl
+              <SegmentedControl<Expression>
                   label={t('idPhotoExpression')}
                   options={[
                     { value: 'keep', label: t('idPhotoExpressionKeep') }, 
@@ -193,7 +199,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                     { value: 'big-smile', label: t('idPhotoExpressionBigSmile') }
                   ]}
                   selected={expression}
-                  onSelect={(value) => setExpression(value)}
+                  onSelect={setExpression}
                   disabled={isLoading || !isImageLoaded}
               />
               <div className="w-full flex flex-col items-center gap-2 pt-2">
@@ -215,7 +221,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
             </div>
           )}
 
-          <SegmentedControl
+          <SegmentedControl<Background>
               label={t('idPhotoBackgroundColor')}
               options={[
                 { value: 'white', label: t('idPhotoBgWhite') }, 
@@ -224,10 +230,10 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                 { value: 'green', label: t('idPhotoBgGreen') }
               ]}
               selected={background}
-              onSelect={(value) => setBackground(value)}
+              onSelect={setBackground}
               disabled={isLoading || !isImageLoaded}
           />
-          <SegmentedControl
+          <SegmentedControl<Size>
               label={t('idPhotoSize')}
               options={[
                 { value: '3x4', label: '3x4 cm' }, 
@@ -237,7 +243,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                 { value: '2x2', label: '2x2 in' }
               ]}
               selected={size}
-              onSelect={(value) => setSize(value)}
+              onSelect={setSize}
               disabled={isLoading || !isImageLoaded}
           />
       </div>
@@ -253,4 +259,4 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
   );
 };
 
-export default IdPhotoPanel;
+export default React.memo(IdPhotoPanel);

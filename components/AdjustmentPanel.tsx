@@ -28,7 +28,7 @@ interface EnhancePanelProps {
 
 type EnhanceMode = 'oneClick' | 'portrait' | 'color' | 'filters';
 
-// Fix: Changed JSX.Element to React.ReactElement to resolve JSX namespace error.
+// Fix: Changed icon type to React.FC to allow passing props like className.
 type AdjustmentPreset = {
   name: string;
   prompt?: string;
@@ -68,6 +68,7 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
     presets: [
       { name: t('oneClickAutoEnhance'), prompt: t('oneClickAutoEnhancePrompt'), icon: SparklesIcon },
       { name: t('oneClickRestoreModern'), prompt: t('oneClickRestoreModernPrompt'), icon: SparklesIcon },
+      { name: t('oneClickReconstructForPrint'), prompt: t('oneClickReconstructForPrintPrompt'), icon: ViewfinderCircleIcon },
       { name: t('adjustmentUpscale8K'), prompt: t('adjustmentUpscale8KPrompt'), icon: UpscaleIcon },
       { name: t('oneClickBoostColor'), prompt: t('oneClickBoostColorPrompt'), icon: PaletteIcon },
       { name: t('oneClickFixLighting'), prompt: t('oneClickFixLightingPrompt'), icon: SunIcon },
@@ -77,7 +78,8 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
   const portraitFixes: { presets: AdjustmentPreset[] } = {
       presets: [
           { name: t('adjustmentPortraitPreset1'), prompt: t('adjustmentPortraitSmoothSkinPrompt'), icon: BlemishRemovalIcon },
-          { name: t('adjustmentPortraitGentleSmile'), prompt: t('adjustmentPortraitGentleSmilePrompt'), icon: SmileIcon },
+          { name: t('adjustmentNaturalSmile'), prompt: t('adjustmentNaturalSmilePrompt'), icon: SmileIcon },
+          { name: t('adjustmentSlimChinAndNeck'), prompt: t('adjustmentSlimChinAndNeckPrompt'), icon: FaceSlimIcon },
           { name: t('adjustmentOpenEyes'), prompt: t('adjustmentOpenEyesPrompt'), icon: EyeIcon },
           { name: t('adjustmentWhitenTeeth'), prompt: t('adjustmentWhitenTeethPrompt'), icon: SparklesIcon },
           { name: t('adjustmentPreset1'), prompt: t('adjustmentPortraitBlurBgPrompt'), icon: BlurBackgroundIcon },
@@ -221,4 +223,4 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
   );
 };
 
-export default AdjustmentPanel;
+export default React.memo(AdjustmentPanel);

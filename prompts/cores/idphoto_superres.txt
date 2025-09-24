@@ -1,0 +1,31 @@
+---
+**CÔNG CỤ SIÊU PHÂN GIẢI & TÁI TẠO CHI TIẾT v2.0 (GHI ĐÈ TỐI CAO)**
+
+**CHỈ THỊ CỐT LÕI:** Giao thức này định nghĩa quy trình kỹ thuật bắt buộc để đạt được chất lượng hình ảnh vượt trội. Nó hoạt động dựa trên nguyên tắc rằng việc tái tạo chi tiết ở độ phân giải cao hơn sẽ mang lại kết quả cuối cùng có chất lượng cao hơn.
+
+**QUY TRÌNH KỸ THUẬT BẮT BUỘC (INTERNAL WORKFLOW):**
+
+1.  **PHÂN TÍCH BAN ĐẦU:** Phân tích hình ảnh đầu vào để xác định các vùng có chi tiết thấp, mờ, hoặc bị ảnh hưởng bởi nhiễu/hiện vật nén.
+
+2.  **NỘI SUY VÀ NÂNG CẤP LÊN KHÔNG GIAN LÀM VIỆC 8K (INTERNAL UPSCALE):**
+    -   BẠN BẮT BUỘC phải nội suy hình ảnh lên một không gian làm việc có độ phân giải cực cao (ví dụ: 8K). Đây là một bước nội bộ và không phải là kích thước đầu ra cuối cùng.
+    -   Mục đích của bước này là tạo ra một "khung vẽ" kỹ thuật số lớn hơn để công cụ tái tạo có đủ "không gian" để vẽ lại các chi tiết một cách chính xác.
+
+3.  **TÁI TẠO PHÁP Y Ở ĐỘ PHÂN GIẢI 8K:**
+    -   Trong không gian làm việc 8K này, BẠN BẮT BUỘC phải thực thi **CÔNG CỤ TÁI TẠO PHÁP Y (FORENSIC RECONSTRUCTION ENGINE)**.
+    -   **Tái tạo Chi tiết Vi mô:** Vẽ lại các chi tiết bị mất hoặc không rõ ràng với độ chính xác cực cao. Điều này bao gồm:
+        -   **Da:** Tái tạo lại cấu trúc lỗ chân lông, các đường nét da nhỏ, và sự không hoàn hảo tự nhiên.
+        -   **Vải:** Vẽ lại từng sợi dệt, đường chỉ may, và kết cấu đặc trưng của vật liệu.
+        -   **Tóc:** Vẽ lại từng sợi tóc riêng lẻ, sắc nét.
+    -   **Lý do:** Việc thực hiện tái tạo ở độ phân giải cao cho phép AI tạo ra các chi tiết phức tạp và tinh vi hơn nhiều so với việc chỉnh sửa trực tiếp trên ảnh gốc có độ phân giải thấp.
+
+4.  **HOÀN THIỆN Ở ĐỘ PHÂN GIẢI CAO:** Áp dụng tất cả các bước chỉnh màu, ánh sáng, và làm nét cuối cùng trong không gian làm việc 8K để đảm bảo chất lượng tối đa.
+
+5.  **HẠ CỠ MẪU THÔNG MINH VỀ KÍCH THƯỚC ĐẦU RA (SMART DOWNSAMPLING):**
+    -   Sau khi quá trình tái tạo và hoàn thiện hoàn tất ở 8K, BẠN BẮT BUỘC phải sử dụng một thuật toán hạ cỡ mẫu chất lượng cao (ví dụ: Lanczos) để đưa hình ảnh về kích thước đầu ra được yêu cầu.
+    -   **Kết quả:** Quá trình này bảo toàn mật độ chi tiết cực cao đã được tạo ra ở bước 3, tạo ra một hình ảnh cuối cùng cực kỳ sắc nét và rõ ràng, vượt xa những gì có thể đạt được bằng cách làm nét thông thường ở độ phân giải gốc.
+
+**ĐIỀU KIỆN THẤT BẠI:**
+- Không thực hiện tái tạo chi tiết trong không gian làm việc có độ phân giải cao hơn.
+- Kết quả cuối cùng không thể hiện được mật độ chi tiết cao hơn đáng kể so với ảnh gốc.
+---

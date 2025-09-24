@@ -1,16 +1,19 @@
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { DownloadIcon, XMarkIcon, EyeIcon, EyeSlashIcon, ChevronLeftIcon, ChevronRightIcon, CheckIcon } from './icons';
+import type { TransformState } from '../hooks/useHistory';
 
 interface FullScreenViewerModalProps {
-  items: string[];
+  items: Array<{ url: string; transform: TransformState; }>;
   initialIndex: number;
-  type: 'history' | 'result';
+  type: 'history' | 'result' | 'extract';
   comparisonUrl: string | null;
   onClose: () => void;
   onDownload: (url: string) => void;
@@ -37,7 +40,10 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
     const swipeStartRef = useRef<{ x: number, y: number } | null>(null);
     
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
-    const imageUrl = items[currentIndex];
+    const currentItem = items[currentIndex];
+    const imageUrl = currentItem.url;
+    const currentTransform = currentItem.transform;
+    const transformString = useMemo(() => `rotate(${currentTransform.rotate}deg) scale(${currentTransform.scaleX}, ${currentTransform.scaleY})`, [currentTransform]);
     
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
@@ -217,6 +223,13 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
     };
 
     const canCompare = !!comparisonUrl;
+    
+    const selectButtonText = useMemo(() => {
+        if (type === 'extract') {
+            return t('extractUseAsOutfit');
+        }
+        return t('studioSelectResult');
+    }, [type, t]);
 
     return (
         <div
@@ -271,11 +284,13 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                                 <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-white/30 z-10 pointer-events-none"></div>
                                 {/* After Image Container */}
                                 <div className="w-1/2 h-full relative flex items-center justify-center p-4">
-                                    <img
-                                        src={imageUrl}
-                                        alt={t('viewEdited')}
-                                        className="w-full h-full object-contain pointer-events-none"
-                                    />
+                                    <div className="w-full h-full flex items-center justify-center" style={{ transform: transformString, transition: 'transform 0.2s ease-in-out' }}>
+                                        <img
+                                            src={imageUrl}
+                                            alt={t('viewEdited')}
+                                            className="w-full h-full object-contain pointer-events-none"
+                                        />
+                                    </div>
                                      <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold py-1 px-2 rounded-md pointer-events-none z-10">
                                         {t('viewEdited')}
                                     </div>
@@ -283,12 +298,14 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                             </div>
                         ) : (
                             // --- TOGGLE VIEW (MOBILE) OR NORMAL VIEW ---
-                            <img
-                                key={`${currentIndex}-${isComparing}`}
-                                src={isComparing && comparisonUrl ? comparisonUrl : imageUrl}
-                                alt={isComparing ? t('historyOriginal') : "Full screen result"}
-                                className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl pointer-events-none animate-fade-in"
-                            />
+                            <div className="w-full h-full flex items-center justify-center" style={{ transform: (isComparing && comparisonUrl) ? 'none' : transformString, transition: 'transform 0.2s ease-in-out' }}>
+                                <img
+                                    key={`${currentIndex}-${isComparing}`}
+                                    src={isComparing && comparisonUrl ? comparisonUrl : imageUrl}
+                                    alt={isComparing ? t('historyOriginal') : "Full screen result"}
+                                    className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl pointer-events-none animate-fade-in"
+                                />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -337,7 +354,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                     </button>
                     <button onClick={() => onSelect(imageUrl, currentIndex)} className="text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-2.5 px-5 rounded-xl transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 active:scale-95 text-base flex items-center gap-2">
                         <CheckIcon className="w-5 h-5"/>
-                        <span className="hidden sm:inline">{t('studioSelectResult')}</span>
+                        <span className="hidden sm:inline">{selectButtonText}</span>
                     </button>
                 </div>
             </div>
@@ -345,4 +362,4 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
     );
 };
 
-export default FullScreenViewerModal;
+export default React.memo(FullScreenViewerModal);

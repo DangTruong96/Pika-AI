@@ -7,9 +7,15 @@ import React, { useRef, useEffect } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import Spinner from './Spinner';
 import { ClockIcon, XMarkIcon } from './icons';
+import type { TransformState } from '../hooks/useHistory';
+
+interface HistoryItemData {
+  url: string;
+  transform: TransformState;
+}
 
 interface HistoryPillsProps {
-  historyItemUrls: string[];
+  historyItems: HistoryItemData[];
   results: string[];
   isGeneratingResults: boolean;
   expectedResultsCount: number;
@@ -23,7 +29,7 @@ interface HistoryPillsProps {
 }
 
 const HistoryPills: React.FC<HistoryPillsProps> = ({
-  historyItemUrls,
+  historyItems,
   results,
   isGeneratingResults,
   expectedResultsCount,
@@ -53,7 +59,7 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
   }, [isExpanded, currentIndex, isShowingResults]);
 
   const activeHistoryIndexForSlicing = resultsBaseHistoryIndex !== null ? resultsBaseHistoryIndex : currentIndex;
-  const visibleHistoryUrls = isShowingResults ? historyItemUrls.slice(0, activeHistoryIndexForSlicing + 1) : historyItemUrls;
+  const visibleHistoryItems = isShowingResults ? historyItems.slice(0, activeHistoryIndexForSlicing + 1) : historyItems;
   const bottomClass = isMobileToolbarVisible ? 'bottom-24' : 'bottom-4';
 
   return (
@@ -79,20 +85,23 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
                   </div>
               </button>
           ))}
-          {visibleHistoryUrls.map((url, index) => (
-              <button
-                  ref={currentIndex === index ? activeItemRef : null}
-                  key={`${url}-${index}`}
-                  onClick={() => onHistorySelect(index)}
-                  className={`relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden group transition-all duration-300 ring-2
-                      ${currentIndex === index && !isShowingResults ? 'ring-cyan-400 scale-110 ring-offset-2 ring-offset-black/50' : 'ring-transparent hover:ring-white/50'}`
-                  }
-                  aria-label={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
-                  title={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
-              >
-                  <img src={url} alt={t('historyStep', { step: index })} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" />
-              </button>
-          ))}
+          {visibleHistoryItems.map((item, index) => {
+              const transformString = `rotate(${item.transform.rotate}deg) scale(${item.transform.scaleX}, ${item.transform.scaleY})`;
+              return (
+                <button
+                    ref={currentIndex === index ? activeItemRef : null}
+                    key={`${item.url}-${index}`}
+                    onClick={() => onHistorySelect(index)}
+                    className={`relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden group transition-all duration-300 ring-2
+                        ${currentIndex === index && !isShowingResults ? 'ring-cyan-400 scale-110 ring-offset-2 ring-offset-black/50' : 'ring-transparent hover:ring-white/50'}`
+                    }
+                    aria-label={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
+                    title={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
+                >
+                    <img src={item.url} alt={t('historyStep', { step: index })} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" style={{ transform: transformString }}/>
+                </button>
+              );
+          })}
         </div>
 
         <button 
@@ -107,4 +116,4 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
   );
 };
 
-export default HistoryPills;
+export default React.memo(HistoryPills);

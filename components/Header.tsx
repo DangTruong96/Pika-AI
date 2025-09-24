@@ -59,21 +59,13 @@ const Header: React.FC<HeaderProps> = ({
                     <h1 className="text-xl font-bold tracking-tight text-white">
                       {t('appName')}
                     </h1>
-                    <span className="ml-1.5 text-xs font-semibold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded-full border border-cyan-400/50">v13.0</span>
+                    <span className="ml-1.5 text-xs font-semibold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded-full border border-cyan-400/50">v1.0</span>
                 </div>
             </button>
             
             {/* --- Mobile-only actions group --- */}
             {isImageLoaded && (
                 <div className="flex sm:hidden items-center gap-2">
-                    <button
-                      onClick={onDownload}
-                      disabled={!canUndo || isLoading}
-                      className="flex items-center justify-center text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-500 ring-1 ring-white/10"
-                      title={t('downloadImage')}
-                    >
-                      <DownloadIcon className="w-5 h-5" />
-                    </button>
                     <button 
                         onClick={onUploadNew}
                         disabled={isLoading}
@@ -105,6 +97,14 @@ const Header: React.FC<HeaderProps> = ({
                         title={t('reset')}
                       >
                         <ArrowPathIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={onDownload}
+                      disabled={!canUndo || isLoading}
+                      className="flex items-center justify-center text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-500 ring-1 ring-white/10"
+                      title={t('downloadImage')}
+                    >
+                      <DownloadIcon className="w-5 h-5" />
                     </button>
                 </div>
             )}
@@ -172,4 +172,4 @@ const Header: React.FC<HeaderProps> = ({
   );
 };
 
-export default Header;
+export default React.memo(Header);
