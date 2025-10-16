@@ -1,15 +1,14 @@
-
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useState, useEffect, useCallback } from 'react';
+// Fix: Imported 'useEffect' from React.
+import React, { useState, useCallback, useRef, useLayoutEffect, useEffect } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { type IdPhotoOptions } from '../services/geminiService';
-import Spinner from './Spinner';
-import type { Gender } from '../hooks/usePika';
+import { IdCardIcon, ExpandIcon, LightbulbIcon } from './icons';
+import type { Gender, Tab } from '../types';
 
 interface IdPhotoPanelProps {
   onApplyIdPhoto: (options: IdPhotoOptions) => void;
@@ -18,42 +17,104 @@ interface IdPhotoPanelProps {
   currentImage: File | null;
   gender: Gender;
   onGenderChange: (gender: Gender) => void;
+  setActiveTab: (tab: Tab) => void;
+  onToggleToolbox: () => void;
+  isMobile?: boolean;
 }
 
 type PhotoType = 'standard' | 'newborn';
 type Expression = 'neutral' | 'smile' | 'keep' | 'big-smile';
-type Outfit = 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai' | 'office-wear';
+type Outfit = 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai';
 type Background = 'white' | 'blue' | 'gray' | 'green';
 type Hair = 'keep' | 'professional-short' | 'professional-tied-back' | 'professional-neat-down' | 'male-neat' | 'male-short' | 'male-medium';
-type Size = '3x4' | '4x6' | '2x2' | '3.5x4.5' | '5x5';
+type Size = '3x4' | '4x6' | '2x3' | '2x2' | '3.5x4.5' | '5x5' | '2.4x3' | '4x5';
 
 
 // Fix: Correctly define a generic memoized component to accept type arguments.
 interface SegmentedControlProps<T extends string> {
-    label: string;
-    options: { value: T; label: string }[];
+    label?: string;
+    options: { value: T; label: string, icon?: React.FC<{ className?: string }>, hideLabel?: boolean }[];
     selected: T;
     onSelect: (value: T) => void;
     disabled: boolean;
+    fullWidth?: boolean;
 }
 
-const SegmentedControl = React.memo(function SegmentedControl<T extends string>({ label, options, selected, onSelect, disabled }: SegmentedControlProps<T>) {
+const ColorSwatch: React.FC<{ color: string }> = ({ color }) => (
+    <span className="w-6 h-6 rounded-full border border-white/30 shadow-inner" style={{ backgroundColor: color }} />
+);
+
+export const SegmentedControl = React.memo(function SegmentedControl<T extends string>({ label, options, selected, onSelect, disabled, fullWidth }: SegmentedControlProps<T>) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [pillStyle, setPillStyle] = useState({ width: 0, height: 0, transform: 'scale(0.5)', opacity: 0 });
+
+    useLayoutEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const calculatePillStyle = () => {
+            const activeButton = container.querySelector<HTMLButtonElement>(`[data-value="${selected}"]`);
+            if (activeButton && activeButton.offsetWidth > 0) {
+                setPillStyle({
+                    width: activeButton.offsetWidth,
+                    height: activeButton.offsetHeight,
+                    transform: `translateX(${activeButton.offsetLeft}px) translateY(${activeButton.offsetTop}px)`,
+                    opacity: 1
+                });
+            } else {
+                 setPillStyle(s => ({ ...s, opacity: 0 }));
+            }
+        };
+        
+        calculatePillStyle();
+
+        let timeoutId: number;
+        const debouncedCalculate = () => {
+            clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(calculatePillStyle, 50);
+        };
+        
+        const resizeObserver = new ResizeObserver(debouncedCalculate);
+        
+        resizeObserver.observe(container);
+        Array.from(container.querySelectorAll('button')).forEach(btn => resizeObserver.observe(btn));
+
+        return () => {
+            clearTimeout(timeoutId);
+            resizeObserver.disconnect();
+        };
+    }, [selected, options, fullWidth]);
+    
     return (
         <div className="w-full flex flex-col items-center gap-2">
-            <span className="text-sm font-medium text-gray-300">{label}:</span>
-            <div className="flex items-center justify-center gap-1 rounded-lg bg-black/30 p-1 flex-wrap">
-                {options.map(({ value, label: optionLabel }) => (
+            {label && <span className="text-sm font-medium text-gray-300">{label}:</span>}
+            <div ref={containerRef} className="relative flex items-center justify-center gap-1 rounded-xl bg-black/20 p-1 flex-wrap w-full">
+                <div 
+                  className="absolute top-0 left-0 segmented-control-pill rounded-md shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  style={{
+                      width: pillStyle.width,
+                      height: pillStyle.height,
+                      transform: pillStyle.transform,
+                      opacity: pillStyle.opacity,
+                      willChange: 'transform, width, height'
+                  }}
+                />
+                {options.map(({ value, label: optionLabel, icon: Icon, hideLabel }) => (
                     <button
                         key={value}
+                        data-value={value}
                         onClick={() => onSelect(value)}
                         disabled={disabled}
-                        className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 ${
+                        className={`relative px-2.5 py-1 rounded-md text-xs sm:text-sm font-semibold transition-colors duration-200 active:scale-95 disabled:opacity-50 min-h-11 flex items-center justify-center gap-2 z-10 ${fullWidth ? 'flex-1' : ''} ${
                             selected === value
-                                ? 'bg-white/15 text-white shadow-sm'
-                                : 'bg-transparent hover:bg-white/10 text-gray-300'
+                                ? 'text-white'
+                                : 'text-gray-300 hover:text-white'
                         }`}
+                        title={optionLabel}
+                        aria-label={optionLabel}
                     >
-                        {optionLabel}
+                        {Icon && <Icon className="w-5 h-5" />}
+                        {optionLabel && !hideLabel && <span>{optionLabel}</span>}
                     </button>
                 ))}
             </div>
@@ -61,7 +122,7 @@ const SegmentedControl = React.memo(function SegmentedControl<T extends string>(
     );
 }) as <T extends string>(props: SegmentedControlProps<T>) => React.ReactElement;
 
-const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, isImageLoaded, currentImage, gender, onGenderChange }) => {
+const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, isImageLoaded, currentImage, gender, onGenderChange, setActiveTab, onToggleToolbox, isMobile }) => {
   const { t } = useTranslation();
 
   const [photoType, setPhotoType] = useState<PhotoType>('standard');
@@ -100,6 +161,14 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
   useEffect(() => {
     setCustomPrompt('');
   }, [currentImage]);
+
+  const handleInputFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+    if (isMobile) {
+      setTimeout(() => {
+        event.target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      }, 300);
+    }
+  };
   
   const handleApply = () => {
     const optionsForApi: IdPhotoOptions = photoType === 'standard'
@@ -125,13 +194,11 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
     ? [
         { value: 'collared-shirt-m', label: t('idPhotoOutfitCollaredShirtM') },
         { value: 'suit', label: t('idPhotoOutfitSuit') },
-        { value: 'office-wear', label: t('idPhotoOutfitOfficeWear') },
       ]
     : [
         { value: 'blouse', label: t('idPhotoOutfitBlouse') },
         { value: 'ao-dai', label: t('idPhotoOutfitAoDai') },
         { value: 'collared-shirt-f', label: t('idPhotoOutfitCollaredShirtF') },
-        { value: 'office-wear', label: t('idPhotoOutfitOfficeWear') },
       ];
 
   const femaleHairOptions: { value: Hair; label: string }[] = [
@@ -148,11 +215,46 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
     { value: 'male-medium', label: t('idPhotoHairMaleMedium') }
   ];
 
+  const titleContent = (
+    <>
+      <IdCardIcon className="w-6 h-6" />
+      <span>{t('idPhotoTitle')}</span>
+    </>
+  );
+  const commonTitleClasses = "text-lg font-semibold text-gray-200 flex items-center justify-center gap-2 bg-black/20 rounded-full px-6 py-2 border border-white/10";
+
+
   return (
     <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
-      <h3 className="text-lg font-semibold text-gray-200 flex items-center justify-center gap-2">
-        {t('idPhotoTitle')}
-      </h3>
+      <div className="w-full flex items-center justify-between">
+        <button 
+          onClick={() => setActiveTab('generate')} 
+          className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('tooltipGenerate')}
+          disabled={isLoading}
+          aria-label={t('tooltipGenerate')}
+        >
+          <LightbulbIcon className="w-6 h-6" />
+        </button>
+        {isMobile ? (
+            <button onClick={onToggleToolbox} className={`${commonTitleClasses} transition-colors hover:bg-black/40`}>
+                {titleContent}
+            </button>
+        ) : (
+            <h3 className={commonTitleClasses}>
+                {titleContent}
+            </h3>
+        )}
+        <button 
+          onClick={() => setActiveTab('expand')} 
+          className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('tooltipExpand')}
+          disabled={isLoading}
+          aria-label={t('tooltipExpand')}
+        >
+          <ExpandIcon className="w-6 h-6" />
+        </button>
+      </div>
       <p className="text-sm text-gray-400 -mt-2 text-center">{t('idPhotoDescription')}</p>
       
       <div className="w-full flex flex-col items-center gap-4">
@@ -212,6 +314,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
                     placeholder={t('idPhotoCustomPromptPlaceholder')}
                     className="bg-white/5 border border-white/10 text-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-sm focus:bg-white/10"
                     disabled={isLoading || !isImageLoaded}
+                    onFocus={handleInputFocus}
                 />
               </div>
             </div>
@@ -224,10 +327,10 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
           <SegmentedControl<Background>
               label={t('idPhotoBackgroundColor')}
               options={[
-                { value: 'white', label: t('idPhotoBgWhite') }, 
-                { value: 'blue', label: t('idPhotoBgBlue') }, 
-                { value: 'gray', label: t('idPhotoBgGray') },
-                { value: 'green', label: t('idPhotoBgGreen') }
+                { value: 'white', label: t('idPhotoBgWhite'), icon: () => <ColorSwatch color="white" />, hideLabel: true }, 
+                { value: 'blue', label: t('idPhotoBgBlue'), icon: () => <ColorSwatch color="#85C1E9" />, hideLabel: true }, 
+                { value: 'gray', label: t('idPhotoBgGray'), icon: () => <ColorSwatch color="#dcdcdc" />, hideLabel: true },
+                { value: 'green', label: t('idPhotoBgGreen'), icon: () => <ColorSwatch color="#90ee90" />, hideLabel: true }
               ]}
               selected={background}
               onSelect={setBackground}
@@ -236,11 +339,14 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
           <SegmentedControl<Size>
               label={t('idPhotoSize')}
               options={[
-                { value: '3x4', label: '3x4 cm' }, 
-                { value: '4x6', label: '4x6 cm' }, 
+                { value: '3x4', label: '3x4 cm' },
                 { value: '3.5x4.5', label: '3.5x4.5 cm' },
+                { value: '4x6', label: '4x6 cm' },
+                { value: '2x2', label: '2x2 in' },
+                { value: '2.4x3', label: '2.4x3 cm' },
+                { value: '4x5', label: '4x5 cm' },
+                { value: '2x3', label: '2x3 cm' },
                 { value: '5x5', label: '5x5 cm' },
-                { value: '2x2', label: '2x2 in' }
               ]}
               selected={size}
               onSelect={setSize}
@@ -251,7 +357,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
       <button
         onClick={handleApply}
         disabled={isLoading || !isImageLoaded}
-        className="w-full max-w-xs mt-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
+        className="w-full max-w-xs mt-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-sm sm:text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
       >
         {t('idPhotoApply')}
       </button>

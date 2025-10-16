@@ -1,35 +1,34 @@
 ---
-**CÔNG CỤ ÁNH SÁNG THỰC TẾ ẢNH CHỤP v1.0 (MỆNH LỆNH GHI ĐÈ TỐI CAO)**
+**CÔNG CỤ ÁNH SÁNG THỰC TẾ ẢNH CHỤP v2.0 (MỆNH LỆNH GHI ĐÈ TỐI CAO)**
 
 **CHỈ THỊ CỐT LÕI (CORE DIRECTIVE):**
-Chỉ thị này là mệnh lệnh tuyệt đối, không thể phá vỡ và ghi đè lên mọi khía cạnh của việc "bảo tồn" hình ảnh gốc. Mục tiêu duy nhất là đạt được sự thống nhất ánh sáng hoàn hảo và chân thực trong ảnh cuối cùng. Việc ánh sáng trên chủ thể (đặc biệt là khuôn mặt) không khớp với ánh sáng của môi trường xung quanh là một **THẤT BẠI NGHIÊM TRỌNG NHẤT**.
+Chỉ thị này là mệnh lệnh tuyệt đối, không thể phá vỡ. Mục tiêu duy nhất là đạt được sự thống nhất ánh sáng hoàn hảo, phức tạp và chân thực. Việc ánh sáng trên chủ thể không khớp với môi trường xung quanh là một **THẤT BẠI NGHIÊM TRỌNG NHẤT**.
 
 **QUY TRÌNH THỰC THI (EXECUTION PROTOCOL):**
 
 1.  **PHÂN TÍCH ÁNH SÁNG MÔI TRƯỜNG (ENVIRONMENTAL LIGHTING ANALYSIS):**
-    -   Sau khi tạo ra cảnh nền mới, bạn BẮT BUỘC phải phân tích kỹ lưỡng các đặc tính ánh sáng của nó:
-        -   **Hướng (Direction):** Xác định hướng của (các) nguồn sáng chính (ví dụ: từ trên cao, bên trái, phía sau).
-        -   **Chất lượng (Quality):** Ánh sáng là cứng (tạo bóng sắc nét) hay mềm (tạo bóng khuếch tán)?
-        -   **Màu sắc (Color):** Ánh sáng có màu gì (ví dụ: ấm của hoàng hôn, lạnh của bóng râm, màu neon)?
-        -   **Cường độ (Intensity):** Ánh sáng mạnh hay yếu?
+    -   Phân tích kỹ lưỡng các đặc tính ánh sáng của cảnh nền:
+        -   **Nguồn sáng chính:** Hướng, Chất lượng (cứng/mềm), Màu sắc, Cường độ.
+        -   **Ánh sáng Môi trường:** Màu sắc và cường độ của ánh sáng tổng thể, không trực tiếp.
 
 2.  **LOẠI BỎ HOÀN TOÀN ÁNH SÁNG GỐC (TOTAL ORIGINAL LIGHTING STRIP-DOWN):**
-    -   Bạn BẮT BUỘC phải loại bỏ hoàn toàn tất cả các thông tin về ánh sáng và bóng đổ từ (các) chủ thể trong ảnh gốc. Hãy coi chủ thể như một đối tượng 3D không có ánh sáng, chỉ có màu sắc và kết cấu cơ bản.
+    -   Loại bỏ hoàn toàn tất cả các thông tin về ánh sáng và bóng đổ từ chủ thể gốc. Coi chủ thể như một đối tượng 3D không có ánh sáng.
 
-3.  **TÁI CHIẾU SÁNG TOÀN DIỆN (COMPREHENSIVE RE-LIGHTING):**
-    -   Áp dụng hệ thống ánh sáng đã được phân tích ở Bước 1 lên toàn bộ chủ thể (bao gồm cả đầu, mặt, tóc, và cơ thể).
-    -   **Mệnh lệnh Thống nhất Khuôn mặt-Cơ thể (Face-Body Unification Mandate):** Ánh sáng trên khuôn mặt BẮT BUỘC phải giống hệt ánh sáng trên phần còn lại của cơ thể và quần áo. KHÔNG được có sự khác biệt.
-    -   **Đổ bóng Tương tác (Interactive Shadow Casting):**
-        -   Chủ thể phải đổ bóng lên nền một cách chính xác theo hướng và chất lượng ánh sáng.
-        -   Các bộ phận của chủ thể phải đổ bóng lên chính họ (ví dụ: mũi đổ bóng lên má, tóc đổ bóng lên vai).
-        -   Nền cũng phải đổ bóng lên chủ thể (ví dụ: một cái cây ở gần có thể đổ bóng lốm đốm lên chủ thể).
-    -   **Phản xạ & Ánh sáng Dội lại (Reflections & Bounced Light):**
-        -   Ánh sáng từ môi trường phải phản xạ một cách tinh tế trên các bề mặt bóng như mắt và da.
-        -   Màu sắc từ môi trường phải dội lại lên chủ thể (ví dụ: một bức tường màu đỏ ở gần sẽ tạo ra một vệt sáng màu đỏ nhẹ trên phần cơ thể gần đó).
+3.  **TÁI CHIẾU SÁNG TOÀN DIỆN & TƯƠNG TÁC HAI CHIỀU (COMPREHENSIVE & BI-DIRECTIONAL RE-LIGHTING):**
+    -   Áp dụng hệ thống ánh sáng đã phân tích lên toàn bộ chủ thể.
+    -   **(A) MÔ HÌNH BÓNG ĐỔ PHỨC HỢP (ADVANCED SHADOW MODELING - ZERO TOLERANCE):**
+        -   **Bóng đổ Chính (Cast Shadows):** Chủ thể phải đổ bóng lên nền một cách chính xác theo hướng và chất lượng ánh sáng. Bóng phải mềm hơn khi ở xa chủ thể hơn.
+        -   **Bóng đổ Tự thân (Self-Shadowing):** Các bộ phận của chủ thể phải đổ bóng lên chính họ một cách chân thực (ví dụ: mũi đổ bóng lên má).
+        -   **Bóng đổ Tiếp xúc (Contact Shadows):** BẮT BUỘC phải có bóng đổ tối, nhỏ và sắc nét ở những nơi chủ thể tiếp xúc trực tiếp với một bề mặt (ví dụ: dưới đế giày, nơi bàn tay chạm vào tường). Việc thiếu bóng đổ tiếp xúc làm cho chủ thể trông như đang "lơ lửng" và là một THẤT BẠI.
+        -   **Bóng đổ Môi trường (Ambient Occlusion):** Mô phỏng các bóng đổ mềm, tối hơn ở các kẽ hở và góc khuất nơi ánh sáng môi trường bị chặn lại (ví dụ: giữa các ngón tay, dưới cằm, nếp gấp quần áo).
+    -   **(B) MÔ HÌNH TƯƠNG TÁC ÁNH SÁNG (LIGHT INTERACTION MODEL):**
+        -   **Phản xạ & Ánh sáng Dội lại từ Nền (Bounce Light & Reflections FROM Background):** Ánh sáng và màu sắc từ môi trường phải dội lại và ảnh hưởng đến chủ thể. Một bức tường màu đỏ sẽ tạo ra một vệt sáng đỏ nhẹ lên chủ thể.
+        -   **Ánh sáng Dội lại từ Chủ thể (Bounce Light FROM Subject - MỆNH LỆNH NÂNG CAO):** Ánh sáng cũng phải dội lại TỪ chủ thể và ảnh hưởng một cách tinh tế đến các bề mặt nền ở gần. Ví dụ, một người mặc áo trắng đứng gần một bức tường tối sẽ làm cho phần tường đó sáng hơn một chút. Tương tác hai chiều này là chìa khóa cho sự chân thực.
+        -   **Tán xạ dưới bề mặt (Subsurface Scattering - SSS):** Đối với da, mô phỏng cách ánh sáng xuyên qua bề mặt da một chút và tán xạ bên trong, tạo ra một vẻ ngoài mềm mại, sống động, đặc biệt là ở những vùng như tai khi bị ngược sáng.
 
 **ĐIỀU KIỆN THẤT BẠI (FAILURE CONDITIONS):**
--   Khuôn mặt có ánh sáng khác với cơ thể hoặc nền.
--   Chủ thể trông như bị "dán" vào nền do ánh sáng không khớp.
--   Bóng đổ không chính xác hoặc thiếu.
--   Chủ thể thiếu sự tương tác ánh sáng với môi trường (không có ánh sáng dội lại, không có phản xạ).
+-   Chủ thể trông như bị "dán" vào nền do ánh sáng hoặc bóng đổ không khớp.
+-   Bóng đổ không chính xác, thiếu (đặc biệt là bóng đổ tiếp xúc), hoặc quá sắc nét/mờ.
+-   Chủ thể thiếu sự tương tác ánh sáng hai chiều với môi trường (không có ánh sáng dội lại).
+-   Da trông cứng và giống như nhựa do thiếu mô phỏng tán xạ dưới bề mặt (SSS).
 ---

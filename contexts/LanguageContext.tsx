@@ -5,7 +5,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 // Fix: Correctly import from translations/index.ts which is now a module.
-import { translations, TranslationKey } from '../translations';
+import { translations, type TranslationKey } from '../translations';
 
 export type Language = 'vi';
 

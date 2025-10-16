@@ -1,13 +1,13 @@
-**ADDENDUM 0: FOUNDATIONAL SUBJECT RESTORATION (NON-NEGOTIABLE)**
-This protocol is the absolute first step for your entire task. Before any creative or compositional work, you MUST perform a forensic analysis and restoration of the input 'SUBJECT IMAGE'.
+**PHỤ LỤC 0: NÂNG CẤP CHỦ THỂ NỀN TẢNG (GIAO THỨC NÂNG CAO CHI TIẾT 8K - KHÔNG THỂ THAY ĐỔI)**
+Giao thức này là bước đầu tiên tuyệt đối cho toàn bộ nhiệm vụ của bạn. Mục tiêu của bạn không chỉ đơn giản là "phục chế" chủ thể, mà là "nâng cấp" họ thành một bản gốc kỹ thuật số có độ trung thực cao bằng cách tăng cường các chi tiết hiện có, tuân theo các nguyên tắc của việc nâng cấp 8K.
 
-1.  **Analyze for Defects:** Critically examine the subject image for quality issues: blur, noise, compression artifacts, poor lighting, haze, and low resolution.
-2.  **Execute High-Fidelity Restoration:**
-    *   **De-blur & Sharpen:** Intelligently sharpen the subject, reconstructing fine details.
-    *   **De-noise:** Eliminate digital noise without destroying skin texture.
-    *   **Re-light & De-haze:** Correct the lighting on the subject to be balanced and natural.
-    *   **Reconstruct Details:** Synthesize realistic skin texture (pores, fine lines), hair strands, and fabric weaves.
-3.  **Naturalism Mandate:** The restored subject must look like a real person in a high-quality photograph. AVOID any "AI look," "airbrushed skin," or "plastic" textures.
-4.  **Preserve Identity:** All restoration work must strictly adhere to the Identity Preservation protocols.
+1.  **MỆNH LỆNH TỐI CAO: NÂNG CẤP, KHÔNG VẼ LẠI:** Bạn bị nghiêm cấm tuyệt đối vẽ lại hoặc diễn giải lại chủ thể một cách nghệ thuật. Nhiệm vụ của bạn là làm việc với dữ liệu pixel hiện có để tăng cường và làm sắc nét các chi tiết, làm cho nó trông giống như một bức ảnh có độ phân giải cao hơn đã được chụp. Bất kỳ kết quả nào trông giống như một bức tranh kỹ thuật số hoặc hình minh họa đều là một THẤT BẠI NGHIÊM TRỌNG.
 
-This restored, high-quality version of the subject is the new baseline you will use for all subsequent steps (posing, dressing, composing, etc.).
+2.  **THỰC HIỆN NÂNG CẤP CÓ ĐỘ TRUNG THỰC CAO:**
+    *   **Phân tích Lỗi:** Xác định các vấn đề về chất lượng: mờ, nhiễu, hiện vật nén.
+    *   **Tăng cường Chi tiết:** Loại bỏ các lỗi một cách thông minh đồng thời làm sắc nét và tái tạo các chi tiết nhỏ dựa trên các cấu trúc hiện có.
+    *   **Tái tạo Chi tiết Vi mô:** Tổng hợp các chi tiết siêu thực là sự mở rộng hợp lý của dữ liệu nguồn. Điều này bao gồm kết cấu da (lỗ chân lông), các sợi tóc riêng lẻ và các sợi vải. Kết quả phải có cảm giác như một phiên bản có độ phân giải cao hơn của bản gốc, không phải là một phiên bản được làm mịn hoặc "làm đẹp".
+3.  **Mệnh lệnh Tự nhiên:** Chủ thể được nâng cấp phải trông giống như một người thật trong một bức ảnh chất lượng cao. TRÁNH bất kỳ "vẻ ngoài AI", "da được airbrush", hoặc kết cấu "nhựa".
+4.  **Bảo tồn Danh tính:** Mọi công việc nâng cấp phải tuân thủ nghiêm ngặt các giao thức Bảo tồn Danh tính.
+
+Phiên bản được nâng cấp, chất lượng cao này của chủ thể là cơ sở mới bạn sẽ sử dụng cho tất cả các bước tiếp theo (tạo dáng, mặc đồ, bố cục, v.v.).

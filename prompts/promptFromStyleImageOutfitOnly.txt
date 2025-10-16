@@ -1,20 +1,26 @@
-**NHIỆM VỤ AI: Phân tích Trang phục Chi tiết (Không có Người) v2.0**
+**NHIỆM VỤ AI: Phân tích Trang phục Chi tiết, theo Từng Diễn viên v3.0**
 
-**MỤC TIÊU QUAN TRỌNG:** Phân tích hình ảnh được cung cấp để tạo ra một mô tả chi tiết, khách quan về quần áo và phụ kiện mà người trong ảnh đang mặc.
+**MỤC TIÊU CHÍNH:** Phân tích hình ảnh được cung cấp để tạo ra một mô tả chi tiết và khách quan về quần áo và phụ kiện mà MỖI người mặc riêng lẻ.
 
-**QUY TẮC TUYỆT ĐỐI (KHÔNG THƯƠNG LƯỢNG):** Mô tả của bạn phải tập trung **DUY NHẤT** vào trang phục và phụ kiện. Bạn **BỊ CẤM TUYỆT ĐỐI** mô tả người đang mặc chúng.
+**QUY TẮC BẮT BUỘC (KHÔNG THỂ THAY ĐỔI):**
 
-**CÁC YẾU TỐ ĐẦU RA BẮT BUỘC (Chỉ tập trung vào những điều này):**
+1.  **XÁC ĐỊNH VÀ TÁCH BIỆT:** Bạn **BẮT BUỘC** phải xác định từng cá nhân trong ảnh và mô tả trang phục của họ một cách riêng biệt.
+2.  **GIỚI TÍNH VÀ VAI TRÒ:** Đối với mỗi người, bạn **BẮT BUỘC** phải nêu rõ giới tính hoặc vai trò cảm nhận được của họ (ví dụ: "Người đàn ông...", "Người phụ nữ...", "Đứa trẻ..."). Điều này rất quan trọng để ánh xạ trang phục một cách chính xác sau này.
+3.  **CHỈ TRANG PHỤC:** Mô tả của bạn phải tập trung **ĐỘC QUYỀN** vào quần áo, phụ kiện và giày dép. Bạn bị **NGHIÊM CẤM TUYỆT ĐỐI** mô tả chính những người đó (khuôn mặt, biểu cảm, tư thế, dáng người) hoặc môi trường xung quanh.
 
-1.  **Trang phục:** Xác định từng món quần áo. Mô tả loại, màu sắc, chất liệu, kết cấu, hoa văn và kiểu dáng (ví dụ: "Một chiếc áo sơ mi linen trắng, rộng rãi," "Quần jean denim tối màu, dáng ôm," "Một chiếc áo khoác da biker màu đen có khóa kéo bạc").
-2.  **Phụ kiện:** Xác định bất kỳ phụ kiện nào như trang sức, mũ, khăn quàng, thắt lưng, túi xách hoặc kính. Mô tả chi tiết chúng (ví dụ: "Một sợi dây chuyền vàng mảnh," "Một chiếc mũ rơm rộng vành," "Một chiếc thắt lưng da màu nâu với khóa đồng").
-3.  **Giày dép:** Nếu có thể nhìn thấy, hãy mô tả giày (ví dụ: "Giày thể thao da màu trắng," "Giày cao gót da bóng màu đen").
-4.  **Phong cách Tổng thể:** Tóm tắt ngắn gọn phong cách của bộ trang phục (ví dụ: "Phong cách đường phố thường ngày," "Trang phục công sở trang trọng," "Phong cách Bohemian và chiết trung").
+**CÁC YẾU TỐ ĐẦU RA BẮT BUỘC (cho mỗi người):**
 
-**KHÔNG ĐỀ CẬP HOẶC MÔ TẢ (KHÔNG KHOAN NHƯỢNG):**
--   Người, người mẫu hoặc đối tượng đang mặc quần áo.
--   Hình dáng cơ thể, tư thế của họ.
--   Khuôn mặt, đặc điểm khuôn mặt, biểu cảm, tuổi tác, giới tính hoặc dân tộc của họ.
--   Bối cảnh hoặc môi trường.
+1.  **Nhận dạng Diễn viên:** Bắt đầu bằng "Người đàn ông...", "Người phụ nữ...", v.v.
+2.  **Trang phục:** Xác định từng món đồ. Mô tả loại, màu sắc, chất liệu, kết cấu, hoa văn và độ vừa vặn của nó (ví dụ: "mặc một chiếc áo sơ mi linen trắng rộng rãi," "mặc quần jean denim mài tối màu, dáng ôm," "khoác một chiếc áo khoác da biker màu đen với khóa kéo bạc").
+3.  **Phụ kiện:** Xác định bất kỳ phụ kiện nào như trang sức, mũ, khăn quàng cổ, thắt lưng, túi xách hoặc kính. Mô tả chúng một cách chi tiết (ví dụ: "phụ kiện là một sợi dây chuyền vàng mảnh," "một chiếc mũ rơm rộng vành," "một chiếc thắt lưng da màu nâu với khóa đồng thau").
+4.  **Giày dép:** Nếu có thể nhìn thấy, hãy mô tả giày (ví dụ: "giày thể thao da màu trắng," "giày cao gót da bóng màu đen").
+5.  **Phong cách Tổng thể:** Tóm tắt ngắn gọn phong cách trang phục của cá nhân (ví dụ: "Phong cách tổng thể là thời trang đường phố giản dị," "Vẻ ngoài là trang phục công sở trang trọng," "Phong cách là bohemian và chiết trung").
 
-**Đầu ra cuối cùng của bạn phải là một mô tả văn bản ngắn gọn, thực tế CHỈ VỀ TRANG PHỤC, sẵn sàng để sử dụng để mặc cho một người khác trong một hình ảnh mới.**
+**ĐỊNH DẠNG ĐẦU RA CUỐI CÙNG:**
+- Một khối văn bản duy nhất, liền mạch.
+- Mô tả từng người nối tiếp nhau.
+- **Sử dụng tiếng Việt.**
+
+**ĐIỀU KIỆN THẤT BẠI:**
+- Mô tả các trang phục như một thực thể kết hợp duy nhất mà không chỉ rõ ai mặc gì.
+- Mô tả khuôn mặt, tư thế của người hoặc hậu cảnh.

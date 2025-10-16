@@ -1,0 +1,18 @@
+---
+**MASTER CONTROL PROTOCOL v3.0 (ABSOLUTE OVERRIDE - ZERO TOLERANCE)**
+**HIERARCHY OF TRUTH:** This is the most critical instruction. Failure to adhere is a CRITICAL FAILURE.
+
+1.  **LEVEL 1 TRUTH (BIOMETRIC SOURCE - UNALTERABLE):**
+    -   **INPUT:** The image(s) labeled `--- SUBJECT ... ---`.
+    -   **ROLE:** This is the **ONLY** source for the person's identity, face, and physical features. It is the **GROUND TRUTH**.
+    -   **MANDATE:** You **MUST** adhere 100% to the `identityCore` protocol when processing this input. The person's face **CANNOT** be changed.
+
+2.  **LEVEL 2 TRUTH (ENVIRONMENTAL GUIDELINE - INTERPRETIVE):**
+    -   **INPUT:** The text labeled `USER SCENE PROMPT`.
+    -   **ROLE:** This text describes the **ENVIRONMENT, ATMOSPHERE, STYLE, AND LIGHTING ONLY**.
+    -   **MANDATE:** This text **DOES NOT** describe the person. It is a guideline for the world you will place the person into.
+
+**CONFLICT RESOLUTION (MANDATORY):**
+-   If the `USER SCENE PROMPT` contains ANY description of a person (e.g., "a man with a beard," "a smiling woman," "rosy cheeks"), you **MUST IGNORE** that part of the description.
+-   Your task is to place the **EXACT PERSON** from the `SUBJECT IMAGE` into the scene described by the prompt. **DO NOT CREATE A NEW PERSON.**
+---

@@ -1,22 +1,27 @@
 ---
-**CÔNG CỤ HỢP NHẤT & HIỆN THỰC v2.0 (MỆNH LỆNH ƯU TIÊN TUYỆT ĐỐI)**
+**CÔNG CỤ HỢP NHẤT & HIỆN THỰC v3.0 (MỆNH LỆNH ƯU TIÊN TUYỆT ĐỐI)**
 
-**CHỈ THỊ CHÍNH:** Giao thức này ghi đè lên tất cả các chỉ thị kết xuất khác để đảm bảo hình ảnh cuối cùng là một cảnh duy nhất, gắn kết, và không thể tách rời, siêu thực. Mục đích của nó là loại bỏ vẻ ngoài "dán" hoặc "ghép" bằng cách buộc tất cả các yếu-tố phải đi qua một quy trình hoàn thiện hợp nhất.
+**CHỈ THỊ CHÍNH:** Giao thức này ghi đè lên tất cả các chỉ thị kết xuất khác để đảm bảo hình ảnh cuối cùng là một cảnh duy nhất, gắn kết, và không thể tách rời, siêu thực. Mục đích của nó là loại bỏ vẻ ngoài "dán" hoặc "ghép" bằng cách buộc tất cả các yếu-t-ố phải đi qua một quy trình hoàn thiện hợp nhất.
 
-1.  **GHI ĐÈ GẮN KẾT TOÀN CỤC:** Đầu ra cuối cùng **BẮT BUỘC** phải trông như thể nó được chụp trong một bức ảnh duy nhất bằng một máy ảnh và ống kính cao cấp duy nhất. Bất kỳ sự khác biệt đáng chú ý nào về chất lượng, ánh sáng, hoặc chi tiết giữa các yếu-t-ố khác nhau (ví dụ: khuôn mặt của một người sắc nét hơn vật thể họ đang cầm, hoặc nền mờ hơn tiền cảnh) là một **THẤT BẠI NGHIÊM TRỌNG**.
+1.  **GHI ĐÈ GẮN KẾT TOÀN CỤC:** Đầu ra cuối cùng **BẮT BUỘC** phải trông như thể nó được chụp trong một bức ảnh duy nhất bằng một máy ảnh và ống kính cao cấp duy nhất. Bất kỳ sự khác biệt đáng chú ý nào về chất lượng, ánh sáng, hoặc chi tiết giữa các yếu-t-ố khác nhau là một **THẤT BẠI NGHIÊM TRỌNG**.
 
-2.  **QUY TRÌNH HẬU KỲ HỢP NHẤT (BẮT BUỘC):** Tất cả các yếu-t-ố—chủ thể, vật thể được tích hợp, nền được tạo ra—**BẮT BUỘC** phải được xử lý như một cảnh duy nhất trong bước kết xuất cuối cùng. Điều này có nghĩa là:
-    *   **Làm nét & Vi tương phản Toàn cục:** Một mức độ làm nét và vi tương phản duy nhất, nhất quán phải được áp dụng cho toàn bộ hình ảnh đã được ghép. Không làm nét các yếu-t-ố riêng lẻ trước khi kết hợp chúng.
-    *   **Nhiễu hạt/Nhiễu Phim Toàn cục:** Nếu có bất kỳ nhiễu hạt phim hoặc nhiễu cảm biến nào được mô phỏng, nó **BẮT BUỘC** phải được áp dụng đồng đều trên toàn bộ hình ảnh, bao gồm cả chủ thể, vật thể, và nền.
-    *   **Hiệu ứng Ống kính Toàn cục:** Tất cả các thuộc tính quang học (độ sâu trường ảnh, lóa ống kính, quang sai màu) phải nhất quán như thể từ một ống kính duy nhất.
+2.  **GIAO THỨC HÒA TRỘN CẠNH VIỀN VÀ KHÔNG KHÍ (EDGE BLENDING & ATMOSPHERICS PROTOCOL):**
+    -   **Mệnh lệnh:** Cạnh viền của chủ thể BẮT BUỘC phải được hòa trộn một cách tự nhiên với nền. Cạnh viền sắc như dao cạo là một dấu hiệu rõ ràng của việc ghép ảnh và là một THẤT BẠI.
+    -   **Ánh sáng Viền (Rim Lighting & Light Wrap):** Ánh sáng từ môi trường BẮT BUỘC phải "bao bọc" quanh các cạnh của chủ thể, tạo ra một đường viền sáng tinh tế (rim light) giúp tách biệt họ khỏi nền một cách tự nhiên.
+    -   **Quang sai màu & Mờ cạnh (Chromatic Aberration & Edge Softness):** Các cạnh của chủ thể phải có cùng đặc tính quang học như phần còn lại của cảnh. Điều này bao gồm việc mô phỏng một chút quang sai màu (viền màu xanh/đỏ tía nhẹ) và độ mờ tự nhiên ở cạnh, giống như một ống kính máy ảnh thực thụ.
+    -   **Độ sâu Khí quyển (Atmospheric Depth):** Các chủ thể và vật thể phải hòa nhập vào không khí của cảnh. Nếu cảnh có sương mù, khói, hoặc bụi, các yếu tố này BẮT BUỘC phải hiện diện một cách tinh tế ở phía trước chủ thể, đặc biệt là khi họ ở xa hơn. Điều này tạo ra cảm giác về chiều sâu và không gian.
 
-3.  **TÍNH NHẤT QUÁN ÁNH SÁNG PHÁP Y:**
+3.  **QUY TRÌNH HẬU KỲ HỢP NHẤT (BẮT BUỘC):** Tất cả các yếu-t-ố—chủ thể, vật thể được tích hợp, nền được tạo ra—**BẮT BUỘC** phải được xử lý như một cảnh duy nhất trong bước kết xuất cuối cùng.
+    *   **Làm nét & Vi tương phản Toàn cục:** Một mức độ làm nét và vi tương phản duy nhất, nhất quán phải được áp dụng cho toàn bộ hình ảnh đã được ghép.
+    *   **Nhiễu hạt/Nhiễu Phim Toàn cục:** Nếu có bất kỳ nhiễu hạt phim nào, nó **BẮT BUỘC** phải được áp dụng đồng đều trên toàn bộ hình ảnh.
+    *   **Hiệu ứng Ống kính Toàn cục:** Tất cả các thuộc tính quang học (độ sâu trường ảnh, lóa ống kính) phải nhất quán.
+
+4.  **TÍNH NHẤT QUÁN ÁNH SÁNG PHÁP Y:**
     *   **Ánh sáng Bao bọc:** Ánh sáng từ môi trường **BẮT BUỘC** phải bao bọc quanh các đường nét của tất cả các chủ thể và vật thể một cách chân thực.
     *   **Nhiễu màu (Color Bleed):** Màu sắc của ánh sáng môi trường **BẮT BUỘC** phải ảnh hưởng một cách tinh tế đến màu sắc của tất cả các yếu-t-ố trong cảnh. Ví dụ, một chủ thể đứng trên cỏ xanh nên có một chút ánh sáng dội lại màu xanh lá cây ở phần dưới cơ thể.
 
 **ĐIỀU KIỆN THẤT BẠI (TỪ CHỐI NGAY LẬP TỨC):**
-- Hình ảnh trông giống như một ảnh ghép hoặc collage của các yếu-t-ố có mức chất lượng khác nhau.
 - Một chủ thể hoặc vật thể trông như bị "cắt và dán" vào nền do ánh sáng, độ sắc nét, hoặc kết cấu không nhất quán.
-- Độ sắc nét của khuôn mặt một người không nhất quán với độ sắc nét của quần áo của họ hoặc một vật thể mà họ đang tương tác.
+- Cạnh viền của chủ thể quá sắc nét, không có sự hòa trộn tự nhiên với nền.
 - **THẤT BẠI NGHIÊM TRỌNG:** Các phần của ảnh bị nét trong khi các phần khác bị mờ (`chỗ nét chỗ mờ`), tạo ra một sản phẩm cuối cùng không đồng nhất về chất lượng.
 ---

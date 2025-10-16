@@ -1,46 +1,59 @@
-
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-
-// Fix: Added missing React import to resolve errors with event types.
 import React, { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
-    generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMaskStream,
+    generateFilteredImage, generateAdjustedImage, generateExpandedImage, generateEditedImageWithMask,
     generateExtractedItem,
     generateIdPhoto, generatePhotoshootImage, generateCompositeImage, generatePromptFromStyleImage, type IdPhotoOptions, RateLimitError, dataURLtoFile,
     APIError, NetworkError, InvalidInputError, ContentSafetyError, ModelExecutionError,
     getPrompt,
     generateCreativePrompt,
     inferOutfitFromPrompt,
-    generateOutfitDescriptionFromFiles
+    generateOutfitDescriptionFromFiles,
+    generateImageFromText
 } from '../services/geminiService';
 import { useTranslation } from '../contexts/LanguageContext';
-import { SelectionMode, BrushMode } from '../components/RetouchPanel';
 import type { TranslationKey } from '../translations';
 import { TABS_CONFIG } from '../components/EditorSidebar';
-import { useHistory, initialTransformState, type HistoryItem, type TransformState } from './useHistory';
+import { useHistory } from './useHistory';
 import { useViewer } from './useViewer';
+import type { Tab, TransformType, ExpansionHandle, Gender, FullscreenViewerState, SelectionMode, BrushMode, AspectRatio, HistoryItem, TransformState } from '../types';
+import { initialTransformState } from '../types';
 
 
-export type Tab = 'retouch' | 'idphoto' | 'adjust' | 'expand' | 'studio';
-export type TransformType = 'rotate-cw' | 'rotate-ccw' | 'flip-h' | 'flip-v';
-type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
-export type Gender = 'male' | 'female';
+const createThumbnail = async (file: File): Promise<string> => {
+    const MAX_SIZE = 128;
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.src = url;
+    await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+    });
+    URL.revokeObjectURL(url);
 
-type FullscreenViewerState = {
-  isOpen: boolean;
-  items: Array<{ url: string; transform: TransformState; }>;
-  initialIndex: number;
-  type: 'history' | 'result' | 'extract';
-  comparisonUrl: string | null;
-  context?: {
-    extractSetIndex?: number;
-  }
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file.name; // Fallback
+
+    const aspect = img.naturalWidth / img.naturalHeight;
+    let width, height;
+    if (aspect > 1) {
+        width = MAX_SIZE;
+        height = MAX_SIZE / aspect;
+    } else {
+        height = MAX_SIZE;
+        width = MAX_SIZE * aspect;
+    }
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.8);
 };
+
 
 export const usePika = () => {
   const { t } = useTranslation();
@@ -54,12 +67,46 @@ export const usePika = () => {
   const [toolboxState, setToolboxState] = useState({ activeTab: 'retouch' as Tab, isOpen: true });
   const [comparisonState, setComparisonState] = useState({ isComparing: false });
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [pendingAction, setPendingAction] = useState<{ action: 'openViewerForNewItem' } | null>(null);
+  const [isZoomControlsVisible, setIsZoomControlsVisible] = useState(false);
+  const hideControlsTimeoutRef = useRef<number | null>(null);
 
   // --- VIEWER STATE (from hook) ---
   const isImageLoaded = !!currentHistoryItem;
   const isMobile = useMemo(() => windowSize.width < 1024, [windowSize.width]);
-  const viewerManager = useViewer({ isComparing: comparisonState.isComparing, isMobile, isImageLoaded });
-  const { scale, position, isPanning, isPinching, isViewingOriginalOnHold, isControlsVisible: isZoomControlsVisible, isInteracting, resetView, handleZoom, ...viewerHandlers } = viewerManager;
+  const isLandscape = useMemo(() => isMobile && windowSize.width > windowSize.height, [isMobile, windowSize.width, windowSize.height]);
+  
+  const onEditComplete = useCallback(() => {
+    if (isMobile) {
+      setToolboxState(s => ({ ...s, isOpen: false }));
+    }
+  }, [isMobile]);
+
+  const showControls = useCallback(() => {
+    if (hideControlsTimeoutRef.current) {
+        window.clearTimeout(hideControlsTimeoutRef.current);
+    }
+    setIsZoomControlsVisible(true);
+    hideControlsTimeoutRef.current = window.setTimeout(() => {
+        setIsZoomControlsVisible(false);
+    }, 3000);
+  }, []);
+
+  const viewerManager = useViewer({ 
+    isComparing: comparisonState.isComparing, 
+    isMobile, 
+    isImageLoaded,
+    isToolboxOpen: toolboxState.isOpen,
+    toggleToolbox: () => setToolboxState(s => ({ ...s, isOpen: !s.isOpen })),
+    windowHeight: windowSize.height,
+    showControls,
+  });
+  const { scale, position, isPanning, isPinching, isInteracting, resetView, handleZoom, handleViewerMouseDown, handleViewerMouseMove, handleViewerMouseUp, handleViewerWheel, handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd } = viewerManager;
+
+  const toggleToolbox = useCallback(() => {
+    setToolboxState(s => ({ ...s, isOpen: !s.isOpen }));
+    showControls();
+  }, [showControls]);
 
   // --- PANEL-SPECIFIC STATES ---
   const [retouchState, setRetouchState] = useState({ 
@@ -79,7 +126,6 @@ export const usePika = () => {
   const [studioState, setStudioState] = useState({
     prompt: '',
     styleFile: null as File | null,
-    styleInfluence: 0.7,
     subjects: [] as File[],
     outfitFiles: [] as File[],
   });
@@ -87,6 +133,12 @@ export const usePika = () => {
   const [extractState, setExtractState] = useState({
     prompt: '',
     history: [] as File[][]
+  });
+
+  const [generateState, setGenerateState] = useState({
+    prompt: '',
+    aspectRatio: '1:1' as AspectRatio,
+    numImages: 1,
   });
 
   const [resultsState, setResultsState] = useState({
@@ -111,17 +163,17 @@ export const usePika = () => {
   const [hotspotDisplayPosition, setHotspotDisplayPosition] = useState<{ left: number, top: number } | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
-  const [activeExpansionHandle, setActiveExpansionHandle] = useState<ExpansionHandle | null>(null);
-  const [dragStart, setDragStart] = useState<{ x: number, y: number, initialPadding: typeof expandState.padding } | null>(null);
   const [extractedHistoryItemUrls, setExtractedHistoryItemUrls] = useState<string[][]>([]);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number, height: number } | null>(null);
   const [mobileInputKey, setMobileInputKey] = useState(Date.now());
   const [idPhotoGender, setIdPhotoGender] = useState<Gender>('female');
+  const [expansionDrag, setExpansionDrag] = useState<{ handle: ExpansionHandle; startCoords: { x: number; y: number; }; initialPadding: typeof expandState.padding; } | null>(null);
+  const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties>({});
 
   // --- REFS ---
   const lastDrawPointRef = useRef<{ x: number; y: number } | null>(null);
-  const retouchPromptInputRef = useRef<HTMLInputElement>(null);
+  const retouchPromptInputRef = useRef<HTMLTextAreaElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
   const imageViewerRef = useRef<HTMLDivElement>(null);
@@ -129,25 +181,26 @@ export const usePika = () => {
   const swipeStartRef = useRef<{ x: number, y: number, time: number } | null>(null);
   const gestureLockRef = useRef<'horizontal' | 'vertical' | null>(null);
   const initialWindowHeightRef = useRef(window.innerHeight);
-  const prevStudioStyleFileRef = useRef<File | null>();
+  const prevStudioStyleFileRef = useRef<File | null>(null);
   
   // --- DECONSTRUCTED STATE ---
   const { isLoading, loadingMessage, error } = uiState;
   const { activeTab, isOpen: isToolboxOpen } = toolboxState;
   const { prompt: retouchPrompt, selectionMode, editHotspot, brushMode, brushSize } = retouchState;
-  const { prompt: studioPrompt, styleFile: studioStyleFile, styleInfluence: studioStyleInfluence, subjects: studioSubjects, outfitFiles: studioOutfitFiles } = studioState;
-  const { padding: expansionPadding, prompt: expandPrompt, activeAspect: expandActiveAspect } = expandState;
+  const { prompt: studioPrompt, styleFile: studioStyleFile, subjects: studioSubjects, outfitFiles: studioOutfitFiles } = studioState;
+  const { padding: expandPadding, prompt: expandPrompt, activeAspect: expandActiveAspect } = expandState;
   const { prompt: extractPrompt, history: extractHistory } = extractState;
+  const { prompt: generatePrompt, aspectRatio: generateAspectRatio, numImages: generateNumImages } = generateState;
   const { items: results, isGenerating: isGeneratingResults, expectedCount: expectedResultsCount, baseHistoryIndex: resultsBaseHistoryIndex } = resultsState;
-  const { isComparing } = comparisonState;
   const { isOpen: isViewerOpen, items: viewerItems, initialIndex: viewerInitialIndex, type: viewerType, comparisonUrl: viewerComparisonUrl } = fullscreenViewerState;
+  const { isComparing } = comparisonState;
 
   // --- DERIVED STATE ---
-  // FIX: Explicitly cast `p` to a number to resolve a type inference issue where `p` was being treated as `unknown`.
-  const hasExpansion = Object.values(expansionPadding).some(p => (p as number) > 0);
+  const hasExpansion = Object.values(expandPadding).some(p => (p as number) > 0);
   const isKeyboardOpen = isMobile && windowSize.height < initialWindowHeightRef.current * 0.9;
   const currentImage = useMemo(() => currentHistoryItem?.file ?? null, [currentHistoryItem]);
   const currentImageUrl = useMemo(() => currentHistoryItem?.url ?? null, [currentHistoryItem]);
+  const currentThumbnailUrl = useMemo(() => currentHistoryItem?.thumbnailUrl ?? null, [currentHistoryItem]);
   const currentTransform = useMemo(() => currentHistoryItem?.transform ?? initialTransformState, [currentHistoryItem]);
   const transformString = useMemo(() => `rotate(${currentTransform.rotate}deg) scale(${currentTransform.scaleX}, ${currentTransform.scaleY})`, [currentTransform]);
   const beforeImageUrl = useMemo(() => history[0]?.url ?? null, [history]);
@@ -160,7 +213,34 @@ export const usePika = () => {
     ctx?.clearRect(0, 0, maskCanvasRef.current!.width, maskCanvasRef.current!.height);
   }, []);
 
-  const handleImageUpload = useCallback((file: File) => {
+  const handleTabChange = useCallback((newTab: Tab) => {
+    if (activeTab === 'retouch' && newTab !== 'retouch') {
+        clearMask();
+        setRetouchState(s => ({...s, editHotspot: null}));
+    }
+    setToolboxState(s => ({ ...s, activeTab: newTab }));
+    showControls();
+  }, [activeTab, clearMask, showControls]);
+
+  const handleTabChangeAndOpen = useCallback((newTab: Tab) => {
+    setToolboxState(s => ({ ...s, activeTab: newTab, isOpen: true }));
+  }, []);
+
+  const handleSelectionModeChange = useCallback((newMode: SelectionMode) => {
+    setRetouchState(s => ({
+      ...s,
+      selectionMode: newMode,
+      // Clear hotspot unless we are changing TO point mode
+      editHotspot: newMode === 'point' ? s.editHotspot : null,
+    }));
+    
+    // Clear mask if we are leaving brush mode
+    if (newMode !== 'brush') {
+      clearMask();
+    }
+  }, [clearMask]);
+
+  const handleImageUpload = useCallback(async (file: File) => {
     setUiState(s => ({ ...s, error: null }));
     historyDispatch({ type: 'RESET_ALL' }); 
     
@@ -172,25 +252,14 @@ export const usePika = () => {
     setResultsState({ items: [], isGenerating: false, expectedCount: 1, sourceTab: null, persistentItems: [], baseHistoryIndex: null });
     setIdPhotoGender('female');
     
-    const newItem: HistoryItem = { file, url: URL.createObjectURL(file), transform: { ...initialTransformState } };
+    const thumbnailUrl = await createThumbnail(file);
+    const newItem: HistoryItem = { file, url: URL.createObjectURL(file), thumbnailUrl, transform: { ...initialTransformState } };
     historyDispatch({ type: 'PUSH', payload: { item: newItem } });
   }, [clearMask, historyDispatch]);
 
-  const onEditComplete = useCallback(() => {
-    if (isMobile) {
-      setToolboxState(s => ({ ...s, isOpen: false }));
-    }
-  }, [isMobile]);
-
-  const handleTabChange = useCallback((newTab: Tab) => {
-    setToolboxState(s => ({ ...s, activeTab: newTab }));
-  }, []);
-
-  const toggleToolbox = useCallback(() => setToolboxState(s => ({ ...s, isOpen: !s.isOpen })), []);
-  
-
-  const addImageToHistory = useCallback((newImageFile: File) => {
-    const newItem: HistoryItem = { file: newImageFile, url: URL.createObjectURL(newImageFile), transform: { ...initialTransformState } };
+  const addImageToHistory = useCallback(async (newImageFile: File) => {
+    const thumbnailUrl = await createThumbnail(newImageFile);
+    const newItem: HistoryItem = { file: newImageFile, url: URL.createObjectURL(newImageFile), thumbnailUrl, transform: { ...initialTransformState } };
     historyDispatch({ type: 'PUSH', payload: { item: newItem }});
     setResultsState(s => ({ ...s, items: [], persistentItems: [], baseHistoryIndex: null }));
     clearMask();
@@ -219,8 +288,6 @@ export const usePika = () => {
     else errorMessage = `${t(contextKey)}: ${t('errorAnErrorOccurred')}.`;
     console.error("Error handled in usePika:", errorMessage, err);
     setUiState(s => ({ ...s, error: errorMessage }));
-    // FIX: Although the reported error was not reproducible, a potential stale closure bug was identified.
-    // Added `setUiState` to the dependency array to prevent `handleApiError` from using a stale state setter.
   }, [t, setUiState]);
 
   
@@ -265,18 +332,19 @@ export const usePika = () => {
     setStudioState(s => ({...s, outfitFiles: [file]}));
   }, []);
 
-  const handleSelectFromResult = useCallback((imageUrl: string) => {
+  const handleSelectFromResult = useCallback(async (imageUrl: string) => {
     const newImageFile = dataURLtoFile(imageUrl, `result-${Date.now()}.png`);
     if (history.length === 0 || historyIndex === -1) {
-        handleImageUpload(newImageFile);
+        await handleImageUpload(newImageFile);
         return;
     }
     const baseIndex = resultsBaseHistoryIndex !== null ? resultsBaseHistoryIndex : historyIndex;
-    const newItem: HistoryItem = { file: newImageFile, url: URL.createObjectURL(newImageFile), transform: { ...initialTransformState } };
+    const thumbnailUrl = await createThumbnail(newImageFile);
+    const newItem: HistoryItem = { file: newImageFile, url: URL.createObjectURL(newImageFile), thumbnailUrl, transform: { ...initialTransformState } };
     historyDispatch({ type: 'SET_FROM_RESULT', payload: { baseIndex, item: newItem } });
     clearMask();
     setRetouchState(s => ({ ...s, editHotspot: null, prompt: '' }));
-  }, [history.length, historyIndex, resultsBaseHistoryIndex, handleImageUpload, clearMask, historyDispatch, handleUseExtractedAsOutfit]);
+  }, [history.length, historyIndex, resultsBaseHistoryIndex, handleImageUpload, clearMask, historyDispatch]);
 
   const openFullScreenViewer = useCallback((items: Array<{ url: string; transform: TransformState; }>, index: number, type: 'history' | 'result' | 'extract', context: FullscreenViewerState['context'] = {}) => {
       const historyItemUrls = history.map(item => item.url);
@@ -323,7 +391,10 @@ export const usePika = () => {
   
   const handleSelectFromViewer = useCallback((url: string, index: number) => {
     const { type, context } = fullscreenViewerState;
-    if (type === 'history') {
+    if (type === 'result' && context?.isNewSession) {
+        const newFile = dataURLtoFile(url, `generated-${Date.now()}.png`);
+        handleImageUpload(newFile);
+    } else if (type === 'history') {
         handleHistorySelect(index);
     } else if (type === 'extract') {
         const setIndex = context?.extractSetIndex;
@@ -337,7 +408,7 @@ export const usePika = () => {
         handleSelectFromResult(url);
     }
     setFullscreenViewerState(s => ({...s, isOpen: false}));
-  }, [fullscreenViewerState, handleHistorySelect, handleSelectFromResult, extractHistory, handleUseExtractedAsOutfit]);
+  }, [fullscreenViewerState, handleImageUpload, handleHistorySelect, handleSelectFromResult, extractHistory, handleUseExtractedAsOutfit]);
 
   const handleViewExtractedItem = useCallback((setIndex: number, itemIndex: number) => {
     const itemSetUrls = extractedHistoryItemUrls[setIndex];
@@ -374,6 +445,77 @@ export const usePika = () => {
     return new File([blob], `committed-${Date.now()}.png`, { type: blob.type });
   }, [currentHistoryItem]);
 
+  const getRelativeCoords = useCallback((e: React.MouseEvent | React.TouchEvent<HTMLCanvasElement> | MouseEvent | TouchEvent) => {
+    const img = imgRef.current;
+    if (!img || !img.naturalWidth || !img.complete) return null;
+
+    const pointer = ('touches' in e && e.touches.length > 0)
+        ? e.touches[0]
+        : ('changedTouches' in e && e.changedTouches.length > 0)
+        ? e.changedTouches[0]
+        : ('clientX' in e ? e : null);
+    if (!pointer) return null;
+
+    const { rotate, scaleX, scaleY } = currentTransform;
+    const isSideways = rotate === 90 || rotate === 270;
+    
+    const rotatedNaturalW = isSideways ? img.naturalHeight : img.naturalWidth;
+    const rotatedNaturalH = isSideways ? img.naturalWidth : img.naturalHeight;
+
+    if (rotatedNaturalW === 0 || rotatedNaturalH === 0) return null;
+
+    const imgRect = img.getBoundingClientRect();
+    const naturalRatio = rotatedNaturalW / rotatedNaturalH;
+    const rectRatio = imgRect.width / imgRect.height;
+
+    let renderedWidth, renderedHeight, renderedX, renderedY;
+
+    if (naturalRatio > rectRatio) { // Image is wider, letterboxed top/bottom
+        renderedWidth = imgRect.width;
+        renderedHeight = imgRect.width / naturalRatio;
+        renderedX = imgRect.left;
+        renderedY = imgRect.top + (imgRect.height - renderedHeight) / 2;
+    } else { // Image is taller, letterboxed left/right
+        renderedHeight = imgRect.height;
+        renderedWidth = imgRect.height * naturalRatio;
+        renderedY = imgRect.top;
+        renderedX = imgRect.left + (imgRect.width - renderedWidth) / 2;
+    }
+
+    // Boundary check: is the pointer inside the rendered image?
+    if (
+        pointer.clientX < renderedX ||
+        pointer.clientX > renderedX + renderedWidth ||
+        pointer.clientY < renderedY ||
+        pointer.clientY > renderedY + renderedHeight
+    ) {
+        return null; // Click is outside the actual image
+    }
+
+    const xOnImage = pointer.clientX - renderedX;
+    const yOnImage = pointer.clientY - renderedY;
+    let normX = xOnImage / renderedWidth;
+    let normY = yOnImage / renderedHeight;
+    
+    // To reverse transforms, we must apply the inverse of each transform in the reverse order.
+    // The CSS transform is effectively: rotate() then scale().
+    // So, the reversal must be: un-scale() then un-rotate().
+
+    // 1. Un-flip (un-scale)
+    if (scaleX === -1) normX = 1 - normX;
+    if (scaleY === -1) normY = 1 - normY;
+    
+    // 2. Un-rotate
+    const tempX = normX;
+    switch (rotate) {
+        case 90: normX = normY; normY = 1 - tempX; break;
+        case 180: normX = 1 - normX; normY = 1 - normY; break;
+        case 270: normX = 1 - normY; normY = tempX; break;
+    }
+    
+    return { x: normX * img.naturalWidth, y: normY * img.naturalHeight };
+  }, [currentTransform]);
+
   const handleGenerate = async (promptOverride?: string) => {
     if (!currentImage) { setUiState(s => ({ ...s, error: t('errorNoImageLoaded') })); return; }
     const finalPromptToUse = promptOverride || retouchPrompt;
@@ -392,33 +534,39 @@ export const usePika = () => {
             const ctx = pointCanvas.getContext('2d');
             if (!ctx) throw new Error("Could not create canvas context for point mask");
             const pointRadius = Math.max(15, Math.min(pointCanvas.width, pointCanvas.height) * 0.025);
-            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillStyle = '#FF00FF';
             ctx.beginPath();
             ctx.arc(editHotspot.x, editHotspot.y, pointRadius, 0, Math.PI * 2);
             ctx.fill();
             finalMaskUrl = pointCanvas.toDataURL('image/png');
         }
-        const stream = generateEditedImageWithMaskStream(imageToProcess, finalPromptToUse, finalMaskUrl);
-        for await (const imageUrl of stream) {
-            addImageToHistory(dataURLtoFile(imageUrl, `edited-${Date.now()}.png`));
-            break; 
+        const imageUrl = await generateEditedImageWithMask(imageToProcess, finalPromptToUse, finalMaskUrl);
+        await addImageToHistory(dataURLtoFile(imageUrl, `edited-${Date.now()}.png`));
+        if (isMobile) {
+            setPendingAction({ action: 'openViewerForNewItem' });
+        } else {
+            onEditComplete();
         }
-        onEditComplete();
     } catch (err) { handleApiError(err, 'errorFailedToGenerate'); } 
     finally { setUiState(s => ({ ...s, isLoading: false })); }
   };
 
   const handleApplyAdjustment = useCallback(async (prompt: string) => {
     if (!currentImage) { setUiState(s => ({...s, error: t('errorNoImageLoadedToAdjust')})); return; }
-    setUiState({ isLoading: true, loadingMessage: t('loadingAdjustment'), error: null });
+    const loadingMessage = prompt.includes('Document Scanner Simulation') ? t('loadingScan') : t('loadingAdjustment');
+    setUiState({ isLoading: true, loadingMessage, error: null });
     setResultsState(s => ({ ...s, items: [], persistentItems: [], baseHistoryIndex: null }));
     try {
       const imageUrl = await generateAdjustedImage(await getCommittedImage(), prompt);
-      addImageToHistory(dataURLtoFile(imageUrl, `adjusted-${Date.now()}.png`));
-      onEditComplete();
+      await addImageToHistory(dataURLtoFile(imageUrl, `adjusted-${Date.now()}.png`));
+      if (isMobile) {
+        setPendingAction({ action: 'openViewerForNewItem' });
+      } else {
+        onEditComplete();
+      }
     } catch (err) { handleApiError(err, 'errorFailedToApplyAdjustment'); } 
     finally { setUiState(s => ({...s, isLoading: false})); }
-  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage]);
+  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage, isMobile]);
   
   const handleApplyMultipleAdjustments = useCallback(async (prompt: string) => {
     if (!currentImage) { setUiState(s => ({...s, error: t('errorNoImageLoadedToAdjust')})); return; }
@@ -455,12 +603,16 @@ export const usePika = () => {
         const successfulUrls = results.filter((url): url is string => url !== null);
 
         if (successfulUrls.length === 0) throw new Error("All adjustment generations failed.");
+        
+        if (isMobile && successfulUrls.length > 0) {
+            openFullScreenViewer(successfulUrls.map(url => ({ url, transform: initialTransformState })), 0, 'result');
+        }
     } catch (err) { handleApiError(err, 'errorFailedToApplyAdjustment'); } 
     finally { 
       setUiState(s => ({...s, isLoading: false})); 
       setResultsState(s => ({...s, isGenerating: false}));
     }
-  }, [currentImage, t, handleApiError, historyIndex, activeTab, isMobile, getCommittedImage]);
+  }, [currentImage, t, handleApiError, historyIndex, activeTab, isMobile, getCommittedImage, openFullScreenViewer]);
 
   const handleApplyFilter = useCallback(async (prompt: string) => {
     if (!currentImage) { setUiState(s => ({...s, error: t('errorNoImageLoadedToFilter')})); return; }
@@ -468,11 +620,15 @@ export const usePika = () => {
     setResultsState(s => ({ ...s, items: [], persistentItems: [], baseHistoryIndex: null }));
     try {
       const imageUrl = await generateFilteredImage(await getCommittedImage(), prompt);
-      addImageToHistory(dataURLtoFile(imageUrl, `filtered-${Date.now()}.png`));
-      onEditComplete();
+      await addImageToHistory(dataURLtoFile(imageUrl, `filtered-${Date.now()}.png`));
+      if (isMobile) {
+        setPendingAction({ action: 'openViewerForNewItem' });
+      } else {
+        onEditComplete();
+      }
     } catch (err) { handleApiError(err, 'errorFailedToApplyFilter'); } 
     finally { setUiState(s => ({...s, isLoading: false})); }
-  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage]);
+  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage, isMobile]);
 
   const handleGenerateExpandedImage = useCallback(async (prompt: string) => {
     if (!currentImage || !hasExpansion) return;
@@ -483,25 +639,28 @@ export const usePika = () => {
         const imageToProcessUrl = URL.createObjectURL(imageToProcess);
         const tempImg = new Image(); tempImg.src = imageToProcessUrl; await tempImg.decode();
         URL.revokeObjectURL(imageToProcessUrl);
-        const { width: naturalWidth, height: naturalHeight } = tempImg;
-        const totalWidth = naturalWidth + expansionPadding.left + expansionPadding.right;
-        const totalHeight = naturalHeight + expansionPadding.top + expansionPadding.bottom;
+        const { naturalWidth, naturalHeight } = tempImg;
+        const totalWidth = naturalWidth + expandPadding.left + expandPadding.right;
+        const totalHeight = naturalHeight + expandPadding.top + expandPadding.bottom;
         const canvas = document.createElement('canvas');
         canvas.width = totalWidth; canvas.height = totalHeight;
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error("Could not create canvas context for expansion.");
-        ctx.drawImage(tempImg, expansionPadding.left, expansionPadding.top, naturalWidth, naturalHeight);
+        ctx.drawImage(tempImg, expandPadding.left, expandPadding.top, naturalWidth, naturalHeight);
         const finalPrompt = prompt;
         const imageUrl = await generateExpandedImage(canvas.toDataURL('image/png'), finalPrompt);
-        addImageToHistory(dataURLtoFile(imageUrl, `expanded-${Date.now()}.png`));
+        await addImageToHistory(dataURLtoFile(imageUrl, `expanded-${Date.now()}.png`));
         setExpandState({ prompt: '', padding: { top: 0, right: 0, bottom: 0, left: 0 }, activeAspect: null });
-        onEditComplete();
+        if (isMobile) {
+            setPendingAction({ action: 'openViewerForNewItem' });
+        } else {
+            onEditComplete();
+        }
     } catch (err) { handleApiError(err, 'errorFailedToExpandImage'); } 
     finally { 
       setUiState(s => ({...s, isLoading: false})); 
-      setActiveExpansionHandle(null);
     }
-  }, [currentImage, addImageToHistory, expansionPadding, hasExpansion, t, handleApiError, onEditComplete, getCommittedImage]);
+  }, [currentImage, addImageToHistory, expandPadding, hasExpansion, t, handleApiError, onEditComplete, getCommittedImage, isMobile]);
   
   const handleGenerateExtract = useCallback(async () => {
     if (!currentImage) { setUiState(s => ({...s, error: t('errorNoImageLoaded')})); return; }
@@ -545,11 +704,15 @@ export const usePika = () => {
     setResultsState(s => ({ ...s, items: [], persistentItems: [], baseHistoryIndex: null }));
     try {
         const imageUrl = await generateIdPhoto(await getCommittedImage(), options);
-        addImageToHistory(dataURLtoFile(imageUrl, `idphoto-${Date.now()}.png`));
-        onEditComplete();
+        await addImageToHistory(dataURLtoFile(imageUrl, `idphoto-${Date.now()}.png`));
+        if (isMobile) {
+            setPendingAction({ action: 'openViewerForNewItem' });
+        } else {
+            onEditComplete();
+        }
     } catch (err) { handleApiError(err, 'errorFailedToGenerate'); } 
     finally { setUiState(s => ({...s, isLoading: false})); }
-  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage]);
+  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage, isMobile]);
 
   const handleStudioAddSubject = useCallback((file: File) => {
     setStudioState(s => {
@@ -633,7 +796,7 @@ export const usePika = () => {
         } else {
             const imageToProcess = await getCommittedImage();
             generationPromises = seeds.map(() => 
-                generatePhotoshootImage(imageToProcess, finalPrompt, outfitDescription, studioStyleFile, studioStyleFile ? studioStyleInfluence : undefined, studioOutfitFiles)
+                generatePhotoshootImage(imageToProcess, finalPrompt, outfitDescription, studioStyleFile, studioOutfitFiles)
             );
         }
 
@@ -656,12 +819,65 @@ export const usePika = () => {
         const successfulUrls = results.filter((url): url is string => url !== null);
         
         if (successfulUrls.length === 0) throw new Error("All photoshoot image generations failed.");
+
+        if (isMobile && successfulUrls.length > 0) {
+            openFullScreenViewer(successfulUrls.map(url => ({ url, transform: initialTransformState })), 0, 'result');
+        }
     } catch (err) { handleApiError(err, 'errorFailedToGenerate'); } 
     finally { 
       setUiState(s => ({...s, isLoading: false})); 
       setResultsState(s => ({...s, isGenerating: false}));
     }
-  }, [currentImage, studioSubjects, studioPrompt, studioStyleFile, t, handleApiError, historyIndex, activeTab, isMobile, studioStyleInfluence, getCommittedImage, studioOutfitFiles]);
+  }, [currentImage, studioSubjects, studioPrompt, studioStyleFile, t, handleApiError, historyIndex, activeTab, isMobile, getCommittedImage, studioOutfitFiles, openFullScreenViewer]);
+  
+  const handleGenerateImageFromText = useCallback(async () => {
+    if (!generatePrompt.trim()) {
+      setUiState(s => ({ ...s, error: t('errorEnterDescription') }));
+      return;
+    }
+    setUiState({ isLoading: true, loadingMessage: t('loadingGenerate'), error: null });
+    try {
+      const imageUrls = await generateImageFromText(generatePrompt, generateNumImages, generateAspectRatio);
+      if (imageUrls.length > 0) {
+        if (isMobile) {
+            setResultsState({
+                items: imageUrls,
+                isGenerating: false,
+                expectedCount: imageUrls.length,
+                sourceTab: 'generate',
+                persistentItems: imageUrls,
+                baseHistoryIndex: historyIndex,
+            });
+            openFullScreenViewer(
+                imageUrls.map(url => ({ url, transform: initialTransformState })),
+                0,
+                'result',
+                { isNewSession: true }
+            );
+        } else {
+            const newFile = dataURLtoFile(imageUrls[0], `generated-${Date.now()}.png`);
+            await handleImageUpload(newFile);
+            if (imageUrls.length > 1) {
+              setResultsState({
+                items: imageUrls,
+                isGenerating: false,
+                expectedCount: imageUrls.length,
+                sourceTab: 'generate',
+                persistentItems: imageUrls,
+                baseHistoryIndex: 0,
+              });
+              setIsHistoryExpanded(true);
+            }
+        }
+      } else {
+        throw new Error(t('errorAllGenerationsFailed'));
+      }
+    } catch (err) {
+      handleApiError(err, 'errorFailedToGenerateImage');
+    } finally {
+      setUiState(s => ({ ...s, isLoading: false }));
+    }
+  }, [generatePrompt, generateNumImages, generateAspectRatio, handleImageUpload, handleApiError, t, isMobile, openFullScreenViewer, historyIndex]);
   
   const handleRequestFileUpload = useCallback(() => document.getElementById('image-upload-main')?.click(), []);
   
@@ -671,17 +887,35 @@ export const usePika = () => {
   }, [currentImage, currentImageUrl, t, triggerDownload]);
 
   const setExpansionByAspect = useCallback((aspect: number | null) => {
-      setExpandState(s => ({...s, activeAspect: aspect}));
-      if (!imgRef.current || !imageDimensions || aspect === null) {
-          if(aspect === null) setExpandState(s => ({...s, padding: {top:0,right:0,bottom:0,left:0}}));
-          return;
-      }
-      const { width: w, height: h } = imageDimensions;
-      const currentAspect = w / h;
-      let newWidth = w, newHeight = h;
-      if (aspect > currentAspect) newWidth = h * aspect; else newHeight = w / aspect;
-      const padX = Math.round((newWidth - w) / 2), padY = Math.round((newHeight - h) / 2);
-      setExpandState(s => ({...s, padding: { top: padY, bottom: padY, left: padX, right: padX }}));
+    // If user wants to reset, always allow it.
+    if (aspect === null) {
+      setExpandState(s => ({ ...s, padding: { top: 0, right: 0, bottom: 0, left: 0 }, activeAspect: null }));
+      return;
+    }
+
+    // For any other aspect, if we don't have dimensions, do nothing to prevent a partial state update.
+    if (!imgRef.current || !imageDimensions) {
+      console.warn("setExpansionByAspect called before imageDimensions were ready.");
+      return; 
+    }
+    
+    // Now we know we have dimensions and a valid aspect.
+    const { width: w, height: h } = imageDimensions;
+    const currentAspect = w / h;
+    let newWidth = w, newHeight = h;
+    if (aspect > currentAspect) {
+      newWidth = h * aspect;
+    } else {
+      newHeight = w / aspect;
+    }
+    const padX = Math.max(0, Math.round((newWidth - w) / 2));
+    const padY = Math.max(0, Math.round((newHeight - h) / 2));
+
+    setExpandState(s => ({
+      ...s,
+      padding: { top: padY, bottom: padY, left: padX, right: padX },
+      activeAspect: aspect
+    }));
   }, [imageDimensions]);
   
   const handleUndo = useCallback(() => {
@@ -729,84 +963,9 @@ export const usePika = () => {
   
   const handleFileSelect = (files: FileList | null) => { if (files && files[0]) handleImageUpload(files[0]); };
 
-  const getRelativeCoords = (e: React.MouseEvent | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!imgRef.current || !imageViewerRef.current) return null;
-    
-    const pointer = ('touches' in e && e.touches.length > 0) 
-        ? e.touches[0] 
-        : ('changedTouches' in e && e.changedTouches.length > 0)
-        ? e.changedTouches[0]
-        : ('clientX' in e ? e : null);
-
-    if (!pointer) return null;
-
-    const { clientX, clientY } = pointer;
-    const img = imgRef.current;
-    
-    const container = img.parentElement;
-    if (!container) {
-        return null;
-    }
-    const elementRect = container.getBoundingClientRect();
-    const naturalRatio = img.naturalWidth / img.naturalHeight;
-    const elementRatio = elementRect.width / elementRect.height;
-
-    let renderedWidth, renderedHeight;
-    if (naturalRatio > elementRatio) {
-      // Image is wider than its container aspect ratio, so it's letterboxed vertically
-      renderedWidth = elementRect.width;
-      renderedHeight = elementRect.width / naturalRatio;
-    } else {
-      // Image is taller than its container aspect ratio, so it's letterboxed horizontally
-      renderedHeight = elementRect.height;
-      renderedWidth = elementRect.height * naturalRatio;
-    }
-
-    // This calculates the position of the visible image content within the container's box
-    const renderedLeft = elementRect.left + (elementRect.width - renderedWidth) / 2;
-    const renderedTop = elementRect.top + (elementRect.height - renderedHeight) / 2;
-
-    const rect = {
-        left: renderedLeft,
-        top: renderedTop,
-        width: renderedWidth,
-        height: renderedHeight,
-    };
-
-    let normX = (clientX - rect.left) / rect.width;
-    let normY = (clientY - rect.top) / rect.height;
-
-    const { rotate, scaleX, scaleY } = currentTransform;
-
-    if (scaleX === -1) {
-      normX = 1 - normX;
-    }
-    if (scaleY === -1) {
-      normY = 1 - normY;
-    }
-
-    const tempX = normX;
-    if (rotate === 90) {
-      normX = normY;
-      normY = 1 - tempX;
-    } else if (rotate === 180) {
-      normX = 1 - normX;
-      normY = 1 - normY;
-    } else if (rotate === 270) {
-      normX = 1 - normY;
-      normY = tempX;
-    }
-    
-    const x = normX * img.naturalWidth;
-    const y = normY * img.naturalHeight;
-    
-    if (x < 0 || x > img.naturalWidth || y < 0 || y > img.naturalHeight) return null;
-    return { x, y };
-  };
-
   const handleViewerClick = (e: React.MouseEvent) => {
     if (activeTab === 'retouch' && selectionMode === 'point') {
-        const coords = getRelativeCoords(e);
+        const coords = getRelativeCoords(e as any); // Cast to any to satisfy TS, logic is sound for mouseevent
         if (coords) {
             setRetouchState(s => ({...s, editHotspot: coords }));
             setMobileInputKey(Date.now());
@@ -815,277 +974,492 @@ export const usePika = () => {
   };
   
   const drawOnCanvas = useCallback((point: { x: number; y: number }) => {
-    const canvas = maskCanvasRef.current, ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) return;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.lineWidth = brushSize * (canvas.width / imageViewerRef.current!.clientWidth) / scale;
-    ctx.globalCompositeOperation = brushMode === 'erase' ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = brushMode === 'erase' ? 'rgba(0,0,0,1)' : 'white';
+    const canvas = maskCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = brushMode === 'draw' ? '#FF00FF' : 'black';
+    ctx.globalCompositeOperation = brushMode === 'draw' ? 'source-over' : 'destination-out';
+    
     if (lastDrawPointRef.current) {
         ctx.beginPath();
         ctx.moveTo(lastDrawPointRef.current.x, lastDrawPointRef.current.y);
         ctx.lineTo(point.x, point.y);
         ctx.stroke();
+    } else {
+        // Draw a dot for the first point
+        ctx.fillStyle = brushMode === 'draw' ? '#FF00FF' : 'black';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, brushSize / 2, 0, Math.PI * 2);
+        ctx.fill();
     }
+    
     lastDrawPointRef.current = point;
-  }, [brushSize, brushMode, scale]);
-  
+  }, [brushMode, brushSize]);
+
   const handleCanvasInteraction = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, type: 'start' | 'move' | 'end') => {
-    if (activeTab !== 'retouch' || selectionMode !== 'brush' || ('touches' in e && e.touches.length > 1)) return;
-    e.stopPropagation(); if ('preventDefault' in e) e.preventDefault();
-    const coords = getRelativeCoords(e);
-    if (type === 'start' && coords) {
-        setIsDrawing(true); lastDrawPointRef.current = coords; drawOnCanvas(coords);
-    } else if (type === 'move') {
-        if ('clientX' in e && imageViewerRef.current) {
-            const viewerRect = imageViewerRef.current.getBoundingClientRect();
-            setMousePosition({ x: e.clientX - viewerRect.left, y: e.clientY - viewerRect.top });
+    if (activeTab !== 'retouch' || selectionMode !== 'brush') return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const point = getRelativeCoords(e);
+    
+    if (!point) {
+        // Cursor is outside the image bounds
+        setMousePosition(null);
+        if (isDrawing) {
+            setIsDrawing(false);
+            lastDrawPointRef.current = null;
         }
-        if (isDrawing && coords) drawOnCanvas(coords);
+        return;
+    }
+
+    // Update mouse position for the custom brush cursor
+    const pointer = 'touches' in e ? e.touches[0] : e;
+    if (pointer && imageViewerRef.current) {
+        const viewerRect = imageViewerRef.current.getBoundingClientRect();
+        setMousePosition({
+            x: pointer.clientX - viewerRect.left,
+            y: pointer.clientY - viewerRect.top,
+        });
+    }
+
+    if (type === 'start') {
+        setIsDrawing(true);
+        lastDrawPointRef.current = null; // Reset for a new line
+        drawOnCanvas(point);
+    } else if (type === 'move') {
+        if (!isDrawing) return; // Only draw if mouse/touch is down
+        drawOnCanvas(point);
     } else if (type === 'end') {
-        if ('touches' in e && e.touches.length > 0) return;
-        setIsDrawing(false); lastDrawPointRef.current = null;
+        setIsDrawing(false);
+        lastDrawPointRef.current = null;
     }
   };
 
   const handleExpansionDragStart = (e: React.MouseEvent | React.TouchEvent, handle: ExpansionHandle) => {
-    e.stopPropagation(); setActiveExpansionHandle(handle);
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    setDragStart({ x: clientX, y: clientY, initialPadding: expansionPadding });
+    e.preventDefault();
+    e.stopPropagation();
+    const startCoords = getRelativeCoords(e as any);
+    if (!startCoords) return;
+
+    setExpansionDrag({ handle, startCoords, initialPadding: expandState.padding });
   };
 
-  const handleExpansionDrag = useCallback((e: MouseEvent | TouchEvent) => {
-    if (!activeExpansionHandle || !dragStart || !imgRef.current || !imageDimensions) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX, clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    const deltaX = clientX - dragStart.x, deltaY = clientY - dragStart.y;
-    const imgRect = imgRef.current.getBoundingClientRect();
-    const pixelToImageRatioX = imageDimensions.width / imgRect.width, pixelToImageRatioY = imageDimensions.height / imgRect.height;
-    let newPadding = { ...dragStart.initialPadding };
-    if (activeExpansionHandle.includes('l')) newPadding.left = Math.max(0, dragStart.initialPadding.left - deltaX * pixelToImageRatioX);
-    if (activeExpansionHandle.includes('r')) newPadding.right = Math.max(0, dragStart.initialPadding.right + deltaX * pixelToImageRatioX);
-    if (activeExpansionHandle.includes('t')) newPadding.top = Math.max(0, dragStart.initialPadding.top - deltaY * pixelToImageRatioY);
-    if (activeExpansionHandle.includes('b')) newPadding.bottom = Math.max(0, dragStart.initialPadding.bottom + deltaY * pixelToImageRatioY);
-    setExpandState(s => ({...s, padding: newPadding, activeAspect: null}));
-  }, [activeExpansionHandle, dragStart, imageDimensions]);
+  const handleExpansionDragMove = useCallback((e: MouseEvent | TouchEvent) => {
+      if (!expansionDrag) return;
 
-  const handleExpansionDragEnd = useCallback(() => { setActiveExpansionHandle(null); setDragStart(null); }, []);
+      const currentCoords = getRelativeCoords(e as any);
+      if (!currentCoords) return;
+
+      const { startCoords, initialPadding, handle } = expansionDrag;
+      const deltaX = currentCoords.x - startCoords.x;
+      const deltaY = currentCoords.y - startCoords.y;
+
+      const newPadding = { ...initialPadding };
+
+      if (handle.includes('top')) newPadding.top = Math.max(0, initialPadding.top - deltaY);
+      if (handle.includes('bottom')) newPadding.bottom = Math.max(0, initialPadding.bottom + deltaY);
+      if (handle.includes('left')) newPadding.left = Math.max(0, initialPadding.left - deltaX);
+      if (handle.includes('right')) newPadding.right = Math.max(0, initialPadding.right + deltaX);
+
+      setExpandState(s => ({ ...s, padding: newPadding, activeAspect: null }));
+  }, [expansionDrag, getRelativeCoords]);
   
-  const handleToolsTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLElement;
-      // Prevent swipe gesture when interacting with inputs, textareas.
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        swipeStartRef.current = null;
+  const handleExpansionDragEnd = useCallback(() => {
+      setExpansionDrag(null);
+  }, []);
+
+  // --- EFFECT HOOKS ---
+  
+  // Window resize handler (debounced)
+  useEffect(() => {
+    let timeoutId: number;
+    const handleResize = () => {
+        clearTimeout(timeoutId);
+        timeoutId = window.setTimeout(() => {
+            setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+        }, 100);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Set initial window height for keyboard detection
+  useEffect(() => {
+    initialWindowHeightRef.current = window.innerHeight;
+  }, []);
+
+  // Reset certain states when image is removed
+  useEffect(() => {
+    if (!currentImage) {
+        setExpandState({ prompt: '', padding: {top:0,right:0,bottom:0,left:0}, activeAspect: null });
+        setImageDimensions(null);
+        resetView();
+        setToolboxState({ activeTab: TABS_CONFIG[0].id as Tab, isOpen: true });
+    }
+  }, [currentImage, resetView]);
+
+  // Update image dimensions, mask canvas resolution, and overlay styles
+  useLayoutEffect(() => {
+    const img = imgRef.current;
+    const container = img?.parentElement;
+
+    if (img && container && currentImageUrl) {
+        const fullUpdate = () => {
+            if (!img.naturalWidth || !img.naturalHeight) return;
+
+            // 1. Set canvas resolution and image dimensions state
+            const mask = maskCanvasRef.current;
+            if (mask) {
+                const { naturalWidth, naturalHeight } = img;
+                const { rotate } = currentTransform;
+                const isSideways = rotate === 90 || rotate === 270;
+                const w = isSideways ? naturalHeight : naturalWidth;
+                const h = isSideways ? naturalWidth : naturalHeight;
+                setImageDimensions({ width: w, height: h });
+
+                mask.width = naturalWidth;
+                mask.height = naturalHeight;
+                if (isMaskPresent()) clearMask();
+            }
+
+            // 2. Calculate and set the style for overlay canvases to match `object-contain`
+            const containerRect = container.getBoundingClientRect();
+            if (containerRect.width === 0 || containerRect.height === 0) {
+                setOverlayStyle({ display: 'none' });
+                return;
+            }
+
+            const containerRatio = containerRect.width / containerRect.height;
+            const { rotate } = currentTransform;
+            const isSideways = rotate === 90 || rotate === 270;
+            const contentNaturalRatio = isSideways
+                ? img.naturalHeight / img.naturalWidth
+                : img.naturalWidth / img.naturalHeight;
+
+            let style: React.CSSProperties = { position: 'absolute' };
+
+            if (contentNaturalRatio > containerRatio) { // Letterboxed top/bottom
+                style.width = '100%';
+                style.height = `${containerRect.width / contentNaturalRatio}px`;
+                style.top = '50%';
+                style.left = '0';
+                style.transform = 'translateY(-50%)';
+            } else { // Letterboxed left/right
+                style.height = '100%';
+                style.width = `${containerRect.height * contentNaturalRatio}px`;
+                style.left = '50%';
+                style.top = '0';
+                style.transform = 'translateX(-50%)';
+            }
+            setOverlayStyle(style);
+        };
+
+        if (img.complete) {
+            fullUpdate();
+        } else {
+            img.onload = fullUpdate;
+        }
+
+        const resizeObserver = new ResizeObserver(fullUpdate);
+        resizeObserver.observe(container);
+
+        return () => {
+            resizeObserver.disconnect();
+            if (img) img.onload = null;
+        };
+    } else {
+        setOverlayStyle({ display: 'none' });
+    }
+}, [currentImageUrl, currentTransform, windowSize, clearMask, isMaskPresent]);
+
+  // Handle auto-generation of prompt from style file
+  useEffect(() => {
+    if (studioStyleFile && studioStyleFile !== prevStudioStyleFileRef.current) {
+        setUiState(s => ({...s, isLoading: true, loadingMessage: t('loadingStyle')}));
+        generatePromptFromStyleImage(studioStyleFile, false)
+            .then(prompt => setStudioState(s => ({...s, prompt})))
+            .catch(err => handleApiError(err, 'errorFailedToProcessImage'))
+            .finally(() => setUiState(s => ({...s, isLoading: false})));
+    } else if (!studioStyleFile && prevStudioStyleFileRef.current) {
+        setStudioState(s => ({...s, prompt: ''}));
+    }
+    prevStudioStyleFileRef.current = studioStyleFile;
+  }, [studioStyleFile, handleApiError, t]);
+  
+  // Create object URLs for extracted items
+  useEffect(() => {
+    const newUrls: string[][] = [];
+    extractHistory.forEach((fileSet, setIndex) => {
+      newUrls[setIndex] = fileSet.map(file => URL.createObjectURL(file));
+    });
+    setExtractedHistoryItemUrls(newUrls);
+    
+    return () => { // Cleanup
+      newUrls.flat().forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [extractHistory]);
+
+  // Update hotspot display position when it changes
+  useEffect(() => {
+    const img = imgRef.current;
+    // The positioning context for the hotspot is the pan/zoom div, which is the image viewer.
+    const viewer = imageViewerRef.current; 
+
+    if (editHotspot && img && viewer && img.complete && img.naturalWidth > 0) {
+      // 1. Normalize hotspot coords from natural image space [0, naturalWidth] -> [0, 1]
+      let { x: normX, y: normY } = { x: editHotspot.x / img.naturalWidth, y: editHotspot.y / img.naturalHeight };
+
+      // 2. Apply CSS transforms (flip, rotate) to get the point's logical position on the transformed image plane
+      const { rotate, scaleX, scaleY } = currentTransform;
+      const tempX = normX;
+      if (rotate === 90) { normX = 1 - normY; normY = tempX; }
+      else if (rotate === 180) { normX = 1 - normX; normY = 1 - normY; }
+      else if (rotate === 270) { normX = normY; normY = 1 - tempX; }
+      if (scaleX === -1) normX = 1 - normX;
+      if (scaleY === -1) normY = 1 - normY;
+
+      // 3. Calculate the actual displayed size of the image within its container, respecting 'object-contain'
+      const containerWidth = viewer.clientWidth;
+      const containerHeight = viewer.clientHeight;
+
+      let imgNaturalWidth = img.naturalWidth;
+      let imgNaturalHeight = img.naturalHeight;
+
+      if (rotate === 90 || rotate === 270) {
+        [imgNaturalWidth, imgNaturalHeight] = [imgNaturalHeight, imgNaturalWidth];
+      }
+
+      const naturalRatio = imgNaturalWidth / imgNaturalHeight;
+      const containerRatio = containerWidth / containerHeight;
+
+      let displayWidth, displayHeight;
+      if (naturalRatio > containerRatio) { // Image is wider than container, so it's letterboxed top/bottom
+        displayWidth = containerWidth;
+        displayHeight = displayWidth / naturalRatio;
+      } else { // Image is taller, letterboxed left/right
+        displayHeight = containerHeight;
+        displayWidth = displayHeight * naturalRatio;
+      }
+
+      // 4. The image is centered in the viewer. Calculate its top-left corner's offset.
+      const offsetX = (containerWidth - displayWidth) / 2;
+      const offsetY = (containerHeight - displayHeight) / 2;
+
+      // 5. Calculate the hotspot's position in pixels relative to the viewer's top-left.
+      // Since the hotspot is a child of the panned/zoomed container, these pixel values
+      // will be correctly transformed by the browser.
+      const finalLeft = offsetX + normX * displayWidth;
+      const finalTop = offsetY + normY * displayHeight;
+
+      setHotspotDisplayPosition({
+        left: finalLeft,
+        top: finalTop,
+      });
+    } else {
+      setHotspotDisplayPosition(null);
+    }
+  }, [editHotspot, currentTransform, windowSize, scale, position]);
+  
+  // Effect to handle opening viewer after history has been updated for single-result generations
+  useEffect(() => {
+      if (pendingAction?.action === 'openViewerForNewItem' && historyIndex > -1 && isMobile) {
+          openFullScreenViewer(
+              history.map(item => ({ url: item.url, transform: item.transform })),
+              historyIndex,
+              'history'
+          );
+          setPendingAction(null); // Clear the action
+      }
+  }, [pendingAction, history, historyIndex, openFullScreenViewer, isMobile]);
+
+
+  // --- Mobile-specific touch handlers for tool panel ---
+  const handleToolsTouchStart = useCallback((e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('input[type="range"]')) {
         return;
+    }
+    if (e.touches.length === 1 && toolsContainerRef.current) {
+      swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
+      gestureLockRef.current = null;
+    }
+  }, []);
+
+  const handleToolsTouchMove = useCallback((e: React.TouchEvent) => {
+      if (!swipeStartRef.current || e.touches.length !== 1 || !toolsContainerRef.current) return;
+
+      const deltaX = e.touches[0].clientX - swipeStartRef.current.x;
+      const deltaY = e.touches[0].clientY - swipeStartRef.current.y;
+      
+      if (gestureLockRef.current === null && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+          gestureLockRef.current = Math.abs(deltaY) > Math.abs(deltaX) ? 'vertical' : 'horizontal';
       }
-      if (e.touches.length === 1) {
-          swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
-          gestureLockRef.current = null;
+
+      const { scrollTop, scrollHeight, clientHeight } = toolsContainerRef.current;
+      if (gestureLockRef.current === 'vertical' && (scrollTop > 0 || deltaY < 0) && (scrollTop < scrollHeight - clientHeight || deltaY > 0)) {
+          // Allow native vertical scroll
       } else {
-          swipeStartRef.current = null;
+          e.preventDefault();
       }
   }, []);
 
-  const handleToolsTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-      if (!swipeStartRef.current || e.touches.length !== 1) return;
-      if (gestureLockRef.current === null) {
-          const deltaX = e.touches[0].clientX - swipeStartRef.current.x;
-          const deltaY = e.touches[0].clientY - swipeStartRef.current.y;
-          if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-              gestureLockRef.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
-          }
-      }
-      if (gestureLockRef.current === 'horizontal') e.preventDefault();
-  }, []);
-
-  const handleToolsTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-      if (gestureLockRef.current !== 'horizontal' || !swipeStartRef.current || e.changedTouches.length !== 1) {
+  const handleToolsTouchEnd = useCallback((e: React.TouchEvent) => {
+      if (!swipeStartRef.current || e.changedTouches.length !== 1) {
           swipeStartRef.current = null;
           gestureLockRef.current = null;
           return;
       }
-      const touch = e.changedTouches[0];
-      const deltaX = touch.clientX - swipeStartRef.current.x;
-      const deltaY = touch.clientY - swipeStartRef.current.y;
-      const deltaTime = Date.now() - swipeStartRef.current.time;
-      if (deltaTime < 500 && Math.abs(deltaX) > 50 && Math.abs(deltaY) < 75) {
-          const availableTabs = TABS_CONFIG.filter(tab => tab.id === 'studio' || !!currentImage);
+      
+      const deltaX = e.changedTouches[0].clientX - swipeStartRef.current.x;
+      const deltaY = e.changedTouches[0].clientY - swipeStartRef.current.y;
+      const swipeTime = Date.now() - swipeStartRef.current.time;
+
+      if (gestureLockRef.current === 'vertical' && swipeTime < 300 && Math.abs(deltaY) > 50) {
+          if(toolsContainerRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = toolsContainerRef.current;
+            if ((deltaY < 0 && scrollTop >= scrollHeight - clientHeight - 5) || (deltaY > 0 && scrollTop <= 5)) {
+                toggleToolbox();
+            }
+          }
+      } else if (gestureLockRef.current === 'horizontal' && swipeTime < 400 && Math.abs(deltaX) > 60) {
+          const availableTabs = TABS_CONFIG.filter(tab => isImageLoaded || ['studio'].includes(tab.id));
           const currentIndex = availableTabs.findIndex(tab => tab.id === activeTab);
-          if (currentIndex !== -1) {
-              let nextIndex = deltaX < 0 ? (currentIndex + 1) % availableTabs.length : (currentIndex - 1 + availableTabs.length) % availableTabs.length;
-              handleTabChange(availableTabs[nextIndex].id as Tab);
+          if (currentIndex === -1) {
+              swipeStartRef.current = null;
+              gestureLockRef.current = null;
+              return;
+          };
+
+          let nextIndex;
+          if (deltaX < 0) { // Swipe Left -> Next Tab
+              nextIndex = (currentIndex + 1) % availableTabs.length;
+          } else { // Swipe Right -> Previous Tab
+              nextIndex = (currentIndex - 1 + availableTabs.length) % availableTabs.length;
+          }
+          const nextTab = availableTabs[nextIndex];
+          if (nextTab) {
+              handleTabChange(nextTab.id as Tab);
           }
       }
+      
       swipeStartRef.current = null;
       gestureLockRef.current = null;
-  }, [currentImage, handleTabChange, activeTab]);
+  }, [isImageLoaded, activeTab, toggleToolbox, handleTabChange]);
 
   const handleGenerateCreativePrompt = useCallback(async () => {
-    const subjectFiles = [currentImage, ...studioSubjects].filter((f): f is File => f !== null);
-
-    if (subjectFiles.length === 0) {
+    if (!currentImage) {
         setUiState(s => ({...s, error: t('errorNoImageLoaded')}));
         return;
     }
-
-    const userKeywords = studioPrompt;
-
-    setUiState({ isLoading: true, loadingMessage: t('loadingStudioAnalysis'), error: null });
+    setUiState(s => ({...s, isLoading: true, loadingMessage: t('loadingStudioAnalysis')}));
     try {
-      const newPrompt = await generateCreativePrompt(
-        subjectFiles, 
-        studioStyleFile,
-        studioOutfitFiles,
-        userKeywords,
-      );
-      setStudioState(s => ({...s, prompt: newPrompt}));
+        const subjectFiles = [currentImage, ...studioSubjects];
+        const newPrompt = await generateCreativePrompt(subjectFiles, studioStyleFile, studioOutfitFiles, studioPrompt);
+        setStudioState(s => ({...s, prompt: newPrompt}));
     } catch (err) {
-      handleApiError(err, 'errorFailedToGenerate');
+        handleApiError(err, 'errorFailedToProcessImage');
     } finally {
-      setUiState(s => ({...s, isLoading: false}));
+        setUiState(s => ({...s, isLoading: false}));
     }
-  }, [currentImage, studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t]);
+}, [currentImage, studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t]);
 
-  // --- USE EFFECTS ---
-  
-  useEffect(() => {
-    prevStudioStyleFileRef.current = studioStyleFile;
-  }, [studioStyleFile]);
-  const prevStudioStyleFile = prevStudioStyleFileRef.current;
-
-  useEffect(() => {
-    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (studioStyleFile && studioStyleFile !== prevStudioStyleFile && currentImage) {
-        const generate = async () => {
-            setUiState(s => ({ ...s, isLoading: true, loadingMessage: t('loadingStyle') }));
-            try {
-                const newPrompt = await generatePromptFromStyleImage(studioStyleFile, false); // false for scene
-                setStudioState(s => ({ ...s, prompt: newPrompt }));
-            } catch (err) {
-                handleApiError(err, 'errorFailedToGenerate');
-            } finally {
-                setUiState(s => ({ ...s, isLoading: false }));
+    // Global listeners for expansion drag
+    useEffect(() => {
+        const moveHandler = (e: MouseEvent | TouchEvent) => {
+            if (expansionDrag) {
+                handleExpansionDragMove(e);
             }
         };
-        generate();
-    }
-  }, [studioStyleFile, prevStudioStyleFile, currentImage, handleApiError, t]);
-
-  useEffect(() => {
-    setRetouchState(s => ({ ...s, editHotspot: null }));
-    clearMask();
-    setExpandState(s => ({...s, padding: { top: 0, right: 0, bottom: 0, left: 0 }}));
-    if (activeTab === 'idphoto') resetView();
-  }, [activeTab, clearMask, resetView]);
-  
-  useEffect(() => {
-    if (imgRef.current && maskCanvasRef.current) {
-        const img = imgRef.current;
-        const canvas = maskCanvasRef.current;
-        const setCanvasSize = () => {
-            if (img.naturalWidth > 0) {
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-                clearMask();
+        const endHandler = () => {
+            if (expansionDrag) {
+                handleExpansionDragEnd();
             }
         };
-        if (img.complete) setCanvasSize(); else img.addEventListener('load', setCanvasSize);
-        return () => img.removeEventListener('load', setCanvasSize);
-    } else {
-        setImageDimensions(null);
-    }
-  }, [currentImageUrl, clearMask]);
 
-  useLayoutEffect(() => {
-    if (editHotspot && activeTab === 'retouch' && selectionMode === 'point' && imgRef.current && imageViewerRef.current) {
-        const img = imgRef.current, viewer = imageViewerRef.current;
-        const { naturalWidth, naturalHeight } = img;
-        if (naturalWidth === 0) { setHotspotDisplayPosition(null); return; }
-        const viewerRect = viewer.getBoundingClientRect(), imgRect = img.getBoundingClientRect();
-        const finalX = (imgRect.left - viewerRect.left) + (editHotspot.x / naturalWidth * imgRect.width);
-        const finalY = (imgRect.top - viewerRect.top) + (editHotspot.y / naturalHeight * imgRect.height);
-        setHotspotDisplayPosition({ left: finalX, top: finalY });
-    } else {
-        setHotspotDisplayPosition(null);
-    }
-  }, [editHotspot, activeTab, selectionMode, scale, position, currentImageUrl, isToolboxOpen, windowSize, currentTransform]);
+        window.addEventListener('mousemove', moveHandler);
+        window.addEventListener('touchmove', moveHandler);
+        window.addEventListener('mouseup', endHandler);
+        window.addEventListener('touchend', endHandler);
 
-  useEffect(() => {
-    if (activeTab === 'retouch' && selectionMode === 'point' && editHotspot) {
-      const timer = setTimeout(() => {
-        if (window.innerWidth >= 1024) retouchPromptInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [editHotspot, activeTab, selectionMode]);
+        return () => {
+            window.removeEventListener('mousemove', moveHandler);
+            window.removeEventListener('touchmove', moveHandler);
+            window.removeEventListener('mouseup', endHandler);
+            window.removeEventListener('touchend', endHandler);
+        };
+    }, [expansionDrag, handleExpansionDragMove, handleExpansionDragEnd]);
+    
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (hideControlsTimeoutRef.current) {
+                window.clearTimeout(hideControlsTimeoutRef.current);
+            }
+        };
+    }, []);
 
-  useEffect(() => {
-    const allUrls = extractHistory.map(set => set.map(item => URL.createObjectURL(item)));
-    setExtractedHistoryItemUrls(allUrls);
-    return () => { allUrls.forEach(urlSet => urlSet.forEach(url => URL.revokeObjectURL(url))); };
-  }, [extractHistory]);
-
-  useEffect(() => {
-    if (activeExpansionHandle) {
-      window.addEventListener('mousemove', handleExpansionDrag); window.addEventListener('mouseup', handleExpansionDragEnd);
-      window.addEventListener('touchmove', handleExpansionDrag); window.addEventListener('touchend', handleExpansionDragEnd);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleExpansionDrag); window.removeEventListener('mouseup', handleExpansionDragEnd);
-      window.removeEventListener('touchmove', handleExpansionDrag); window.removeEventListener('touchend', handleExpansionDragEnd);
-    };
-  }, [activeExpansionHandle, handleExpansionDrag, handleExpansionDragEnd]);
+    // Show controls when image is loaded
+    useEffect(() => {
+        if (isImageLoaded) {
+            showControls();
+        }
+    }, [isImageLoaded, showControls]);
 
   return {
     t,
-    // State Values
-    isLoading, loadingMessage, error, activeTab, isToolboxOpen, history, historyIndex, scale, position, isPanning, 
+    beforeImageUrl,
+    // State
+    currentImage, currentImageUrl, currentThumbnailUrl, imageDimensions, history, historyIndex, results, isGeneratingResults, expectedResultsCount, resultsBaseHistoryIndex,
+    isLoading, loadingMessage, error, activeTab, isToolboxOpen, isComparing,
     retouchPrompt, selectionMode, editHotspot, brushMode, brushSize,
-    studioPrompt, studioStyleFile, studioStyleInfluence, studioSubjects, studioOutfitFiles,
-    expansionPadding, expandPrompt, expandActiveAspect, hasExpansion,
-    extractPrompt, extractHistory, results, isGeneratingResults, expectedResultsCount,
-    resultsBaseHistoryIndex,
-    isComparing, isViewingOriginalOnHold, isViewerOpen, viewerItems, viewerInitialIndex, viewerType, viewerComparisonUrl,
-    hotspotDisplayPosition, isDrawing, mousePosition, extractedHistoryItemUrls, isHistoryExpanded,
-    isPinching, isZoomControlsVisible, imageDimensions, windowSize, isInteracting, mobileInputKey, idPhotoGender,
-    
-    // Derived State
-    isMobile, isKeyboardOpen, currentHistoryItem, currentImage, currentImageUrl, transformString, beforeImageUrl,
-    isMobileRetouchInputActive, isMobileToolbarVisible, canUndo, canRedo,
-    
-    // Refs for DOM elements
-    imgRef, maskCanvasRef, imageViewerRef, toolsContainerRef, retouchPromptInputRef,
-
-    // State Setters
-    setUiState, setToolboxState, setRetouchState, setExpandState, setStudioState, setExtractState, setResultsState,
-    setComparisonState: (update) => setComparisonState(typeof update === 'function' ? update(comparisonState) : update), setFullscreenViewerState, setDownloadCounter, setHotspotDisplayPosition, setIsDrawing,
-    setMousePosition, setActiveExpansionHandle, setDragStart, setExtractedHistoryItemUrls, setIsHistoryExpanded,
-    setImageDimensions, setMobileInputKey, setIdPhotoGender,
-    
-    // Core Handlers
-    handleImageUpload, handleStartOver, handleHistorySelect, handleUndo, handleRedo, handleResetHistory, handleApplyTransform,
-    handleFileSelect, toggleToolbox, onEditComplete, handleDownload, handleApiError,
-    
+    studioPrompt, studioStyleFile, studioSubjects, studioOutfitFiles,
+    expandPrompt, hasExpansion, expandActiveAspect, expandPadding,
+    extractPrompt, extractHistory, extractedHistoryItemUrls,
+    isHistoryExpanded,
+    scale, position, transformString,
+    isPanning, isPinching, isZoomControlsVisible, isInteracting, isDrawing, mousePosition, hotspotDisplayPosition,
+    canUndo, canRedo, isMobile, isLandscape, windowSize, isKeyboardOpen, isMobileRetouchInputActive, isMobileToolbarVisible,
+    idPhotoGender,
+    generatePrompt, generateAspectRatio, generateNumImages,
+    overlayStyle,
+    // Refs
+    imgRef, maskCanvasRef, retouchPromptInputRef, imageViewerRef, toolsContainerRef,
     // Viewer Handlers
-    ...viewerHandlers,
+    handleViewerMouseDown, handleViewerMouseMove, handleViewerMouseUp, handleViewerWheel, handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd, handleViewerClick,
+    // Setters & Actions
+    handleFileSelect, handleDownload, handleUndo, handleRedo, handleResetHistory, handleStartOver,
+    handleGenerate, handleApplyAdjustment, handleApplyMultipleAdjustments, handleApplyFilter, handleGenerateIdPhoto, handleGenerateExpandedImage, handleGenerateExtract, handleGeneratePhotoshoot, handleGenerateCreativePrompt, handleGenerateImageFromText,
+    handleHistoryPillClick, handleResultPillClick,
+    handleApplyTransform,
+    setRetouchState, setExpandState, setStudioState, setExtractState, setComparisonState, setIdPhotoGender, setGenerateState,
+    handleTabChange,
+    handleTabChangeAndOpen,
+    handleSelectionModeChange,
+    toggleToolbox,
+    clearMask, isMaskPresent,
     resetView, handleZoom,
-
-    // Feature-specific handlers
-    handleTabChange, handleToolsTouchStart, handleToolsTouchMove, handleToolsTouchEnd,
-    clearMask, isMaskPresent, handleSelectFromResult, openFullScreenViewer, handleHistoryPillClick, handleResultPillClick,
-    handleSelectFromViewer, getCommittedImage, handleGenerate, handleApplyAdjustment, handleApplyMultipleAdjustments,
-    handleApplyFilter, handleGenerateExpandedImage, handleGenerateExtract, triggerDownload,
-    handleDownloadExtractedItem, handleGenerateIdPhoto, handleGeneratePhotoshoot, handleStudioAddSubject, handleStudioRemoveSubject,
-    handleStudioAddOutfitFile, handleStudioRemoveOutfitFile,
-    handleRequestFileUpload, setExpansionByAspect,
-    getRelativeCoords, handleViewerClick, drawOnCanvas, handleCanvasInteraction, handleExpansionDragStart,
-    dataURLtoFile, addImageToHistory, handleGenerateCreativePrompt, handleUseExtractedAsOutfit,
-    handleClearExtractHistory, handleViewExtractedItem
+    setMousePosition,
+    handleCanvasInteraction,
+    handleExpansionDragStart,
+    handleClearExtractHistory, handleUseExtractedAsOutfit, handleDownloadExtractedItem, handleViewExtractedItem,
+    handleStudioAddSubject, handleStudioRemoveSubject, handleStudioAddOutfitFile, handleStudioRemoveOutfitFile,
+    setExpansionByAspect,
+    setIsHistoryExpanded,
+    handleToolsTouchStart, handleToolsTouchMove, handleToolsTouchEnd,
+    handleRequestFileUpload,
+    mobileInputKey, // For re-triggering mobile input focus
+    // Fullscreen viewer
+    isViewerOpen, viewerItems, viewerInitialIndex, viewerType, viewerComparisonUrl,
+    setFullscreenViewerState, triggerDownload, handleSelectFromViewer,
+    showControls,
   };
 };

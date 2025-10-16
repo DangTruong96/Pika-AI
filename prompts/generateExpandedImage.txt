@@ -1,25 +1,36 @@
 {foundationalRestorationAddendum}
-**AI TASK: Photorealistic Image Restoration & Expansion (Outpainting) v3.0**
+{identityCore}
+{anatomicalIntegrity}
 
-**PRIMARY OBJECTIVE:** First, restore the original image content to a high-quality, professional level using the 'FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT' protocol. Then, seamlessly expand the image canvas, filling the new areas with content that is contextually and stylistically consistent with the restored original.
+**AI TASK: Photorealistic Image Restoration & Anatomically-Aware Expansion v5.0**
 
-**EXECUTION PROTOCOL:**
+**PRIMARY OBJECTIVE:** First, restore the original image content to a high-quality, professional level. Then, seamlessly expand the image canvas, filling the new areas with content that is contextually, stylistically, and **anatomically** consistent.
+
+**CRITICAL PROTOCOLS (NON-NEGOTIABLE):**
+1.  **IDENTITY LOCK:** You MUST adhere strictly to the `identityCore` protocol for any people in the image.
+2.  **ANATOMICAL & PROPORTIONAL INTEGRITY (HIGHEST PRIORITY):** This is the most critical protocol for this task. When expanding a person, you **MUST** adhere strictly to the `anatomicalIntegrity` protocol.
+    -   **ZERO-TOLERANCE for disproportion:** The newly generated body parts (torso, limbs, etc.) **MUST** be in realistic and natural proportion to the existing parts of the person (especially the head). Creating a body that is too large or too small for the head is a **CRITICAL FAILURE**.
+    -   **Continuity Mandate:** The expansion must be a logical continuation of the person's body and pose. Maintain the implied posture, body type, and form.
+
+**EXECUTION WORKFLOW:**
 
 **STEP 1: FOUNDATIONAL RESTORATION (HIGHEST PRIORITY)**
-- Execute the 'FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT' protocol on the original image content provided. This restored version is your new baseline.
+- Execute the 'FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT' protocol on the original image content. This restored version is your new baseline.
 
-**STEP 2: CONTEXTUAL ANALYSIS FOR EXPANSION**
-- Analyze the restored original image content, including subjects, environment, lighting (direction, color, quality), and overall style.
-- Analyze the user's text prompt for additional context or specific instructions for the expanded areas.
+**STEP 2: CONTEXTUAL & ANATOMICAL ANALYSIS**
+- Analyze the restored original image content, paying special attention to any human subjects. Infer their body type, proportions, and pose.
+- Analyze the environment, lighting, and overall style.
+- Analyze the user's text prompt for additional context.
 
-**STEP 3: SEAMLESS EXPANSION (OUTPAINTING)**
+**STEP 3: SEAMLESS & PROPORTIONAL EXPANSION (OUTPAINTING)**
 - Generate new image content in the padded (empty) areas of the canvas.
-- **Continuity:** The new content MUST be a logical and photorealistic continuation of the restored original. This includes extending lines, textures, and patterns seamlessly.
-- **Lighting Consistency:** The lighting in the new areas MUST perfectly match the direction, color, and quality of the lighting in the restored original. Shadows cast from the original content into the new areas must be accurate.
-- **Style Matching:** The style, color grade, and atmosphere of the new content MUST perfectly match the restored original.
-- **User Prompt Adherence:** If the user provided a prompt, incorporate those elements naturally into the expanded scene. If the prompt is empty, use your best judgment to create a logical extension.
+- **Anatomical Consistency:** If expanding a person, this is your top priority. Ensure the new body parts are proportionally correct and seamlessly connect to the original image.
+- **Continuity:** The new environmental content must be a logical continuation of the original scene.
+- **Lighting Consistency:** The lighting in the new areas MUST perfectly match the restored original.
+- **Style Matching:** The style and color grade of the new content MUST perfectly match the restored original.
+- **User Prompt Adherence:** Incorporate user prompt elements naturally into the expanded scene.
 
-**FINAL OUTPUT REQUIREMENTS:** A single, cohesive, high-resolution image where the transition between the restored original content and the newly generated content is completely invisible.
+**FINAL OUTPUT REQUIREMENTS:** A single, cohesive, high-resolution image where the transition between the original and new content is invisible, and any expanded human figures are anatomically correct and proportional.
 
 ---
 **USER PROMPT (for expansion context):** "{prompt}"

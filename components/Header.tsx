@@ -21,6 +21,8 @@ interface HeaderProps {
     onStartOver: () => void;
     isToolboxOpen: boolean;
     onUploadNew: () => void;
+    isMobile?: boolean;
+    isControlsVisible?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -38,18 +40,22 @@ const Header: React.FC<HeaderProps> = ({
     onStartOver,
     isToolboxOpen,
     onUploadNew,
+    isMobile,
+    isControlsVisible,
 }) => {
   const { t } = useTranslation();
 
+  const isHeaderVisible = !isMobile || !isImageLoaded || isControlsVisible;
+
   return (
-    <header className="w-full py-1.5 px-4 sm:px-6 border-b border-white/10 bg-black/30 backdrop-blur-xl sticky top-0 z-50">
-      <div className="w-full flex items-center justify-between gap-4">
+    <header className={`w-full py-1.5 px-3 sm:px-4 border-b border-white/10 header-bg z-50 transition-all duration-300 ease-in-out ${!isHeaderVisible ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'} ${isMobile ? 'absolute top-0' : 'sticky top-0'}`}>
+      <div className="w-full flex items-center justify-between gap-2 sm:gap-3">
           {/* Left Section: Logo and Image Info */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <button 
                 onClick={onToggleToolbox}
                 disabled={isLoading}
-                className="flex items-center justify-center gap-2 sm:gap-3 transition-opacity hover:opacity-80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 sm:gap-3 transition-opacity hover:opacity-80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed p-2 sm:p-0"
                 aria-label={t('appName')}
                 aria-expanded={isToolboxOpen}
                 title={isImageLoaded ? (isToolboxOpen ? t('hideTools') : t('showTools')) : t('appName')}
@@ -101,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({
                     <button
                       onClick={onDownload}
                       disabled={!canUndo || isLoading}
-                      className="flex items-center justify-center text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-500 ring-1 ring-white/10"
+                      className="flex items-center justify-center text-center bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-semibold p-2 rounded-lg transition-all duration-200 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-600 disabled:to-gray-500 ring-1 ring-white/10"
                       title={t('downloadImage')}
                     >
                       <DownloadIcon className="w-5 h-5" />

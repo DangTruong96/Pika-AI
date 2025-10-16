@@ -1,5 +1,3 @@
-
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -8,13 +6,16 @@
 // Fix: Corrected invalid import syntax for React hooks.
 import React, { useState } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-// Fix: Imported the missing `EyeSlashIcon` component to resolve a compilation error.
+import type { Tab } from '../types';
+import { SegmentedControl } from './IdPhotoPanel';
 import { 
-    MagicWandIcon, UserCircleIcon, CloudIcon, PhotoIcon, ArrowPathIcon, ChevronUpIcon,
-    BlurBackgroundIcon, SharpenIcon, TemperatureIcon, SpotlightIcon, 
-    SmileIcon, EyeIcon, SunIcon, MoonIcon, RemoveBgIcon, UpscaleIcon, SparklesIcon, PaletteIcon,
-    BlemishRemovalIcon, MakeupIcon, FaceSlimIcon, PostureCorrectionIcon, AdjustmentsIcon, StopCircleIcon, DropletIcon, CircleHalfStrokeIcon, EyeSlashIcon,
-    FilmIcon, PaintBrushIcon, SwatchIcon, CpuChipIcon, CameraIcon, WrenchScrewdriverIcon, ViewfinderCircleIcon, Squares2x2Icon, PencilIcon
+    UserCircleIcon,
+    SmileIcon, EyeIcon, UpscaleIcon, SparklesIcon, PaletteIcon,
+    BrushIcon, UsersIcon,
+    FaceSlimIcon,
+    CameraIcon, ViewfinderCircleIcon,
+    PostureCorrectionIcon, RedoIcon, UndoIcon, HairRimLightIcon,
+    LightningBoltIcon, FaceRestoreIcon, DocumentScannerIcon, ArrowPathIcon, StarburstIcon
 } from './icons';
 import type { TranslationKey } from '../translations';
 
@@ -24,9 +25,12 @@ interface EnhancePanelProps {
   onApplyMultipleAdjustments: (prompt: string) => void;
   isLoading: boolean;
   isImageLoaded: boolean;
+  setActiveTab: (tab: Tab) => void;
+  onToggleToolbox: () => void;
+  isMobile?: boolean;
 }
 
-type EnhanceMode = 'oneClick' | 'portrait' | 'color' | 'filters';
+type EnhanceMode = 'oneClick' | 'portrait' | 'pose' | 'color';
 
 // Fix: Changed icon type to React.FC to allow passing props like className.
 type AdjustmentPreset = {
@@ -35,13 +39,13 @@ type AdjustmentPreset = {
   action?: () => void;
   icon: React.FC<{ className?: string }>;
   multiple?: boolean;
+  isFilter?: boolean;
 };
 
-const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApplyFilter, onApplyMultipleAdjustments, isLoading, isImageLoaded }) => {
+const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApplyFilter, onApplyMultipleAdjustments, isLoading, isImageLoaded, setActiveTab, onToggleToolbox, isMobile }) => {
   const { t } = useTranslation();
   const [customPrompt, setCustomPrompt] = useState('');
   const [mode, setMode] = useState<EnhanceMode>('oneClick');
-  const [filterCategory, setFilterCategory] = useState<string>('camera');
   
   const handleApplyCustom = () => {
     if (customPrompt) {
@@ -55,7 +59,9 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
     if (preset.action) {
       preset.action();
     } else if (preset.prompt) {
-      if (preset.multiple) {
+      if (preset.isFilter) {
+        onApplyFilter(preset.prompt);
+      } else if (preset.multiple) {
         onApplyMultipleAdjustments(preset.prompt);
       } else {
         onApplyAdjustment(preset.prompt);
@@ -63,137 +69,135 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
     }
   };
 
+  const handleInputFocus = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (isMobile) {
+      setTimeout(() => {
+        event.target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      }, 300);
+    }
+  };
+
   // Fix: Explicitly typed the presets to match `AdjustmentPreset[]` to resolve the error on `preset.multiple`.
   const oneClickFixes: { presets: AdjustmentPreset[] } = {
     presets: [
       { name: t('oneClickAutoEnhance'), prompt: t('oneClickAutoEnhancePrompt'), icon: SparklesIcon },
-      { name: t('oneClickRestoreModern'), prompt: t('oneClickRestoreModernPrompt'), icon: SparklesIcon },
-      { name: t('oneClickReconstructForPrint'), prompt: t('oneClickReconstructForPrintPrompt'), icon: ViewfinderCircleIcon },
+      { name: t('oneClickStarFilter'), prompt: t('oneClickStarFilterPrompt'), icon: StarburstIcon },
+      { name: t('oneClickRestoreModern'), prompt: t('oneClickRestoreModernPrompt'), icon: FaceRestoreIcon },
       { name: t('adjustmentUpscale8K'), prompt: t('adjustmentUpscale8KPrompt'), icon: UpscaleIcon },
-      { name: t('oneClickBoostColor'), prompt: t('oneClickBoostColorPrompt'), icon: PaletteIcon },
-      { name: t('oneClickFixLighting'), prompt: t('oneClickFixLightingPrompt'), icon: SunIcon },
+      { name: t('oneClickReconstructForPrint'), prompt: t('oneClickReconstructForPrintPrompt'), icon: DocumentScannerIcon },
+      { name: t('oneClickHairRimLight'), prompt: t('oneClickHairRimLightPrompt'), icon: HairRimLightIcon },
+      { name: t('oneClickLumoFlash'), prompt: t('oneClickLumoFlashPrompt'), icon: LightningBoltIcon },
     ]
   };
 
   const portraitFixes: { presets: AdjustmentPreset[] } = {
       presets: [
-          { name: t('adjustmentPortraitPreset1'), prompt: t('adjustmentPortraitSmoothSkinPrompt'), icon: BlemishRemovalIcon },
+          { name: t('adjustmentPortrait50mm'), prompt: t('adjustmentPortrait50mmPrompt'), icon: CameraIcon },
+          { name: t('adjustmentPortrait85mm'), prompt: t('adjustmentPortrait85mmPrompt'), icon: ViewfinderCircleIcon },
           { name: t('adjustmentNaturalSmile'), prompt: t('adjustmentNaturalSmilePrompt'), icon: SmileIcon },
-          { name: t('adjustmentSlimChinAndNeck'), prompt: t('adjustmentSlimChinAndNeckPrompt'), icon: FaceSlimIcon },
+          { name: t('adjustmentSlimFace'), prompt: t('adjustmentSlimFacePrompt'), icon: FaceSlimIcon },
+          { name: t('adjustmentSlimChinAndNeck'), prompt: t('adjustmentSlimChinAndNeckPrompt'), icon: PostureCorrectionIcon },
           { name: t('adjustmentOpenEyes'), prompt: t('adjustmentOpenEyesPrompt'), icon: EyeIcon },
-          { name: t('adjustmentWhitenTeeth'), prompt: t('adjustmentWhitenTeethPrompt'), icon: SparklesIcon },
-          { name: t('adjustmentPreset1'), prompt: t('adjustmentPortraitBlurBgPrompt'), icon: BlurBackgroundIcon },
-          { name: t('adjustmentRemoveBg'), prompt: t('adjustmentRemoveBgPrompt'), icon: RemoveBgIcon },
       ]
+  };
+
+  const poseFixes: { presets: AdjustmentPreset[] } = {
+    presets: [
+      { name: t('poseNaturalWalk'), prompt: t('poseNaturalWalkPrompt'), icon: RedoIcon },
+      { name: t('poseLeaningBack'), prompt: t('poseLeaningBackPrompt'), icon: UndoIcon },
+      { name: t('poseLookOverShoulder'), prompt: t('poseLookOverShoulderPrompt'), icon: ArrowPathIcon },
+      { name: t('poseCandidSitting'), prompt: t('poseCandidSittingPrompt'), icon: CameraIcon },
+      { name: t('poseHandsInPockets'), prompt: t('poseHandsInPocketsPrompt'), icon: UserCircleIcon },
+    ]
   };
 
   const colorFixes: { presets: AdjustmentPreset[] } = {
     presets: [
-      { name: t('filterColorCinematic'), prompt: t('filterColorCinematicPrompt'), icon: FilmIcon },
-      { name: t('filterColorVibrant'), prompt: t('filterColorVibrantPrompt'), icon: PaletteIcon },
-      { name: t('filterColorGolden'), prompt: t('filterColorGoldenPrompt'), icon: SunIcon },
-      { name: t('filterColorMoody'), prompt: t('filterColorMoodyPrompt'), icon: MoonIcon },
+      { name: t('filterColorVibrant'), prompt: t('filterColorVibrantPrompt'), icon: PaletteIcon, isFilter: true },
+      { name: t('filterColorGoldenSun'), prompt: t('filterColorGoldenSunPrompt'), icon: PaletteIcon, isFilter: true },
+      { name: t('filterColorBlueSunset'), prompt: t('filterColorBlueSunsetPrompt'), icon: PaletteIcon, isFilter: true },
     ]
   };
 
-  const filterPresets = [
-    { id: 'camera', title: t('filterSectionCamera'), icon: CameraIcon, presets: [
-        { name: t('filterCameraFuji'), prompt: t('filterCameraFujiPrompt'), icon: SwatchIcon },
-        { name: t('filterCameraKodak'), prompt: t('filterCameraKodakPrompt'), icon: SunIcon },
-        { name: t('filterCameraLeica'), prompt: t('filterCameraLeicaPrompt'), icon: CircleHalfStrokeIcon },
-        { name: t('filterCameraCanon'), prompt: t('filterCameraCanonPrompt'), icon: UserCircleIcon },
-    ]},
-    { id: 'film', title: t('filterSectionFilm'), icon: FilmIcon, presets: [
-        { name: t('filterFilmVintage'), prompt: t('filterFilmVintagePrompt'), icon: PhotoIcon },
-        { name: t('filterFilmBW'), prompt: t('filterFilmBWPrompt'), icon: CircleHalfStrokeIcon },
-        { name: t('filterFilmSepia'), prompt: t('filterFilmSepiaPrompt'), icon: SwatchIcon },
-        { name: t('filterFilmPolaroid'), prompt: t('filterFilmPolaroidPrompt'), icon: CloudIcon },
-    ]},
-    { id: 'artistic', title: t('filterSectionArtistic'), icon: PaintBrushIcon, presets: [
-        { name: t('filterArtisticOil'), prompt: t('filterArtisticOilPrompt'), icon: PaintBrushIcon },
-        { name: t('filterArtisticWatercolor'), prompt: t('filterArtisticWatercolorPrompt'), icon: DropletIcon },
-        { name: t('filterArtisticSketch'), prompt: t('filterArtisticSketchPrompt'), icon: PencilIcon },
-        { name: t('filterArtisticPopArt'), prompt: t('filterArtisticPopArtPrompt'), icon: SparklesIcon },
-    ]},
-    { id: 'digital', title: t('filterSectionDigital'), icon: CpuChipIcon, presets: [
-        { name: t('filterDigitalSynthwave'), prompt: t('filterDigitalSynthwavePrompt'), icon: ViewfinderCircleIcon },
-        { name: t('filterDigitalGlitch'), prompt: t('filterDigitalGlitchPrompt'), icon: WrenchScrewdriverIcon },
-        { name: t('filterDigitalDuotone'), prompt: t('filterDigitalDuotonePrompt'), icon: CircleHalfStrokeIcon },
-        { name: t('filterDigitalPixel'), prompt: t('filterDigitalPixelPrompt'), icon: Squares2x2Icon },
-    ]}
+  const modeOptions: { value: EnhanceMode; label: string; icon: React.FC<{ className?: string; }> }[] = [
+    { value: 'oneClick', label: t('oneClickTitle'), icon: SparklesIcon },
+    { value: 'portrait', label: t('adjustmentPortraitTitle'), icon: UserCircleIcon },
+    { value: 'pose', label: t('poseCorrectionTitle'), icon: PostureCorrectionIcon },
+    { value: 'color', label: t('filterSectionColor'), icon: PaletteIcon },
   ];
 
-
   const renderPresets = (presets: AdjustmentPreset[]) => (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 animate-fade-in">
+    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 animate-fade-in">
       {presets.map(preset => (
           <button
               key={preset.name}
               onClick={() => handlePresetClick(preset)}
               disabled={isLoading || !isImageLoaded}
-              className="w-full h-24 flex flex-col items-center justify-center text-center gap-1 bg-white/5 border border-white/10 text-gray-300 font-medium p-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-white/10 active:scale-95 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-20 flex flex-col items-center justify-center text-center gap-1 bg-white/5 border border-transparent text-gray-300 font-medium p-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-white/10 hover:border-white/10 active:scale-95 text-[11px] leading-tight disabled:opacity-50 disabled:cursor-not-allowed"
               title={preset.name}
           >
-              <preset.icon className='w-7 h-7 text-gray-300' />
+              <preset.icon className='w-6 h-6 text-gray-300' />
               <span className="leading-tight">{preset.name}</span>
           </button>
       ))}
     </div>
   );
-
-  const renderFilterPresets = () => {
-    const currentSection = filterPresets.find(sec => sec.id === filterCategory);
-    if (!currentSection) return null;
-
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 animate-fade-in">
-        {currentSection.presets.map(preset => (
-            <button
-                key={preset.name}
-                onClick={() => onApplyFilter(preset.prompt)}
-                disabled={isLoading || !isImageLoaded}
-                className="w-full h-24 flex flex-col items-center justify-center text-center gap-1 bg-white/5 border border-white/10 text-gray-300 font-medium p-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-white/10 active:scale-95 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                title={preset.name}
-            >
-                <preset.icon className='w-7 h-7 text-gray-300' />
-                <span className="leading-tight">{preset.name}</span>
-            </button>
-        ))}
-      </div>
-    );
-  };
   
-  const renderModeButtons = () => (
-      <div className="p-1 bg-black/30 rounded-lg flex gap-1 w-full max-w-sm mx-auto">
-          <button onClick={() => setMode('oneClick')} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${mode === 'oneClick' ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5'}`}><SparklesIcon className="w-5 h-5"/>{t('oneClickTitle')}</button>
-          <button onClick={() => setMode('portrait')} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${mode === 'portrait' ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5'}`}><UserCircleIcon className="w-5 h-5"/>{t('adjustmentPortraitTitle')}</button>
-          <button onClick={() => setMode('color')} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${mode === 'color' ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5'}`}><PaletteIcon className="w-5 h-5"/>{t('filterSectionColor')}</button>
-          <button onClick={() => setMode('filters')} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${mode === 'filters' ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5'}`}><CameraIcon className="w-5 h-5"/>{t('filterTitle')}</button>
-      </div>
+  const titleContent = (
+    <>
+        <SparklesIcon className="w-6 h-6" />
+        <span>{t('enhanceTitle')}</span>
+    </>
   );
+  const commonTitleClasses = "text-lg font-semibold text-gray-200 flex items-center justify-center gap-2 bg-black/20 rounded-full px-6 py-2 border border-white/10";
 
   return (
     <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
-      <h3 className="text-lg font-semibold text-center text-gray-200">{t('enhanceTitle')}</h3>
+      <div className="w-full flex items-center justify-between">
+        <button 
+          onClick={() => setActiveTab('retouch')} 
+          className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('tooltipRetouch')}
+          disabled={isLoading}
+          aria-label={t('tooltipRetouch')}
+        >
+          <BrushIcon className="w-6 h-6" />
+        </button>
+        
+        {isMobile ? (
+            <button onClick={onToggleToolbox} className={`${commonTitleClasses} transition-colors hover:bg-black/40`}>
+                {titleContent}
+            </button>
+        ) : (
+            <h3 className={commonTitleClasses}>
+                {titleContent}
+            </h3>
+        )}
+
+        <button 
+          onClick={() => setActiveTab('studio')} 
+          className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('tooltipStudio')}
+          disabled={isLoading}
+          aria-label={t('tooltipStudio')}
+        >
+          <UsersIcon className="w-6 h-6" />
+        </button>
+      </div>
       
-      {renderModeButtons()}
+      <SegmentedControl
+        options={modeOptions}
+        selected={mode}
+        onSelect={(value) => setMode(value)}
+        disabled={isLoading || !isImageLoaded}
+        fullWidth
+      />
       
       <div className="w-full">
           {mode === 'oneClick' && renderPresets(oneClickFixes.presets)}
           {mode === 'portrait' && renderPresets(portraitFixes.presets)}
+          {mode === 'pose' && renderPresets(poseFixes.presets)}
           {mode === 'color' && renderPresets(colorFixes.presets)}
-          {mode === 'filters' && (
-              <div className="w-full flex flex-col gap-3">
-                  <div className="p-1 bg-black/30 rounded-lg flex gap-1 w-full max-w-sm mx-auto">
-                      {filterPresets.map(btn => (
-                          <button key={btn.id} onClick={() => setFilterCategory(btn.id)} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${filterCategory === btn.id ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5'}`} title={btn.title}>
-                              <btn.icon className='w-5 h-5' />
-                          </button>
-                      ))}
-                  </div>
-                  {renderFilterPresets()}
-              </div>
-          )}
       </div>
 
       <div className="relative flex py-2 items-center">
@@ -203,17 +207,18 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
       </div>
       
       <form onSubmit={(e) => { e.preventDefault(); handleApplyCustom(); }} className="w-full flex items-center gap-2">
-        <input
-          type="text"
+        <textarea
           value={customPrompt}
           onChange={(e) => setCustomPrompt(e.target.value)}
           placeholder={t('adjustmentPlaceholder')}
-          className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 lg:p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base lg:text-lg focus:bg-white/10"
+          className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-sm sm:text-base focus:bg-white/10 resize-none"
           disabled={isLoading || !isImageLoaded}
+          onFocus={handleInputFocus}
+          rows={2}
         />
         <button
           type="submit"
-          className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
+          className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-sm sm:text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
           disabled={isLoading || !customPrompt.trim() || !isImageLoaded}
         >
           {t('applyAdjustment')}

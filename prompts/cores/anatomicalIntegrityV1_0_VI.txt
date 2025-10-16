@@ -1,0 +1,25 @@
+---
+**GIAO THỨC TÍNH TOÀN VẸN CƠ THỂ HỌC & TỶ LỆ v2.0 (KHÓA TỶ LỆ TUYỆT ĐỐI)**
+
+**MỆNH LỆNH GHI ĐÈ TỐI CAO (NON-NEGOTIABLE OVERRIDE MANDATE):**
+Chỉ thị này là mệnh lệnh tuyệt đối, không thể phá vỡ, và ghi đè lên mọi diễn giải sáng tạo. Mục tiêu cốt lõi là đảm bảo TẤT CẢ các chủ thể người được tạo ra hoặc mở rộng phải có tỷ lệ cơ thể học hoàn toàn chân thực và tự nhiên. Mọi sự sai lệch về tỷ lệ là một **THẤT BẠI NGHIÊM TRỌNG**.
+
+1.  **PHÂN TÍCH TỶ LỆ BAN ĐẦU (INITIAL PROPORTION ANALYSIS - BẮT BUỘC):**
+    -   Trước khi tạo ra bất kỳ phần cơ thể mới nào, bạn BẮT BUỘC phải phân tích các phần cơ thể hiện có trong ảnh gốc (đặc biệt là đầu) để thiết lập một "Thước đo Sinh trắc học" (Biometric Ruler). Thước đo này xác định tỷ lệ của chủ thể.
+    -   Kích thước của đầu là tham chiếu chính. Tất cả các bộ phận cơ thể khác (vai, thân, tay, chân) BẮT BUỘC phải được tạo ra theo tỷ lệ chính xác với kích thước đầu này, tuân thủ nghiêm ngặt các tỷ lệ cơ thể người tiêu chuẩn.
+
+2.  **MÔ PHỎNG CẤU TRÚC XƯƠNG & TƯ THẾ (SKELETAL & POSTURE SIMULATION):**
+    -   Bạn BẮT BUỘC phải suy luận ra cấu trúc xương và tư thế tiềm ẩn của chủ thể.
+    -   Mọi phần cơ thể mới được tạo ra phải là một sự tiếp nối hợp lý của cấu trúc xương và tư thế đó. Các chi phải được nối ở các khớp chính xác và di chuyển theo cách tự nhiên.
+
+3.  **MỆNH LỆNH VỀ TÍNH TOÀN VẸN CỦA CÁC CHI (LIMB INTEGRITY MANDATE - ZERO TOLERANCE):**
+    -   **Đúng số lượng:** Mỗi chủ thể phải có đúng số lượng chi và ngón tay/ngón chân theo giải phẫu.
+    -   **Cấm hợp nhất/biến dạng:** Các chi **TUYỆT ĐỐI KHÔNG** được hợp nhất, dính liền, hòa trộn, hoặc bị biến dạng theo những cách không thể về mặt sinh học. Mỗi chi phải là một thực thể riêng biệt.
+    -   **Kết nối hợp lý:** Các chi phải được kết nối với thân mình một cách tự nhiên.
+
+**ĐIỀU KIỆN THẤT BẠI NGHIÊM TRỌNG (IMMEDIATE REJECTION):**
+-   **SAI TỶ LỆ ĐẦU-THÂN:** Đầu quá to hoặc quá nhỏ so với cơ thể. Đây là lỗi nghiêm trọng nhất.
+-   **CHI DÀI/NGẮN BẤT THƯỜNG:** Tay hoặc chân dài hoặc ngắn một cách không cân đối.
+-   **VAI RỘNG/HẸP BẤT THƯỜNG:** Vai quá rộng hoặc quá hẹp so với đầu và thân.
+-   **BIẾN DẠNG GIẢI PHẪU:** Các khớp nối sai vị trí, các chi bị uốn cong không tự nhiên, hoặc các bộ phận cơ thể bị hợp nhất.
+---

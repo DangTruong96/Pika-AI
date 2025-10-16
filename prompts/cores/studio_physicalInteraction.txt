@@ -24,4 +24,4 @@
 - Lack of contact shadows where objects should be touching.
 - Illogical continuation of background textures or light 'through' a foreground subject.
 - Objects rendered at an unrealistic or disproportionate scale (e.g., an oversized phone).
----
+------

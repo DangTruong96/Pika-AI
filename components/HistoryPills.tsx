@@ -7,10 +7,11 @@ import React, { useRef, useEffect } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import Spinner from './Spinner';
 import { ClockIcon, XMarkIcon } from './icons';
-import type { TransformState } from '../hooks/useHistory';
+import type { TransformState } from '../types';
 
 interface HistoryItemData {
   url: string;
+  thumbnailUrl: string;
   transform: TransformState;
 }
 
@@ -26,6 +27,8 @@ interface HistoryPillsProps {
   isExpanded: boolean;
   onToggle: () => void;
   isMobileToolbarVisible?: boolean;
+  isMobile?: boolean;
+  isControlsVisible?: boolean;
 }
 
 const HistoryPills: React.FC<HistoryPillsProps> = ({
@@ -40,6 +43,8 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
   isExpanded,
   onToggle,
   isMobileToolbarVisible,
+  isMobile,
+  isControlsVisible,
 }) => {
   const { t } = useTranslation();
   const activeItemRef = useRef<HTMLButtonElement>(null);
@@ -60,10 +65,11 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
 
   const activeHistoryIndexForSlicing = resultsBaseHistoryIndex !== null ? resultsBaseHistoryIndex : currentIndex;
   const visibleHistoryItems = isShowingResults ? historyItems.slice(0, activeHistoryIndexForSlicing + 1) : historyItems;
-  const bottomClass = isMobileToolbarVisible ? 'bottom-24' : 'bottom-4';
+  const bottomClass = isMobileToolbarVisible ? 'bottom-20' : 'bottom-4';
+  const isVisible = !isMobile || isControlsVisible;
 
   return (
-    <div className={`fixed ${bottomClass} left-4 z-40 flex flex-col items-start gap-2`}>
+    <div className={`fixed ${bottomClass} left-4 z-40 flex flex-col items-start gap-2 transition-all duration-300 ease-in-out ${!isVisible ? 'opacity-0 -translate-x-full pointer-events-none' : 'opacity-100 translate-x-0'}`}>
         <div 
             className={`flex flex-col-reverse items-start gap-2 transition-all duration-300 ease-in-out hide-scrollbar ${isExpanded ? 'max-h-[calc(100vh-15rem)] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0'}`}
         >
@@ -77,11 +83,11 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
                   key={url}
                   onClick={() => onResultSelect(url, index)}
                   className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden group transition-all duration-300 ring-2 ring-cyan-400/70 hover:ring-cyan-400 bg-black/30 glow-border-animate animate-fade-in"
-                  aria-label={`Select result ${index + 1}`}
+                  aria-label={t('selectResult', { index: index + 1 })}
               >
-                  <img src={url} alt={`Result ${index + 1}`} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" />
+                  <img src={url} alt={t('resultAlt', { index: index + 1 })} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" />
                   <div className="absolute top-0 right-0 bg-cyan-500/90 text-white text-[8px] font-bold py-0.5 px-1 rounded-bl-md pointer-events-none">
-                      NEW
+                      {t('new')}
                   </div>
               </button>
           ))}
@@ -98,7 +104,7 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
                     aria-label={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
                     title={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
                 >
-                    <img src={item.url} alt={t('historyStep', { step: index })} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" style={{ transform: transformString }}/>
+                    <img src={item.thumbnailUrl} alt={t('historyStep', { step: index })} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" style={{ transform: transformString }}/>
                 </button>
               );
           })}
@@ -108,7 +114,7 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
             onClick={onToggle}
             className="w-14 h-14 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center text-white hover:bg-black/60 transition-colors"
             aria-expanded={isExpanded}
-            aria-label={isExpanded ? 'Collapse history' : 'Expand history'}
+            aria-label={isExpanded ? t('collapseHistory') : t('expandHistory')}
         >
           {isExpanded ? <XMarkIcon className="w-7 h-7"/> : <ClockIcon className="w-7 h-7" />}
         </button>

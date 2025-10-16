@@ -1,5 +1,3 @@
-
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -8,7 +6,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { DownloadIcon, XMarkIcon, EyeIcon, EyeSlashIcon, ChevronLeftIcon, ChevronRightIcon, CheckIcon } from './icons';
-import type { TransformState } from '../hooks/useHistory';
+import type { TransformState } from '../types';
 
 interface FullScreenViewerModalProps {
   items: Array<{ url: string; transform: TransformState; }>;
@@ -238,7 +236,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
             aria-modal="true"
             aria-labelledby="fullscreen-image-viewer-title"
         >
-            <h2 id="fullscreen-image-viewer-title" className="sr-only">Image Viewer</h2>
+            <h2 id="fullscreen-image-viewer-title" className="sr-only">{t('imageViewerTitle')}</h2>
 
             <div 
                 className="flex-grow w-full h-full flex items-center justify-center relative overflow-hidden"
@@ -302,7 +300,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                                 <img
                                     key={`${currentIndex}-${isComparing}`}
                                     src={isComparing && comparisonUrl ? comparisonUrl : imageUrl}
-                                    alt={isComparing ? t('historyOriginal') : "Full screen result"}
+                                    alt={isComparing ? t('historyOriginal') : t('fullScreenResult')}
                                     className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl pointer-events-none animate-fade-in"
                                 />
                             </div>
@@ -315,10 +313,10 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
 
                 {items.length > 1 && (
                     <>
-                        <button onClick={handlePrev} className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all z-[110] ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-label="Previous image">
+                        <button onClick={handlePrev} className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all z-[110] ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-label={t('previousImage')}>
                             <ChevronLeftIcon className="w-7 h-7" />
                         </button>
-                         <button onClick={handleNext} className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all z-[110] ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-label="Next image">
+                         <button onClick={handleNext} className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all z-[110] ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-label={t('nextImage')}>
                             <ChevronRightIcon className="w-7 h-7" />
                         </button>
                     </>
@@ -333,13 +331,13 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                                 key={index} 
                                 onClick={() => setCurrentIndex(index)}
                                 className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${currentIndex === index ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}`}
-                                aria-label={`Go to image ${index + 1}`}
+                                aria-label={t('goToImage', { index: index + 1 })}
                             />
                         ))}
                     </div>
                 )}
                 <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-                    <button onClick={onClose} className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base flex items-center gap-2">
+                    <button onClick={onClose} className="text-center bg-white/5 backdrop-blur-md border border-white/10 text-gray-200 font-semibold py-3 px-5 rounded-xl transition-all duration-200 ease-in-out hover:bg-white/15 active:scale-95 text-base flex items-center gap-2">
                         <XMarkIcon className="w-5 h-5"/>
                     </button>
                     {canCompare && (

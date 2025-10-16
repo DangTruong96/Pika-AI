@@ -13,6 +13,4 @@
 Adherence to all protocols is mandatory.
 
 **TECHNICAL SPECIFICATIONS (USER PARAMETERS):**
-```json
 {prompt}
-```

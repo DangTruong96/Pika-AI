@@ -1,5 +1,3 @@
-
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -7,10 +5,10 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BullseyeIcon, BrushIcon, PhotoIcon, UserCircleIcon, SparklesIcon, TagIcon, UndoIcon, EyeIcon } from './icons';
+import { BullseyeIcon, BrushIcon, UserCircleIcon, SparklesIcon, TagIcon, UndoIcon, EyeIcon, ExpandIcon } from './icons';
+import type { Tab, SelectionMode, BrushMode } from '../types';
 
-export type SelectionMode = 'point' | 'brush' | 'extract';
-export type BrushMode = 'draw' | 'erase';
+export type { SelectionMode, BrushMode };
 
 interface RetouchPanelProps {
   onApplyRetouch: (promptOverride?: string) => void;
@@ -28,7 +26,7 @@ interface RetouchPanelProps {
   isMaskPresent: boolean;
   prompt: string;
   onPromptChange: (prompt: string) => void;
-  promptInputRef: React.RefObject<HTMLInputElement>;
+  promptInputRef: React.RefObject<HTMLTextAreaElement>;
   onApplyExtract: () => void;
   extractPrompt: string;
   onExtractPromptChange: (prompt: string) => void;
@@ -38,6 +36,9 @@ interface RetouchPanelProps {
   onDownloadExtractedItem: (file: File) => void;
   onClearExtractHistory: () => void;
   onViewExtractedItem: (setIndex: number, itemIndex: number) => void;
+  setActiveTab: (tab: Tab) => void;
+  onToggleToolbox: () => void;
+  isMobile?: boolean;
 }
 
 const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
@@ -48,7 +49,8 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
     isMaskPresent, prompt, onPromptChange, promptInputRef,
     onApplyExtract, extractPrompt, onExtractPromptChange, extractHistoryFiles, 
     extractedHistoryItemUrls, onUseExtractedAsOutfit, onDownloadExtractedItem, onClearExtractHistory,
-    onViewExtractedItem
+    onViewExtractedItem,
+    setActiveTab, onToggleToolbox, isMobile
   } = props;
 
   const allExtractedItems = React.useMemo(() => {
@@ -77,31 +79,75 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
       }
   };
 
+  const handleInputFocus = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (isMobile) {
+      setTimeout(() => {
+        event.target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      }, 300);
+    }
+  };
+
   const canGenerateRetouch = isImageLoaded && !!prompt.trim();
   const canGenerateExtract = isImageLoaded && !isLoading && !!extractPrompt.trim();
+
+  const titleContent = (
+    <>
+      {selectionMode === 'extract' ? <TagIcon className="w-6 h-6" /> : <BrushIcon className="w-6 h-6" />}
+      <span>{selectionMode === 'extract' ? t('extractTitle') : t('retouchTitle')}</span>
+    </>
+  );
+  const commonTitleClasses = "text-lg font-semibold text-gray-200 flex items-center justify-center gap-2 bg-black/20 rounded-full px-6 py-2 border border-white/10";
 
 
   return (
     <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
-      <h3 className="text-lg font-semibold text-gray-200">{selectionMode === 'extract' ? t('extractTitle') : t('retouchTitle')}</h3>
+      <div className="w-full flex items-center justify-between">
+        <button 
+          onClick={() => setActiveTab('expand')} 
+          className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('tooltipExpand')}
+          disabled={isLoading}
+          aria-label={t('tooltipExpand')}
+        >
+          <ExpandIcon className="w-6 h-6" />
+        </button>
+        {isMobile ? (
+            <button onClick={onToggleToolbox} className={`${commonTitleClasses} transition-colors hover:bg-black/40`}>
+                {titleContent}
+            </button>
+        ) : (
+            <h3 className={commonTitleClasses}>
+                {titleContent}
+            </h3>
+        )}
+        <button 
+          onClick={() => setActiveTab('adjust')} 
+          className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t('tooltipAdjust')}
+          disabled={isLoading}
+          aria-label={t('tooltipAdjust')}
+        >
+          <SparklesIcon className="w-6 h-6" />
+        </button>
+      </div>
       
       {/* Selection Mode Toggle */}
-      <div className="p-1 bg-black/30 rounded-lg flex gap-1">
+      <div className="p-1 bg-black/30 rounded-lg flex flex-wrap gap-1">
         <button 
           onClick={() => onSelectionModeChange('point')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold transition-all ${selectionMode === 'point' ? 'bg-white/15 text-white' : 'text-gray-400 hover:bg-white/5'}`}
+          className={`flex items-center gap-2 px-4 py-3 rounded-md font-semibold transition-all ${selectionMode === 'point' ? 'bg-white/15 text-white' : 'text-gray-400 hover:bg-white/5'}`}
         >
           <BullseyeIcon className="w-5 h-5" /> {t('retouchModePoint')}
         </button>
         <button 
           onClick={() => onSelectionModeChange('brush')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold transition-all ${selectionMode === 'brush' ? 'bg-white/15 text-white' : 'text-gray-400 hover:bg-white/5'}`}
+          className={`flex items-center gap-2 px-4 py-3 rounded-md font-semibold transition-all ${selectionMode === 'brush' ? 'bg-white/15 text-white' : 'text-gray-400 hover:bg-white/5'}`}
         >
           <BrushIcon className="w-5 h-5" /> {t('retouchModeBrush')}
         </button>
         <button 
           onClick={() => onSelectionModeChange('extract')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold transition-all ${selectionMode === 'extract' ? 'bg-white/15 text-white' : 'text-gray-400 hover:bg-white/5'}`}
+          className={`flex items-center gap-2 px-4 py-3 rounded-md font-semibold transition-all ${selectionMode === 'extract' ? 'bg-white/15 text-white' : 'text-gray-400 hover:bg-white/5'}`}
         >
           <TagIcon className="w-5 h-5" /> {t('tooltipExtract')}
         </button>
@@ -150,24 +196,25 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
                     type="button"
                     onClick={onClearHotspot}
                     className="flex-shrink-0 bg-white/5 text-white font-bold p-4 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-                    aria-label="Back"
-                    title="Back"
+                    aria-label={t('back')}
+                    title={t('back')}
                 >
                     <UndoIcon className="w-5 h-5" />
                 </button>
               )}
-              <input
+              <textarea
                 ref={promptInputRef}
-                type="text"
                 value={prompt}
                 onChange={(e) => onPromptChange(e.target.value)}
                 placeholder={isImageLoaded ? t('retouchPlaceholderGenerative') : t('retouchPlaceholder')}
-                className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 lg:p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base lg:text-lg focus:bg-white/10"
+                className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-sm sm:text-base focus:bg-white/10 resize-none"
                 disabled={isLoading || !isImageLoaded}
+                onFocus={handleInputFocus}
+                rows={2}
               />
               <button
                 type="submit"
-                className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
+                className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-sm sm:text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
                 disabled={isLoading || !canGenerateRetouch}
               >
                 {t('generate')}
@@ -178,17 +225,18 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
         <div className="w-full animate-fade-in">
           <form onSubmit={handleExtractFormSubmit} className="w-full flex flex-col items-center gap-3">
               <div className="w-full flex items-center gap-2">
-                  <input
-                      type="text"
+                  <textarea
                       value={extractPrompt}
                       onChange={(e) => onExtractPromptChange(e.target.value)}
                       placeholder={t('extractPlaceholder')}
-                      className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 lg:p-4 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base lg:text-lg focus:bg-white/10"
+                      className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-sm sm:text-base focus:bg-white/10 resize-none"
                       disabled={isLoading || !isImageLoaded}
+                      onFocus={handleInputFocus}
+                      rows={2}
                   />
                   <button
                       type="submit"
-                      className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
+                      className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 hover:-translate-y-px active:scale-95 active:shadow-inner text-sm sm:text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none ring-1 ring-white/10"
                       disabled={!canGenerateExtract}
                   >
                       {t('extractApply')}
@@ -208,7 +256,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
                       {t('extractClearHistory')}
                   </button>
               </div>
-              <div className="w-full grid grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-2">
+              <div className="w-full grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-96 overflow-y-auto pr-2">
                 {allExtractedItems.map(item => (
                   <div key={item.key} className="flex flex-col gap-2">
                     <button 
@@ -220,7 +268,7 @@ const RetouchPanel: React.FC<RetouchPanelProps> = (props) => {
                       }}
                       title={t('viewEdited')}
                     >
-                      <img src={item.url} alt={`Extracted item ${item.key}`} className="w-full h-full object-contain"/>
+                      <img src={item.url} alt={t('extractedItemAlt', { key: item.key })} className="w-full h-full object-contain"/>
                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                         <EyeIcon className="w-8 h-8 text-white" />
                       </div>

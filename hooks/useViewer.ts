@@ -72,45 +72,34 @@ interface UseViewerProps {
     isComparing: boolean;
     isMobile: boolean;
     isImageLoaded: boolean;
+    isToolboxOpen: boolean;
+    toggleToolbox: () => void;
+    windowHeight: number;
+    showControls: () => void;
 }
 
 // --- HOOK ---
-export const useViewer = ({ isComparing, isMobile, isImageLoaded }: UseViewerProps) => {
+export const useViewer = ({ isComparing, isMobile, isImageLoaded, isToolboxOpen, toggleToolbox, windowHeight, showControls }: UseViewerProps) => {
     const [viewerState, dispatch] = useReducer(viewerReducer, initialViewerState);
     const { scale, position, isPanning } = viewerState;
 
     const [isPinching, setIsPinching] = useState(false);
-    const [isViewingOriginalOnHold, setIsViewingOriginalOnHold] = useState(false);
-    const [isControlsVisible, setIsControlsVisible] = useState(false);
     
     const pinchStartDistRef = useRef<number | null>(null);
     const pinchStartScaleRef = useRef<number>(1);
     const touchStartTimeRef = useRef<number>(0);
-    const hideControlsTimeoutRef = useRef<number | null>(null);
     const interactionTimeoutRef = useRef<number | null>(null);
     const [isInteracting, setIsInteracting] = useState(false);
+    const swipeUpToOpenToolsRef = useRef<{ y: number } | null>(null);
 
     const reportInteraction = useCallback(() => {
         if (interactionTimeoutRef.current) window.clearTimeout(interactionTimeoutRef.current);
         setIsInteracting(true);
         interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 300);
     }, []);
-
-    const showControls = useCallback(() => {
-        if (hideControlsTimeoutRef.current) window.clearTimeout(hideControlsTimeoutRef.current);
-        setIsControlsVisible(true);
-        hideControlsTimeoutRef.current = window.setTimeout(() => {
-            setIsControlsVisible(false);
-        }, 3000);
-    }, []);
-
-    useEffect(() => {
-        if (isImageLoaded) showControls();
-    }, [isImageLoaded, showControls]);
     
     // Cleanup timeouts on unmount
     useEffect(() => () => {
-        if (hideControlsTimeoutRef.current) window.clearTimeout(hideControlsTimeoutRef.current);
         if (interactionTimeoutRef.current) window.clearTimeout(interactionTimeoutRef.current);
     }, []);
 
@@ -147,15 +136,17 @@ export const useViewer = ({ isComparing, isMobile, isImageLoaded }: UseViewerPro
     };
     
     const handleViewerTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (isMobile && !isToolboxOpen && e.touches.length === 1) {
+            if (e.touches[0].clientY > windowHeight * 0.8) { 
+                swipeUpToOpenToolsRef.current = { y: e.touches[0].clientY };
+                return;
+            }
+        }
+        swipeUpToOpenToolsRef.current = null;
+
         showControls();
         reportInteraction();
         
-        if (isComparing && isMobile && e.touches.length === 1) {
-            e.preventDefault();
-            setIsViewingOriginalOnHold(true);
-            return;
-        }
-
         if (e.touches.length === 2) {
             e.preventDefault();
             pinchStartDistRef.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
@@ -170,27 +161,40 @@ export const useViewer = ({ isComparing, isMobile, isImageLoaded }: UseViewerPro
                 touchStartTimeRef.current = 0; // Reset after double tap
             } else {
                 touchStartTimeRef.current = now;
-                dispatch({ type: 'START_PAN', payload: { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }});
+                if (scale > 1) { // Only start pan if zoomed
+                    dispatch({ type: 'START_PAN', payload: { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }});
+                }
             }
         }
     };
     
     const handleViewerTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (swipeUpToOpenToolsRef.current) {
+            e.preventDefault();
+            return;
+        }
+
         if (e.touches.length === 2 && pinchStartDistRef.current !== null) { // Pinching
             e.preventDefault();
             const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             const newScale = pinchStartScaleRef.current * (newDist / pinchStartDistRef.current);
             dispatch({ type: 'SET_SCALE', payload: { scale: newScale } });
-        } else if (isPanning && e.touches.length === 1) { // Panning
+        } else if (isPanning && e.touches.length === 1) { // Panning (only happens if scale > 1)
             e.preventDefault();
             dispatch({ type: 'PAN', payload: { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }});
         }
     };
 
-    const handleViewerTouchEnd = () => {
-        if (isViewingOriginalOnHold) {
-            setIsViewingOriginalOnHold(false);
+    const handleViewerTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (swipeUpToOpenToolsRef.current && e.changedTouches.length === 1) {
+            const deltaY = e.changedTouches[0].clientY - swipeUpToOpenToolsRef.current.y;
+            if (deltaY < -50) { // Swiped up by at least 50px
+                toggleToolbox();
+            }
+            swipeUpToOpenToolsRef.current = null;
+            return;
         }
+
         dispatch({ type: 'END_PAN' });
         pinchStartDistRef.current = null;
         setIsPinching(false);
@@ -201,8 +205,6 @@ export const useViewer = ({ isComparing, isMobile, isImageLoaded }: UseViewerPro
         position,
         isPanning,
         isPinching,
-        isViewingOriginalOnHold,
-        isControlsVisible,
         isInteracting,
         resetView,
         handleZoom,

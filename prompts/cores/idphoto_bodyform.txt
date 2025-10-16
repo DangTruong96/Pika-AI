@@ -25,4 +25,3 @@
 -   **Sai lệch Vật lý:** Vải nặng rủ xuống như vải nhẹ, hoặc vải không co giãn lại ôm sát như spandex.
 -   **Lỗi Va chạm (Clipping):** Bất kỳ phần nào của cơ thể xuyên qua quần áo, hoặc các lớp quần áo xuyên qua nhau.
 -   **Sai lệch tỷ lệ:** Quần áo làm cho chủ thể trông to hơn hoặc có hình dáng khác biệt đáng kể.
----

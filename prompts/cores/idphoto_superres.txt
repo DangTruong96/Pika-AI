@@ -28,4 +28,3 @@
 **ĐIỀU KIỆN THẤT BẠI:**
 - Không thực hiện tái tạo chi tiết trong không gian làm việc có độ phân giải cao hơn.
 - Kết quả cuối cùng không thể hiện được mật độ chi tiết cao hơn đáng kể so với ảnh gốc.
----

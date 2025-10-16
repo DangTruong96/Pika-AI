@@ -1,1 +1,0 @@
-// This prompt is deprecated and no longer used.

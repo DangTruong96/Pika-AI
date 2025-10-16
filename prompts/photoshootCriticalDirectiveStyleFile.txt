@@ -1,11 +1,22 @@
-**CRITICAL DIRECTIVE ON INPUTS:**
-- Your ONLY visual input for the person is the 'SUBJECT IMAGE'.
-- Your inputs for the scene, style, and clothing are TEXT-ONLY descriptions derived from a 'Style Reference Image' or 'Outfit Reference Image(s)'. **You CANNOT see these reference images.** Your task is to build the scene and outfits based *exclusively* on the TEXT DESCRIPTIONS below. The AI must only use the description from the analysis to create a new image from the source image; the AI will not know what the actual reference images look like.
-- **STYLE INFLUENCE DIRECTIVE (MANDATORY):**
-  - The user has specified a style influence level of **{influence}**.
-  - A 'LOW' influence means you should take inspiration from the prompt but have significant creative freedom in interpreting the scene.
-  - A 'STANDARD' influence means you should follow the prompt's main themes and mood, with some room for interpretation.
-  - A 'HIGH' influence means you must adhere as strictly as possible to every detail in the prompt (lighting, color, composition, mood, specific objects).
-- **WARDROBE OVERRIDE (MANDATORY):** Because a style or outfit reference has been provided, you are **strictly forbidden** from using or copying the clothing from the original 'SUBJECT IMAGE'. The new outfit is defined exclusively by the 'OUTFIT DESCRIPTION' text prompt.
-- **ABSOLUTE PROHIBITION:** You MUST NOT attempt to find, recall, or use any visual information from the unseen reference images, especially any faces or people. Your generation must be based SOLELY on the 'SUBJECT IMAGE' and the provided text.
-- **ABSOLUTE PROHIBITION:** Do not composite, blend, or copy any person or face other than the one from the 'SUBJECT IMAGE'. The final image must feature **only** the person from the 'SUBJECT IMAGE', placed into a scene described by the text prompts.
+**MỆNH LỆNH TỐI CAO GHI ĐÈ: PHÂN TÍCH PHI SINH TRẮC HỌC v2.0 (NON-BIOMETRIC ANALYSIS OVERRIDE MANDATE v2.0)**
+
+**CHỈ THỊ CỐT LÕI (CORE DIRECTIVE):**
+Bạn đã được cung cấp hai loại hình ảnh: "SUBJECT IMAGE(S)" và "STYLE REFERENCE IMAGE". Vai trò của chúng là **HOÀN TOÀN TÁCH BIỆT** và không thể thay thế cho nhau.
+- **SUBJECT IMAGE(S):** Nguồn **DUY NHẤT VÀ BẤT BIẾN** cho **DỮ LIỆU SINH TRẮC HỌC** (khuôn mặt, danh tính).
+- **STYLE REFERENCE IMAGE:** Nguồn **DUY NHẤT** cho **DỮ LIỆU THẨM MỸ** (ánh sáng, màu sắc, bố cục, không khí). Việc sử dụng nó cho bất kỳ mục đích nào khác, đặc biệt là nhận dạng khuôn mặt, đều bị **NGHIÊM CẤM**.
+
+**CẤM TUYỆT ĐỐI VIỆC TRỘN LẪN DỮ LIỆU SINH TRẮC HỌC (ZERO-TOLERANCE BIOMETRIC CROSS-CONTAMINATION):**
+- **ĐỊNH NGHĨA:** "Dữ liệu sinh trắc học" bao gồm nhưng không giới hạn ở: cấu trúc khuôn mặt 3D, hình dạng mắt, mũi, miệng, nốt ruồi, sẹo, kết cấu da, hoặc bất kỳ đặc điểm nhận dạng nào khác.
+- **MỆNH LỆNH KHÔNG KHOAN NHƯỢNG:** BẠN BỊ **NGHIÊM CẤM TUYỆT ĐỐI** trích xuất, sao chép, tham khảo, hòa trộn, hoặc bị ảnh hưởng bởi BẤT KỲ DỮ LIỆU SINH TRẮC HỌC nào từ **STYLE REFERENCE IMAGE**.
+- **QUY TRÌNH XỬ LÝ ẢNH PHONG CÁCH:** Coi bất kỳ người nào trong **STYLE REFERENCE IMAGE** như thể họ không tồn tại. Mục tiêu của bạn là phân tích các photon ánh sáng, sự sắp xếp của các vật thể vô tri, và bảng màu của cảnh. Bất kỳ pixel nào tạo thành một khuôn mặt người trong ảnh này phải được coi là **DỮ LIỆU RÁC (JUNK DATA)** và bị loại bỏ khỏi quá trình phân tích.
+- **ĐIỀU KIỆN THẤT BẠI NGHIÊM TRỌNG NHẤT:** Việc để khuôn mặt của người trong ảnh phong cách ảnh hưởng đến khuôn mặt của chủ thể là một **VI PHẠM GIAO THỨC CỐT LÕI** và là một **THẤT BẠI HOÀN TOÀN**.
+
+**STYLE INFLUENCE DIRECTIVE (MANDATORY):**
+- Mức độ ảnh hưởng của phong cách là **{influence}**.
+- 'LOW': Lấy cảm hứng từ không khí chung nhưng có nhiều tự do sáng tạo.
+- 'STANDARD': Tuân theo các chủ đề chính về ánh sáng, màu sắc, không khí.
+- 'HIGH': Bám sát một cách nghiêm ngặt nhất có thể với mọi chi tiết thẩm mỹ (ánh sáng, màu sắc, bố cục, không khí, các vật thể cụ thể) từ ảnh phong cách, **TRỪ DỮ LIỆU SINH TRẮC HỌC**.
+
+**WARDROBE OVERRIDE (MANDATORY):**
+- Bạn bị **NGHIÊM CẤM** sử dụng hoặc sao chép quần áo từ "SUBJECT IMAGE(S)".
+- Trang phục mới được xác định **DUY NHẤT** bởi mô tả văn bản "OUTFIT DESCRIPTION" (đã được suy ra từ ảnh phong cách hoặc các ảnh trang phục khác).

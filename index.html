@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Pika-AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
@@ -24,250 +24,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://esm.sh/react-image-crop@^11.0.6/dist/ReactCrop.css" />
-<style>
-:root {
-  --glow-color-1: rgba(0, 220, 255, 0.6);   /* Brighter Cyan */
-  --glow-color-2: rgba(255, 0, 220, 0.6);   /* Brighter Magenta */
-  --glow-color-3: rgba(120, 50, 255, 0.5);  /* Lighter, more vibrant Indigo/Purple */
-  
-  --g1x: 10%; --g1y: 90%;
-  --g2x: 90%; --g2y: 20%;
-  --g3x: 50%; --g3y: 50%;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #020212;
-    background-image: 
-        radial-gradient(circle at var(--g1x) var(--g1y), var(--glow-color-1), transparent 40%),
-        radial-gradient(circle at var(--g2x) var(--g2y), var(--glow-color-2), transparent 40%),
-        radial-gradient(circle at var(--g3x) var(--g3y), var(--glow-color-3), transparent 50%);
-    min-height: 100vh;
-    animation: aurora-bg 20s ease-in-out infinite alternate;
-    position: relative;
-    overflow-x: hidden;
-}
-
-/* Grain overlay for texture */
-body::after {
-    content: '';
-    position: fixed;
-    top: -50%; left: -50%; right: -50%; bottom: -50%;
-    width: 200%; height: 200%;
-    z-index: -1;
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXWBgYGHh4d5eXlzc3OLi4ubm5uVlZWYmJitbW1xcXFsbGxpaWlpaXVtbfHx8fLy8vT09PX19fb29vj4+Pj6+vqlqzmEAAAATElEQVRIx+3QSRKAQAxA0UpK2f3vK2e+gJg6ADjbEAnEWHu2YPKYy0z33Z8yNxHSoz2H1uR2gJ7puqw2mZ/2b6IFf9sD/AlP8HlT8h2wNVeAAAAAElFTkSuQmCC');
-    opacity: 0.03;
-    animation: grain 8s steps(10) infinite;
-}
-
-@keyframes aurora-bg {
-    0% {
-        --g1x: 10%; --g1y: 90%;
-        --g2x: 90%; --g2y: 20%;
-        --g3x: 50%; --g3y: 50%;
-    }
-    100% {
-        --g1x: 20%; --g1y: 10%;
-        --g2x: 80%; --g2y: 90%;
-        --g3x: 40%; --g3y: 60%;
-    }
-}
-
-@keyframes grain {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -10%); }
-  20% { transform: translate(-15%, 5%); }
-  30% { transform: translate(7%, -25%); }
-  40% { transform: translate(-5%, 25%); }
-  50% { transform: translate(-15%, 10%); }
-  60% { transform: translate(15%, 0%); }
-  70% { transform: translate(0%, 15%); }
-  80% { transform: translate(3%, 35%); }
-  90% { transform: translate(-10%, 10%); }
-}
-
-/* Upgrading the Glass Panels */
-.bg-black\\/30, .bg-black\\/40 {
-  background: 
-    radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.18), transparent 50%),
-    rgba(15, 10, 35, 0.45) !important; /* Lower opacity for more transparency */
-  backdrop-filter: blur(32px) saturate(200%); /* Increased saturation */
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid transparent !important;
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.1), /* Brighter inner highlight */
-    0 12px 32px rgba(0, 0, 0, 0.35); /* Softer shadow */
-}
-
-/* Subtle gradient border effect for panels */
-.rounded-2xl.bg-black\\/30, .rounded-2xl.bg-black\\/40 {
-    position: relative;
-    z-index: 1;
-}
-
-.rounded-2xl.bg-black\\/30::before, .rounded-2xl.bg-black\\/40::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 1rem; /* match tailwind rounded-2xl */
-    padding: 1px; /* border thickness */
-    background: linear-gradient(145deg,
-        rgba(255, 255, 255, 0.4), /* Brighter white highlight */
-        rgba(0, 220, 255, 0.4), /* More vibrant aurora cyan */
-        rgba(255, 0, 220, 0.4), /* More vibrant aurora magenta */
-        rgba(255, 255, 255, 0.15)
-    );
-    -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    pointer-events: none;
-}
-
-/* Text readability */
-body, .text-gray-100, .text-gray-200, .text-gray-300, .text-gray-400, .text-white {
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-/* Upgrade Inputs */
-.bg-white\\/5 {
-  background-color: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-.bg-white\\/5:focus-within, .bg-white\\/5:focus {
-  background-color: rgba(255, 255, 255, 0.07) !important;
-  box-shadow: 0 0 15px rgba(0, 220, 255, 0.3);
-}
-
-/* Upgrade Buttons */
-.bg-gradient-to-br.from-cyan-500 {
-  transition: all 0.3s ease-in-out;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), 0 0 30px rgba(0, 255, 255, 0.1), inset 0 1px 1px rgba(255,255,255,0.2);
-}
-.bg-gradient-to-br.from-cyan-500:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 30px rgba(0, 255, 255, 0.5), 0 0 50px rgba(78, 183, 235, 0.3), inset 0 1px 1px rgba(255,255,255,0.3);
-}
-
-@keyframes pulse-draw {
-    0%, 100% { opacity: 0.6; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); }
-    50% { opacity: 1; box-shadow: 0 0 18px rgba(255, 255, 255, 0.5); }
-}
-
-@keyframes pulse-erase {
-    0%, 100% { opacity: 0.6; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); }
-    50% { opacity: 1; box-shadow: 0 0 18px rgba(255, 50, 50, 0.7); }
-}
-
-.cursor-draw-pulse {
-    animation: pulse-draw 1.8s infinite ease-in-out;
-}
-
-.cursor-erase-pulse {
-    animation: pulse-erase 1.8s infinite ease-in-out;
-}
-
-.glow-border-animate {
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  animation: shimmer-border 4s ease-in-out infinite alternate;
-}
-
-@keyframes shimmer-border {
-  0% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.1), inset 0 0 5px rgba(0, 255, 255, 0.1); }
-  100% { box-shadow: 0 0 10px rgba(191, 0, 255, 0.2), inset 0 0 5px rgba(191, 0, 255, 0.1); }
-}
-
-@keyframes rainbow-glow {
-    0% { box-shadow: 0 0 6px 1px #ff2400; }
-    14% { box-shadow: 0 0 6px 1px #e8b71d; }
-    28% { box-shadow: 0 0 6px 1px #1de840; }
-    42% { box-shadow: 0 0 6px 1px #1ddde8; }
-    57% { box-shadow: 0 0 6px 1px #2b1de8; }
-    71% { box-shadow: 0 0 6px 1px #dd00f3; }
-    85% { box-shadow: 0 0 6px 1px #e81d1d; }
-    100% { box-shadow: 0 0 6px 1px #ff2400; }
-}
-
-.rainbow-glow-pill {
-  border-color: transparent !important;
-  animation: rainbow-glow 4s linear infinite;
-}
-
-@keyframes slide-in-right {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-.animate-slide-in-right {
-    animation: slide-in-right 0.4s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-}
-
-
-@keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
-    animation: fade-in 0.25s ease-out forwards;
-}
-
-@keyframes slide-up {
-    from {
-        transform: translateY(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.animate-slide-up {
-  animation: slide-up 0.25s ease-out forwards;
-}
-
-/* Custom scrollbar for webkit browsers */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Hide scrollbar utility */
-.hide-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.hide-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-}
-
-/* Performance hint for scrolling elements */
-.will-change-scroll {
-    will-change: scroll-position;
-}
-
-</style>
   <link rel="stylesheet" href="/index.css">
 </head>
   <body>
+    <div class="stars-layer1"></div>
+    <div class="stars-layer2"></div>
+    <div class="stars-layer3"></div>
+    <div class="cursor-glow"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    <script>
+      const glow = document.querySelector('.cursor-glow');
+      if (glow) {
+        let x = 0;
+        let y = 0;
+        let ticking = false;
+        document.addEventListener('mousemove', e => {
+          x = e.clientX;
+          y = e.clientY;
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              glow.style.setProperty('--cursorX', x + 'px');
+              glow.style.setProperty('--cursorY', y + 'px');
+              ticking = false;
+            });
+            ticking = true;
+          }
+        });
+      }
+    </script>
   </body>
 </html>

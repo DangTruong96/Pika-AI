@@ -4,20 +4,10 @@
 */
 
 import { useReducer, useMemo } from 'react';
+import type { HistoryItem, TransformState } from '../types';
 
 // --- TYPES ---
-export type TransformState = {
-  rotate: number;
-  scaleX: 1 | -1;
-  scaleY: 1 | -1;
-};
-export const initialTransformState: TransformState = { rotate: 0, scaleX: 1, scaleY: 1 };
-
-export type HistoryItem = {
-  file: File;
-  url: string;
-  transform: TransformState;
-};
+const initialTransformState: TransformState = { rotate: 0, scaleX: 1, scaleY: 1 };
 
 type HistoryState = {
   items: HistoryItem[];
@@ -40,7 +30,13 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
     case 'PUSH': {
       const newHistory = state.items.slice(0, state.currentIndex + 1);
       // Revoke URLs for items that are being discarded
-      state.items.slice(state.currentIndex + 1).forEach(item => URL.revokeObjectURL(item.url));
+      state.items.slice(state.currentIndex + 1).forEach(item => {
+        URL.revokeObjectURL(item.url);
+        // Also revoke thumbnail URL if it's an object URL (it will be a data URL, but check just in case)
+        if (item.thumbnailUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(item.thumbnailUrl);
+        }
+      });
       newHistory.push(action.payload.item);
       return {
         items: newHistory,
@@ -66,7 +62,12 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
     case 'SET_FROM_RESULT': {
         const { baseIndex, item } = action.payload;
         const newHistory = state.items.slice(0, baseIndex + 1);
-        state.items.slice(baseIndex + 1).forEach(i => URL.revokeObjectURL(i.url));
+        state.items.slice(baseIndex + 1).forEach(i => {
+          URL.revokeObjectURL(i.url);
+          if (i.thumbnailUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(i.thumbnailUrl);
+          }
+        });
         newHistory.push(item);
         return {
             items: newHistory,
@@ -75,7 +76,12 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
     }
     case 'RESET_TO_FIRST': {
         if (state.items.length > 1) {
-            state.items.slice(1).forEach(item => URL.revokeObjectURL(item.url));
+            state.items.slice(1).forEach(item => {
+              URL.revokeObjectURL(item.url);
+              if (item.thumbnailUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(item.thumbnailUrl);
+              }
+            });
             return {
                 items: [state.items[0]],
                 currentIndex: 0,
@@ -84,7 +90,12 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
         return state;
     }
     case 'RESET_ALL': {
-        state.items.forEach(item => URL.revokeObjectURL(item.url));
+        state.items.forEach(item => {
+          URL.revokeObjectURL(item.url);
+          if (item.thumbnailUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(item.thumbnailUrl);
+          }
+        });
         return initialHistoryState;
     }
     default:

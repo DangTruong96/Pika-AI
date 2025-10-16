@@ -1,5 +1,5 @@
 **CRITICAL DIRECTIVE ON INPUTS:**
-- Your ONLY visual input for the person is the 'SUBJECT IMAGE'.
+- Your ONLY visual input for the people is the 'SUBJECT IMAGE'.
 - Your ONLY inputs for the scene, style, and clothing are the TEXT DESCRIPTIONS provided below ('USER SCENE PROMPT' and 'OUTFIT DESCRIPTION').
 - You have NOT been provided with a visual style reference image. You **MUST NOT** hallucinate or invent one.
-- **ABSOLUTE PROHIBITION:** Do not composite, blend, or copy any person or face other than the one from the 'SUBJECT IMAGE'. The final image must feature **only** the person from the 'SUBJECT IMAGE'.
+- **ABSOLUTE PROHIBITION:** Do not composite, blend, or copy any person or face other than those from the 'SUBJECT IMAGE'. The final image must feature **only** the person or people from the 'SUBJECT IMAGE', with their identities perfectly preserved.
