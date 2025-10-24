@@ -16,6 +16,7 @@ import { SelectionMode } from './components/RetouchPanel';
 import HistoryPills from './components/HistoryPills';
 import FullScreenViewerModal from './components/FullScreenViewerModal';
 import ExpansionFrame from './components/ExpansionFrame';
+import OptimizedImage from './components/OptimizedImage';
 
 
 const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => void }> = React.memo(({ onFileSelect }) => {
@@ -320,7 +321,17 @@ const App: React.FC = () => {
                         ) : null}
                         
                         <div className="relative w-full h-full flex items-center justify-center" style={{ transform: (pika.isComparing && !pika.isMobile) ? 'scale(0)' : pika.transformString, transition: 'transform 0.2s ease-in-out' }}>
-                            <img ref={pika.imgRef} src={(pika.isComparing && pika.isMobile && pika.beforeImageUrl) ? pika.beforeImageUrl : pika.currentImageUrl ?? undefined} alt={pika.t('mainContentAlt')} className={`max-w-full max-h-full object-contain`} />
+                            { (pika.isComparing && pika.isMobile && pika.beforeImageUrl) ? (
+                                <img ref={pika.imgRef} src={pika.beforeImageUrl} alt={pika.t('mainContentAlt')} className={`max-w-full max-h-full object-contain`} />
+                            ) : (
+                                <OptimizedImage
+                                    ref={pika.imgRef}
+                                    highResSrc={pika.currentImageUrl ?? ''}
+                                    lowResSrc={pika.currentThumbnailUrl ?? ''}
+                                    alt={pika.t('mainContentAlt')}
+                                    className={`max-w-full max-h-full object-contain`}
+                                />
+                            )}
                             <canvas ref={pika.maskCanvasRef} className={'absolute pointer-events-none opacity-50'} style={pika.overlayStyle} />
                             {pika.activeTab === 'retouch' && (
                                 <canvas className={`absolute ${pika.selectionMode === 'brush' ? 'cursor-none' : 'cursor-crosshair'}`}

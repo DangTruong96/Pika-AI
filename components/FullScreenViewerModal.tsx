@@ -125,6 +125,24 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
       };
     }, []);
 
+    // Preload adjacent images for smoother swiping
+    useEffect(() => {
+        if (items.length > 1) {
+            const nextIndex = (currentIndex + 1) % items.length;
+            const prevIndex = (currentIndex - 1 + items.length) % items.length;
+    
+            const nextImg = new Image();
+            if (items[nextIndex]?.url) {
+                nextImg.src = items[nextIndex].url;
+            }
+    
+            const prevImg = new Image();
+            if (items[prevIndex]?.url) {
+                prevImg.src = items[prevIndex].url;
+            }
+        }
+    }, [currentIndex, items]);
+
     const getDistanceBetweenTouches = (touches: React.TouchList | Touch[]): number => {
         return Math.hypot(
             touches[0].clientX - touches[1].clientX,

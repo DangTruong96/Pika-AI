@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import Spinner from './Spinner';
 import { ClockIcon, XMarkIcon } from './icons';
@@ -30,6 +30,57 @@ interface HistoryPillsProps {
   isMobile?: boolean;
   isControlsVisible?: boolean;
 }
+
+const LazyPillImage: React.FC<{
+  thumbnailUrl: string;
+  transform: TransformState;
+  alt: string;
+}> = ({ thumbnailUrl, transform, alt }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: '200px' } // Preload when it's 200px away from viewport
+    );
+
+    const currentRef = containerRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, []);
+
+  const transformString = `rotate(${transform.rotate}deg) scale(${transform.scaleX}, ${transform.scaleY})`;
+
+  return (
+    <div ref={containerRef} className="w-full h-full">
+      {isVisible ? (
+        <img
+          src={thumbnailUrl}
+          alt={alt}
+          className="w-full h-full object-cover transition-transform group-hover:scale-110"
+          decoding="async"
+          style={{ transform: transformString }}
+        />
+      ) : (
+        <div className="w-full h-full bg-white/5" /> // Placeholder
+      )}
+    </div>
+  );
+};
+
 
 const HistoryPills: React.FC<HistoryPillsProps> = ({
   historyItems,
@@ -92,7 +143,6 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
               </button>
           ))}
           {visibleHistoryItems.map((item, index) => {
-              const transformString = `rotate(${item.transform.rotate}deg) scale(${item.transform.scaleX}, ${item.transform.scaleY})`;
               return (
                 <button
                     ref={currentIndex === index ? activeItemRef : null}
@@ -104,7 +154,11 @@ const HistoryPills: React.FC<HistoryPillsProps> = ({
                     aria-label={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
                     title={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
                 >
-                    <img src={item.thumbnailUrl} alt={t('historyStep', { step: index })} className="w-full h-full object-cover transition-transform group-hover:scale-110" decoding="async" style={{ transform: transformString }}/>
+                    <LazyPillImage 
+                      thumbnailUrl={item.thumbnailUrl}
+                      transform={item.transform}
+                      alt={index === 0 ? t('historyOriginal') : t('historyStep', { step: index })}
+                    />
                 </button>
               );
           })}

@@ -4,7 +4,7 @@
 */
 
 // Fix: Corrected invalid import syntax for React hooks.
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import type { Tab } from '../types';
 import { SegmentedControl } from './IdPhotoPanel';
@@ -81,12 +81,12 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
   const oneClickFixes: { presets: AdjustmentPreset[] } = {
     presets: [
       { name: t('oneClickAutoEnhance'), prompt: t('oneClickAutoEnhancePrompt'), icon: SparklesIcon },
-      { name: t('oneClickStarFilter'), prompt: t('oneClickStarFilterPrompt'), icon: StarburstIcon },
       { name: t('oneClickRestoreModern'), prompt: t('oneClickRestoreModernPrompt'), icon: FaceRestoreIcon },
       { name: t('adjustmentUpscale8K'), prompt: t('adjustmentUpscale8KPrompt'), icon: UpscaleIcon },
       { name: t('oneClickReconstructForPrint'), prompt: t('oneClickReconstructForPrintPrompt'), icon: DocumentScannerIcon },
       { name: t('oneClickHairRimLight'), prompt: t('oneClickHairRimLightPrompt'), icon: HairRimLightIcon },
       { name: t('oneClickLumoFlash'), prompt: t('oneClickLumoFlashPrompt'), icon: LightningBoltIcon },
+      { name: t('oneClickStarFilter'), prompt: t('oneClickStarFilterPrompt'), icon: StarburstIcon },
     ]
   };
 
@@ -119,12 +119,12 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
     ]
   };
 
-  const modeOptions: { value: EnhanceMode; label: string; icon: React.FC<{ className?: string; }> }[] = [
-    { value: 'oneClick', label: t('oneClickTitle'), icon: SparklesIcon },
-    { value: 'portrait', label: t('adjustmentPortraitTitle'), icon: UserCircleIcon },
-    { value: 'pose', label: t('poseCorrectionTitle'), icon: PostureCorrectionIcon },
-    { value: 'color', label: t('filterSectionColor'), icon: PaletteIcon },
-  ];
+  const modeOptions = useMemo(() => [
+    { value: 'oneClick' as EnhanceMode, label: t('oneClickTitle'), icon: SparklesIcon },
+    { value: 'portrait' as EnhanceMode, label: t('adjustmentPortraitTitle'), icon: UserCircleIcon },
+    { value: 'pose' as EnhanceMode, label: t('poseCorrectionTitle'), icon: PostureCorrectionIcon },
+    { value: 'color' as EnhanceMode, label: t('filterSectionColor'), icon: PaletteIcon },
+  ], [t]);
 
   const renderPresets = (presets: AdjustmentPreset[]) => (
     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 animate-fade-in">

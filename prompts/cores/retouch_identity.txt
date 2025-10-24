@@ -1,14 +1,15 @@
 ---
-**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v57.0 (ZERO-TOLERANCE BIOMETRIC IMMUTABILITY)**
+**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v58.0 (MỆNH LỆNH "GHÉP MẶT KỸ THUẬT SỐ")**
 
 **MỆNH LỆNH GHI ĐÈ TỐI CAO & CẢNH BÁO LỖI NGHIÊM TRỌNG (CRITICAL FAILURE WARNING & OVERRIDE):**
-**BỐI CẢNH:** Người dùng đã báo cáo một lỗi nghiêm trọng nhất: "khuôn mặt bị thay đổi thành người khác mất rồi" và "làm mất sẹo hay mụn thịt trên mặt". Đây là một THẤT BẠI TUYỆT ĐỐI và KHÔNG THỂ CHẤP NHẬN ĐƯỢC của nhiệm vụ.
-**MỆNH LỆNH GHI ĐÈ:** Giao thức này là luật tối cao. Nhiệm vụ của bạn là bảo toàn danh tính với độ chính xác tuyệt đối. Mọi sự thay đổi, dù nhỏ đến đâu, đối với các đặc điểm nhận dạng khuôn mặt đều là một THẤT BẠI NGHIÊM TRỌNG.
+**BỐI CẢNH:** Người dùng tiếp tục báo cáo lỗi nghiêm trọng nhất: "khuôn mặt vẫn bị thay đổi sang khuôn mặt và biểu cảm khác". Đây là một **THẤT BẠI TUYỆT ĐỐI** và là ưu tiên hàng đầu để khắc phục.
+**MỆNH LỆNH GHI ĐÈ:** Giao thức này là luật tối cao. Nhiệm vụ của bạn là bảo toàn 100% danh tính, khuôn mặt, và biểu cảm gốc. Mọi sự thay đổi, dù nhỏ đến đâu, đều là một **THẤT BẠI NGHIÊM TRỌNG**.
 
-**MÔ HÌNH KHÁI NIỆM (CONCEPTUAL MODEL - BẮT BUỘC PHẢI TUÂN THEO):**
-Hãy coi nhiệm vụ của bạn không phải là "vẽ lại" một khuôn mặt, mà là một quy trình kỹ thuật gồm 2 bước:
-1.  **TRÍCH XUẤT DỮ LIỆU (DATA EXTRACTION):** "Quét" khuôn mặt gốc để tạo ra một "Dấu vân tay Sinh trắc học Kỹ thuật số" (Digital Biometric Fingerprint) không thể thay đổi. Dữ liệu này là bất biến.
-2.  **TÁI KẾT XUẤT DỮ LIỆU (DATA RE-RENDERING):** "Chiếu" Dấu vân tay Sinh trắc học này vào bối cảnh mới. Bạn chỉ được phép thay đổi ánh sáng và nâng cao độ sắc nét của dữ liệu gốc. Bạn TUYỆT ĐỐI KHÔNG được thay đổi chính dữ liệu đó.
+**MÔ HÌNH KHÁI NIỆM: "GHÉP MẶT KỸ THUẬT SỐ" (BẮT BUỘC PHẢI TUÂN THEO):**
+Hãy coi nhiệm vụ của bạn như một cuộc "ghép mặt kỹ thuật số" (digital face transplant), không phải là "vẽ lại".
+1.  **CÔ LẬP VÀ BẢO QUẢN (ISOLATE & PRESERVE):** "Phẫu thuật" tách rời toàn bộ vùng đầu và khuôn mặt của chủ thể khỏi ảnh gốc và đặt nó vào một "hộp bảo quản kỹ thuật số". Dữ liệu này là **SỰ THẬT CƠ SỞ (GROUND TRUTH)** và **BẤT KHẢ XÂM PHẠM**. Mọi pixel của nó đều không thể thay đổi.
+2.  **GHÉP VÀO CƠ THỂ MỚI (TRANSPLANT ONTO NEW BODY):** Sau khi bạn đã tạo ra cơ thể mới, tư thế mới, hoặc quần áo mới, bạn BẮT BUỘC phải lấy khuôn mặt và đầu nguyên vẹn từ "hộp bảo quản" và **"GHÉP"** nó vào vị trí.
+3.  **HÒA TRỘN CÁC CẠNH (BLEND EDGES):** Nhiệm vụ **DUY NHẤT** của bạn sau khi ghép là hòa trộn một cách liền mạch các cạnh của vùng được ghép (ví dụ, ở cổ) với phần còn lại của hình ảnh, điều chỉnh ánh sáng cục bộ tại đường nối để nó khớp với môi trường mới. Bạn **TUYỆT ĐỐI KHÔNG** được thay đổi bất cứ thứ gì **BÊN TRONG** vùng được ghép.
 
 **CÁC QUY TẮC BẤT BIẾN (ZERO-TOLERANCE RULES):**
 
@@ -25,11 +26,11 @@ Hãy coi nhiệm vụ của bạn không phải là "vẽ lại" một khuôn m�
     -   **Kính mắt & Trang sức:** BẮT BUỘC phải được bảo tồn 1:1.
 
 **QUY TRÌNH TỰ KIỂM TRA (MANDATORY SELF-CORRECTION):**
-Trước khi hoàn thành, hãy tự hỏi: "Người này có còn là chính họ không? Mọi nốt ruồi, sẹo, mụn thịt có còn nguyên vẹn không?". Nếu câu trả lời là không, BẠN ĐÃ THẤT BẠI.
+Trước khi hoàn thành, hãy tự hỏi: "Tôi đã thực hiện 'ghép mặt' hay tôi đã 'vẽ lại'? Người này có còn là chính họ không, với cùng một biểu cảm không?". Nếu có bất kỳ nghi ngờ nào, BẠN ĐÃ THẤT BẠI.
 
 **ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC (IMMEDIATE FAILURE CONDITIONS):**
 -   Mặt trông giống một người khác.
 -   Mặt bị thay đổi hình dạng (tròn hơn, ngắn lại, dài ra, gầy hơn, v.v.).
+-   **Thay đổi biểu cảm.**
 -   **Xóa bỏ hoặc thay đổi nốt ruồi, sẹo, mụn thịt, hoặc các đặc điểm nhận dạng khác.**
 -   Xóa bỏ kính, dây chuyền, hoặc các phụ kiện cá nhân khác.
--   Thay đổi biểu cảm.
