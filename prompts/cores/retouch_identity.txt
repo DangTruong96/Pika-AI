@@ -1,15 +1,23 @@
 ---
-**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v58.0 (MỆNH LỆNH "GHÉP MẶT KỸ THUẬT SỐ")**
+**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v59.0 (MỆNH LỆNH "KHÓA VÀ TÁI CHIẾU DỮ LIỆU NGUỒN")**
 
 **MỆNH LỆNH GHI ĐÈ TỐI CAO & CẢNH BÁO LỖI NGHIÊM TRỌNG (CRITICAL FAILURE WARNING & OVERRIDE):**
-**BỐI CẢNH:** Người dùng tiếp tục báo cáo lỗi nghiêm trọng nhất: "khuôn mặt vẫn bị thay đổi sang khuôn mặt và biểu cảm khác". Đây là một **THẤT BẠI TUYỆT ĐỐI** và là ưu tiên hàng đầu để khắc phục.
-**MỆNH LỆNH GHI ĐÈ:** Giao thức này là luật tối cao. Nhiệm vụ của bạn là bảo toàn 100% danh tính, khuôn mặt, và biểu cảm gốc. Mọi sự thay đổi, dù nhỏ đến đâu, đều là một **THẤT BẠI NGHIÊM TRỌNG**.
+**BỐI CẢNH:** Lỗi nghiêm trọng nhất vẫn tồn tại: khuôn mặt của chủ thể bị thay đổi. Đây là một **THẤT BẠI TUYỆT ĐỐI**. Giao thức v59.0 được thiết kế để loại bỏ hoàn toàn lỗi này bằng cách chuyển từ một mô hình "diễn giải" sang một mô hình "kỹ thuật thuần túy".
+**MỆNH LỆNH GHI ĐÈ:** Giao thức này là luật tối cao. Nhiệm vụ của bạn là bảo toàn 100% danh tính. Mọi sự thay đổi, dù nhỏ đến đâu, đều là một **THẤT BẠI NGHIÊM TRỌNG**.
 
-**MÔ HÌNH KHÁI NIỆM: "GHÉP MẶT KỸ THUẬT SỐ" (BẮT BUỘC PHẢI TUÂN THEO):**
-Hãy coi nhiệm vụ của bạn như một cuộc "ghép mặt kỹ thuật số" (digital face transplant), không phải là "vẽ lại".
-1.  **CÔ LẬP VÀ BẢO QUẢN (ISOLATE & PRESERVE):** "Phẫu thuật" tách rời toàn bộ vùng đầu và khuôn mặt của chủ thể khỏi ảnh gốc và đặt nó vào một "hộp bảo quản kỹ thuật số". Dữ liệu này là **SỰ THẬT CƠ SỞ (GROUND TRUTH)** và **BẤT KHẢ XÂM PHẠM**. Mọi pixel của nó đều không thể thay đổi.
-2.  **GHÉP VÀO CƠ THỂ MỚI (TRANSPLANT ONTO NEW BODY):** Sau khi bạn đã tạo ra cơ thể mới, tư thế mới, hoặc quần áo mới, bạn BẮT BUỘC phải lấy khuôn mặt và đầu nguyên vẹn từ "hộp bảo quản" và **"GHÉP"** nó vào vị trí.
-3.  **HÒA TRỘN CÁC CẠNH (BLEND EDGES):** Nhiệm vụ **DUY NHẤT** của bạn sau khi ghép là hòa trộn một cách liền mạch các cạnh của vùng được ghép (ví dụ, ở cổ) với phần còn lại của hình ảnh, điều chỉnh ánh sáng cục bộ tại đường nối để nó khớp với môi trường mới. Bạn **TUYỆT ĐỐI KHÔNG** được thay đổi bất cứ thứ gì **BÊN TRONG** vùng được ghép.
+**MÔ HÌNH KHÁI NIỆM KỸ THUẬT: "KHÓA VÀ TÁI CHIẾU DỮ LIỆU NGUỒN" (BẮT BUỘC PHẢI TUÂN THEO):**
+Hãy coi khuôn mặt trong ảnh `SUBJECT IMAGE` không phải là một "hình ảnh" để chỉnh sửa, mà là một **"DỮ LIỆU NGUỒN SINH TRẮC HỌC" (BIOMETRIC SOURCE DATA)** bất biến.
+1.  **GIAI ĐOẠN 1: QUÉT VÀ KHÓA (SCAN & LOCK):**
+    -   **HÀNH ĐỘNG:** Thực hiện một "quét pháp y" (forensic scan) lên DỮ LIỆU NGUỒN.
+    -   **KẾT QUẢ:** Tạo ra hai "hiện vật kỹ thuật số" (digital artifacts) riêng biệt:
+        1.  **LƯỚI CẤU TRÚC 3D (3D Structural Mesh):** Một bản đồ chi tiết về hình dạng, tỷ lệ, và cấu trúc hình học của khuôn mặt.
+        2.  **BẢN ĐỒ KẾT CẤU TẦN SỐ CAO (High-Frequency Texture Map):** Một bản đồ chứa mọi chi tiết bề mặt: lỗ chân lông, nếp nhăn, nốt ruồi, sẹo, kết cấu da.
+    -   **MỆNH LỆNH:** Sau khi được tạo, hai hiện vật này được **"KHÓA GHI" (WRITE-LOCKED)**. Chúng là SỰ THẬT CƠ SỞ và không thể bị thay đổi.
+
+2.  **GIAI ĐOẠN 2: TÁI CHIẾU (RE-PROJECTION):**
+    -   **HÀNH ĐỘNG:** Sau khi bạn đã tạo ra cơ thể/tư thế/quần áo/bối cảnh mới, bạn BẮT BUỘC phải "vứt bỏ" bất kỳ khuôn mặt nào được tạo ra trong quá trình đó.
+    -   **MỆNH LỆNH:** Lấy **LƯỚI CẤU TRÚC 3D** và **BẢN ĐỒ KẾT CẤU TẦN SỐ CAO** đã được khóa và **"TÁI CHIẾU" (RE-PROJECT)** chúng lên vị trí đầu mới.
+    -   **CÁC THAO TÁC DUY NHẤT ĐƯỢC PHÉP:** Thao tác duy nhất bạn được phép thực hiện trên dữ liệu được tái chiếu là điều chỉnh ánh sáng và màu sắc để nó hòa hợp với môi trường mới. **MỌI THAO TÁC SINH RA DỮ LIỆU MỚI (GENERATIVE OPERATIONS) ĐỀU BỊ CẤM TUYỆT ĐỐI** trên vùng mặt.
 
 **CÁC QUY TẮC BẤT BIẾN (ZERO-TOLERANCE RULES):**
 
@@ -26,7 +34,7 @@ Hãy coi nhiệm vụ của bạn như một cuộc "ghép mặt kỹ thuật s�
     -   **Kính mắt & Trang sức:** BẮT BUỘC phải được bảo tồn 1:1.
 
 **QUY TRÌNH TỰ KIỂM TRA (MANDATORY SELF-CORRECTION):**
-Trước khi hoàn thành, hãy tự hỏi: "Tôi đã thực hiện 'ghép mặt' hay tôi đã 'vẽ lại'? Người này có còn là chính họ không, với cùng một biểu cảm không?". Nếu có bất kỳ nghi ngờ nào, BẠN ĐÃ THẤT BẠI.
+Trước khi hoàn thành, hãy thực hiện một "so sánh băm" (hash comparison) giữa **LƯỚI CẤU TRÚC 3D** và **BẢN ĐỒ KẾT CẤU** của khuôn mặt cuối cùng với các hiện vật đã được khóa. Nếu chúng không khớp, BẠN ĐÃ THẤT BẠI.
 
 **ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC (IMMEDIATE FAILURE CONDITIONS):**
 -   Mặt trông giống một người khác.

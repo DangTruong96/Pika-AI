@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import { GoogleGenAI, GenerateContentResponse, Modality, Type } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 
 // --- ERROR CLASSES ---
 export class RateLimitError extends Error {
@@ -20,6 +20,25 @@ export class ModelExecutionError extends APIError { constructor(message: string 
 
 
 // --- TYPE DEFINITIONS ---
+export interface WebGroundingAttribution {
+  uri: string;
+  title: string;
+}
+
+export interface GroundingChunk {
+  web?: WebGroundingAttribution;
+}
+
+export interface ImageResponse {
+  imageUrl: string;
+  sources: GroundingChunk[];
+}
+
+export interface CreativePromptResponse {
+  prompt: string;
+  sources: GroundingChunk[];
+}
+
 interface IdPhotoOptionsBase {
   backgroundColor: 'white' | 'blue' | 'gray' | 'green';
   size: '3x4' | '4x6' | '2x2' | '3.5x4.5' | '5x5' | '2x3' | '2.4x3' | '4x5';
@@ -185,14 +204,23 @@ async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
 
 // --- IMPLEMENTED API FUNCTIONS ---
 
-async function getImageUrlFromResponse(response: GenerateContentResponse): Promise<string> {
-    if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
+async function getImageUrlFromResponse(response: GenerateContentResponse): Promise<ImageResponse> {
+    const candidate = response.candidates?.[0];
+    const sources = candidate?.groundingMetadata?.groundingChunks ?? [];
+    let imageUrl: string | null = null;
+
+    if (candidate?.content?.parts) {
+        for (const part of candidate.content.parts) {
             if (part.inlineData) {
                 const base64ImageBytes: string = part.inlineData.data;
-                return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
+                imageUrl = `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
+                break; // Found the image, no need to loop further
             }
         }
+    }
+
+    if (imageUrl) {
+        return { imageUrl, sources };
     }
 
     // If no image part was found, check for a text response which might contain an error message.
@@ -204,7 +232,6 @@ async function getImageUrlFromResponse(response: GenerateContentResponse): Promi
     }
 
     // If there's no image and no text, check for other reasons like safety blocks.
-    const candidate = response.candidates?.[0];
     if (candidate) {
         const finishReason = candidate.finishReason as string | undefined;
         if (finishReason && finishReason !== 'STOP' && finishReason !== 'FINISH_REASON_UNSPECIFIED') {
@@ -243,7 +270,7 @@ export const generateImageFromText = async (prompt: string, numberOfImages: numb
     });
 };
 
-export const generateEditedImageWithMask = (imageFile: File, prompt: string, maskDataUrl?: string): Promise<string> => {
+export const generateEditedImageWithMask = (imageFile: File, prompt: string, maskDataUrl?: string): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         const identityCore = await getPrompt('cores/retouch_identity.txt');
         const forensicReconstructionEngine = await getPrompt('cores/retouch_forensic.txt');
@@ -275,14 +302,16 @@ export const generateEditedImageWithMask = (imageFile: File, prompt: string, mas
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
         });
         
         return getImageUrlFromResponse(response);
     });
 }
 
-export const generateFilteredImage = async (imageFile: File, prompt: string): Promise<string> => {
+export const generateFilteredImage = async (imageFile: File, prompt: string): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         const imagePart = await fileToGenerativePart(imageFile);
         const foundationalRestoration = await getPrompt('cores/filter_restoration.txt');
@@ -296,13 +325,15 @@ export const generateFilteredImage = async (imageFile: File, prompt: string): Pr
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, { text: finalPrompt }] },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
         });
         return getImageUrlFromResponse(response);
     });
 };
 
-export const generateAdjustedImage = async (imageFile: File, prompt: string): Promise<string> => {
+export const generateAdjustedImage = async (imageFile: File, prompt: string): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         const imagePart = await fileToGenerativePart(imageFile);
         const identityCore = await getPrompt('cores/adjust_identity.txt');
@@ -336,14 +367,14 @@ export const generateAdjustedImage = async (imageFile: File, prompt: string): Pr
             model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, { text: finalPrompt }] },
             config: { 
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
+                responseModalities: [Modality.IMAGE],
             },
         });
         return getImageUrlFromResponse(response);
     });
 };
 
-export const generateExpandedImage = async (imageDataUrl: string, prompt: string): Promise<string> => {
+export const generateExpandedImage = async (imageDataUrl: string, prompt: string): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         const imageFile = dataURLtoFile(imageDataUrl, 'expand-base.png');
         const imagePart = await fileToGenerativePart(imageFile);
@@ -361,7 +392,9 @@ export const generateExpandedImage = async (imageDataUrl: string, prompt: string
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, { text: finalPrompt }] },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
         });
         return getImageUrlFromResponse(response);
     });
@@ -374,7 +407,7 @@ export const generateExtractedItem = async (imageFile: File, prompt: string): Pr
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, { text: fullPrompt }] },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: { responseModalities: [Modality.IMAGE] },
         });
         const results: string[] = [];
         for (const part of response.candidates[0].content.parts) {
@@ -389,7 +422,7 @@ export const generateExtractedItem = async (imageFile: File, prompt: string): Pr
     });
 };
 
-export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions): Promise<string> => {
+export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         // Mappings from keys to Vietnamese descriptions for the AI model
         const outfitMap: Record<StandardIdPhotoOptions['outfit'], string> = {
@@ -447,9 +480,16 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
         };
 
         const imagePart = await fileToGenerativePart(imageFile);
-        
-        const identityCore = await getPrompt('cores/idphoto_identity.txt');
-        const forensicReconstructionEngine = await getPrompt('cores/idphoto_forensic.txt');
+        const isNewborn = options.type === 'newborn';
+
+        const identityCore = isNewborn 
+            ? await getPrompt('cores/idphoto_identity_newborn.txt') 
+            : await getPrompt('cores/idphoto_identity.txt');
+
+        const forensicReconstructionEngine = isNewborn
+            ? await getPrompt('cores/idphoto_forensic_newborn.txt')
+            : await getPrompt('cores/idphoto_forensic.txt');
+
         const superResolutionEngine = await getPrompt('cores/idphoto_superres.txt');
         const bodyformAndSilhouetteIntegrity = await getPrompt('cores/idphoto_bodyform.txt');
 
@@ -462,11 +502,11 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
             size: sizeMap[options.size],
             size_ratio: sizeRatioMap[options.size],
             backgroundColor: backgroundMap[options.backgroundColor],
-            gender: options.type === 'standard' ? options.gender === 'male' ? 'Nam' : 'Nữ' : '',
-            outfit: options.type === 'standard' ? outfitMap[options.outfit] : '',
-            hairstyle: options.type === 'standard' ? hairMap[options.hairstyle] : '',
-            expression: options.type === 'standard' ? expressionMap[options.expression] : '',
-            customInstructions: options.type === 'standard' ? options.customPrompt || 'Không có' : ''
+            gender: options.type === 'standard' ? (options.gender === 'male' ? 'Nam' : 'Nữ') : 'Không áp dụng',
+            outfit: options.type === 'standard' ? outfitMap[options.outfit] : 'Giữ nguyên tuyệt đối trang phục gốc',
+            hairstyle: options.type === 'standard' ? hairMap[options.hairstyle] : 'Giữ nguyên tuyệt đối tóc gốc',
+            expression: options.type === 'standard' ? expressionMap[options.expression] : 'Giữ nguyên tuyệt đối biểu cảm gốc',
+            customInstructions: options.type === 'standard' ? (options.customPrompt || 'Không có') : 'Không có, và cấm tuyệt đối mọi sự thay đổi không được yêu cầu.'
         };
 
         const prompt = await getPrompt('generateIdPhoto.txt', promptParams);
@@ -474,13 +514,13 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, { text: prompt }] },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: { responseModalities: [Modality.IMAGE] },
         });
         return getImageUrlFromResponse(response);
     });
 };
 
-export const generateCompositeImage = async (subjectImages: File[], prompt: string, outfitDescription: string, objectFiles: File[] = []): Promise<string> => {
+export const generateCompositeImage = async (subjectImages: File[], prompt: string, outfitDescription: string, objectFiles: File[] = []): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         if (subjectImages.length < 1) {
             throw new InvalidInputError("Composite generation requires at least one subject image.");
@@ -532,13 +572,15 @@ export const generateCompositeImage = async (subjectImages: File[], prompt: stri
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
         });
         return getImageUrlFromResponse(response);
     });
 };
 
-export const generatePhotoshootImage = async (imageFile: File, prompt: string, outfitDescription: string, styleFile: File | null, objectFiles: File[] = []): Promise<string> => {
+export const generatePhotoshootImage = async (imageFile: File, prompt: string, outfitDescription: string, styleFile: File | null, objectFiles: File[] = []): Promise<ImageResponse> => {
     return withErrorHandling(async () => {
         // The styleFile is used upstream in `usePika.ts` to generate the text prompts.
         // Per the user's critical request, the styleFile ITSELF MUST NOT be sent to the image generation model
@@ -591,13 +633,15 @@ export const generatePhotoshootImage = async (imageFile: File, prompt: string, o
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
         });
         return getImageUrlFromResponse(response);
     });
 };
 
-export const generateCreativePrompt = async (subjectFiles: File[], styleFile: File | null, outfitFiles: File[], keywords?: string): Promise<string> => {
+export const generateCreativePrompt = async (subjectFiles: File[], styleFile: File | null, outfitFiles: File[], keywords?: string): Promise<CreativePromptResponse> => {
     return withErrorHandling(async () => {
         if (subjectFiles.length === 0) {
             throw new InvalidInputError("Creative Assistant requires at least one subject image.");
@@ -629,9 +673,15 @@ export const generateCreativePrompt = async (subjectFiles: File[], styleFile: Fi
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: { parts: allParts },
+            config: {
+                tools: [{googleSearch: {}}],
+            }
         });
 
-        return (response.text || '').trim();
+        const prompt = (response.text || '').trim();
+        const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+
+        return { prompt, sources };
     });
 };
 

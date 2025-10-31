@@ -81,12 +81,13 @@ const AdjustmentPanel: React.FC<EnhancePanelProps> = ({ onApplyAdjustment, onApp
   const oneClickFixes: { presets: AdjustmentPreset[] } = {
     presets: [
       { name: t('oneClickAutoEnhance'), prompt: t('oneClickAutoEnhancePrompt'), icon: SparklesIcon },
+      { name: t('oneClickAIComposition'), prompt: t('oneClickAICompositionPrompt'), icon: ViewfinderCircleIcon },
       { name: t('oneClickRestoreModern'), prompt: t('oneClickRestoreModernPrompt'), icon: FaceRestoreIcon },
       { name: t('adjustmentUpscale8K'), prompt: t('adjustmentUpscale8KPrompt'), icon: UpscaleIcon },
       { name: t('oneClickReconstructForPrint'), prompt: t('oneClickReconstructForPrintPrompt'), icon: DocumentScannerIcon },
       { name: t('oneClickHairRimLight'), prompt: t('oneClickHairRimLightPrompt'), icon: HairRimLightIcon },
       { name: t('oneClickLumoFlash'), prompt: t('oneClickLumoFlashPrompt'), icon: LightningBoltIcon },
-      { name: t('oneClickStarFilter'), prompt: t('oneClickStarFilterPrompt'), icon: StarburstIcon },
+      { name: t('oneClickStarFilter'), prompt: t('oneClickStarFilterPrompt'), icon: StarburstIcon, isFilter: true },
     ]
   };
 

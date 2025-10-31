@@ -11,7 +11,7 @@ import type { ExpansionHandle } from '../types';
 export const useExpansion = ({
   currentImage, getCommittedImage, addImageToHistory, setUiState, setPendingAction,
   handleApiError, onEditComplete, isMobile, resultsManager, 
-  imageDimensions, getRelativeCoords, t, imgRef
+  imageDimensions, getRelativeCoords, t, imgRef, setSources
 }) => {
   const [expandState, setExpandState] = useState({
     prompt: '',
@@ -56,6 +56,7 @@ export const useExpansion = ({
     if (!currentImage || !hasExpansion) return;
     setUiState({ isLoading: true, loadingMessage: t('loadingExpansion'), error: null });
     resultsManager.clearAllResults();
+    setSources([]);
     try {
         const imageToProcess = await getCommittedImage();
         const imageToProcessUrl = URL.createObjectURL(imageToProcess);
@@ -70,7 +71,8 @@ export const useExpansion = ({
         if (!ctx) throw new Error("Could not create canvas context for expansion.");
         ctx.drawImage(tempImg, expandPadding.left, expandPadding.top, naturalWidth, naturalHeight);
         const finalPrompt = prompt;
-        const imageUrl = await generateExpandedImage(canvas.toDataURL('image/png'), finalPrompt);
+        const { imageUrl, sources } = await generateExpandedImage(canvas.toDataURL('image/png'), finalPrompt);
+        setSources(sources);
         await addImageToHistory(dataURLtoFile(imageUrl, `expanded-${Date.now()}.png`));
         setExpandState({ prompt: '', padding: { top: 0, right: 0, bottom: 0, left: 0 }, activeAspect: null });
         if (isMobile) {
@@ -82,7 +84,7 @@ export const useExpansion = ({
     finally { 
       setUiState(s => ({...s, isLoading: false})); 
     }
-  }, [currentImage, addImageToHistory, expandPadding, hasExpansion, t, handleApiError, onEditComplete, getCommittedImage, isMobile, setUiState, resultsManager, setPendingAction]);
+  }, [currentImage, addImageToHistory, expandPadding, hasExpansion, t, handleApiError, onEditComplete, getCommittedImage, isMobile, setUiState, resultsManager, setPendingAction, setSources]);
 
   const handleExpansionDragStart = (e: React.MouseEvent | React.TouchEvent, handle: ExpansionHandle) => {
     e.preventDefault();

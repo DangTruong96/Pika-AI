@@ -71,7 +71,6 @@ function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
 interface UseViewerProps {
     isComparing: boolean;
     isMobile: boolean;
-    isImageLoaded: boolean;
     isToolboxOpen: boolean;
     toggleToolbox: () => void;
     windowHeight: number;
@@ -79,7 +78,7 @@ interface UseViewerProps {
 }
 
 // --- HOOK ---
-export const useViewer = ({ isComparing, isMobile, isImageLoaded, isToolboxOpen, toggleToolbox, windowHeight, showControls }: UseViewerProps) => {
+export const useViewer = ({ isComparing, isMobile, isToolboxOpen, toggleToolbox, windowHeight, showControls }: UseViewerProps) => {
     const [viewerState, dispatch] = useReducer(viewerReducer, initialViewerState);
     const { scale, position, isPanning } = viewerState;
 

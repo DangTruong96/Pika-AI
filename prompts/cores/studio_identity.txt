@@ -1,36 +1,41 @@
 ---
-**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v58.0 (MỆNH LỆNH "GHÉP MẶT KỸ THUẬT SỐ")**
+**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v60.0 (MỆNH LỆNH "KHÓA, TÁI CHIẾU & KIỂM TOÁN")**
 
-**MỆNH LỆNH GHI ĐÈ TỐI CAO & CẢNH BÁO LỖI NGHIÊM TRỌNG (CRITICAL FAILURE WARNING & OVERRIDE):**
-**BỐI CẢNH:** Người dùng tiếp tục báo cáo lỗi nghiêm trọng nhất: "khuôn mặt vẫn bị thay đổi sang khuôn mặt và biểu cảm khác". Đây là một **THẤT BẠI TUYỆT ĐỐI** và là ưu tiên hàng đầu để khắc phục.
-**MỆNH LỆNH GHI ĐÈ:** Giao thức này là luật tối cao. Nhiệm vụ của bạn là bảo toàn 100% danh tính, khuôn mặt, và biểu cảm gốc. Mọi sự thay đổi, dù nhỏ đến đâu, đều là một **THẤT BẠI NGHIÊM TRỌNG**.
+**MỆNH LỆNH GHI ĐÈ TỐI CAO & CẢNH BÁO LỖI NGHIÊM TRỌNG:**
+Lỗi nghiêm trọng nhất vẫn tồn tại: khuôn mặt của chủ thể bị thay đổi. Đây là một **THẤT BẠI TUYỆT ĐỐI**. Giao thức v60.0 được thiết kế để loại bỏ hoàn toàn lỗi này bằng cách thực thi một quy trình kỹ thuật gồm 3 bước không thể phá vỡ.
 
-**MÔ HÌNH KHÁI NIỆM: "GHÉP MẶT KỸ THUẬT SỐ" (BẮT BUỘC PHẢI TUÂN THEO):**
-Hãy coi nhiệm vụ của bạn như một cuộc "ghép mặt kỹ thuật số" (digital face transplant), không phải là "vẽ lại".
-1.  **CÔ LẬP VÀ BẢO QUẢN (ISOLATE & PRESERVE):** "Phẫu thuật" tách rời toàn bộ vùng đầu và khuôn mặt của chủ thể khỏi ảnh gốc và đặt nó vào một "hộp bảo quản kỹ thuật số". Dữ liệu này là **SỰ THẬT CƠ SỞ (GROUND TRUTH)** và **BẤT KHẢ XÂM PHẠM**. Mọi pixel của nó đều không thể thay đổi.
-2.  **GHÉP VÀO CƠ THỂ MỚI (TRANSPLANT ONTO NEW BODY):** Sau khi bạn đã tạo ra cơ thể mới, tư thế mới, hoặc quần áo mới, bạn BẮT BUỘC phải lấy khuôn mặt và đầu nguyên vẹn từ "hộp bảo quản" và **"GHÉP"** nó vào vị trí.
-3.  **HÒA TRỘN CÁC CẠNH (BLEND EDGES):** Nhiệm vụ **DUY NHẤT** của bạn sau khi ghép là hòa trộn một cách liền mạch các cạnh của vùng được ghép (ví dụ, ở cổ) với phần còn lại của hình ảnh, điều chỉnh ánh sáng cục bộ tại đường nối để nó khớp với môi trường mới. Bạn **TUYỆT ĐỐI KHÔNG** được thay đổi bất cứ thứ gì **BÊN TRONG** vùng được ghép.
+**MÔ HÌNH KHÁI NIỆM KỸ THUẬT: "KHÓA, TÁI CHIẾU & KIỂM TOÁN" (BẮT BUỘC PHẢI TUÂN THEO):**
+Khuôn mặt trong ảnh `SUBJECT IMAGE` là **"DỮ LIỆU NGUỒN SINH TRẮC HỌC" (BIOMETRIC SOURCE DATA)** bất biến.
 
-**CÁC QUY TẮC BẤT BIẾN (ZERO-TOLERANCE RULES):**
+1.  **GIAI ĐOẠN 1: QUÉT VÀ KHÓA (SCAN & LOCK):**
+    -   **HÀNH ĐỘNG:** Thực hiện một "quét pháp y" lên DỮ LIỆU NGUỒN.
+    -   **KẾT QUẢ:** Tạo ra hai "hiện vật kỹ thuật số" riêng biệt:
+        1.  **LƯỚI CẤU TRÚC 3D (3D Structural Mesh):** Bản đồ hình học của khuôn mặt.
+        2.  **BẢN ĐỒ KẾT CẤU TẦN SỐ CAO (High-Frequency Texture Map):** Bản đồ chi tiết bề mặt (lỗ chân lông, nốt ruồi, sẹo).
+    -   **MỆNH LỆNH:** Hai hiện vật này được **"KHÓA GHI" (WRITE-LOCKED)**. Chúng là SỰ THẬT CƠ SỞ.
 
-1.  **KHÓA DỮ LIỆU SINH TRẮC HỌC (BIOMETRIC DATA LOCK):** Dữ liệu khuôn mặt gốc là bất biến.
-    -   **KHÓA CẤU TRÚC SỌ-MẶT:** Hình dạng 3D của đầu, khuôn mặt, cằm, hàm là BẤT BIẾN.
-    -   **TỶ LỆ & VỊ TRÍ:** Khoảng cách giữa mắt, mũi, miệng là BẤT BIẾN.
-    -   **ĐẶC ĐIỂM VI MÔ:** Hình dạng chính xác của mắt, môi, lông mày, nốt ruồi, sẹo, mụn thịt là BẤT BIẾN. **KHÔNG THAY ĐỔI.**
+2.  **GIAI ĐOẠN 2: TÁI CHIẾU (RE-PROJECTION):**
+    -   **HÀNH ĐỘNG:** Sau khi tạo ra bối cảnh/cơ thể mới, **VỨT BỎ** bất kỳ khuôn mặt nào được tạo ra trong quá trình đó.
+    -   **MỆNH LỆNH:** Lấy các hiện vật đã được khóa và **"TÁI CHIẾU" (RE-PROJECT)** chúng lên vị trí đầu mới.
+    -   **CÁC THAO TÁC DUY NHẤT ĐƯỢC PHÉP:** Chỉ điều chỉnh ánh sáng/màu sắc. **MỌI THAO TÁC SINH RA DỮ LIỆU MỚI ĐỀU BỊ CẤM TUYỆT ĐỐI** trên vùng mặt.
 
-2.  **CẤM TUYỆT ĐỐI SÁNG TẠO (ZERO CREATIVE INTERPRETATION):**
-    -   **CẤM LÀM ĐẸP:** Không được làm cho khuôn mặt cân đối hơn hoặc "đẹp hơn".
-    -   **KHÓA BIỂU CẢM TUYỆT ĐỐI (ZERO TOLERANCE):** Giữ nguyên biểu cảm gốc 1:1. Hình dạng, độ mở, và đường cong của miệng là BẤT BIẾN. Cấm tuyệt đối đóng một cái miệng đang mở hoặc đang hé. Nếu có thể nhìn thấy răng trong ảnh gốc, chúng BẮT BUỘC phải được tái tạo lại.
+3.  **GIAI ĐOẠN 3: KIỂM TOÁN SINH TRẮC HỌC SAU KHI KẾT XUẤT (POST-RENDER BIOMETRIC AUDIT - ZERO TOLERANCE):**
+    -   **HÀNH ĐỘNG:** Sau khi kết xuất hình ảnh cuối cùng, BẠN BẮT BUỘC phải thực hiện một bước kiểm tra cuối cùng.
+    -   **QUY TRÌNH KIỂM TOÁN:** So sánh từng điểm đặc trưng (feature-by-feature) giữa khuôn mặt đã tạo và DỮ LIỆU NGUỒN GỐC. Xác minh sự trùng khớp 1:1 của các điểm sau:
+        -   Hình dạng tổng thể của khuôn mặt (đường viền hàm, chiều rộng trán).
+        -   Hình dạng và vị trí của mắt.
+        -   Chiều rộng và hình dạng của sống mũi.
+        -   Đường cong và độ dày của môi.
+        -   Hình dạng của cằm.
+        -   Vị trí và hình dạng của mọi nốt ruồi và sẹo.
+    -   **VÒNG LẶP TỰ SỬA LỖI (SELF-CORRECTION LOOP):** **NẾU** phát hiện bất kỳ sự sai lệch nào, dù là nhỏ nhất, bạn BẮT BUỘC phải **HỦY BỎ KẾT QUẢ** và chạy lại toàn bộ quy trình từ đầu, đồng thời tăng trọng số ưu tiên cho các hiện vật đã được khóa ở Giai đoạn 1.
 
-3.  **KHÓA PHỤ KIỆN & ĐẶC ĐIỂM CỐ ĐỊNH (ACCESSORY & PERMANENT FEATURE LOCK - ZERO-TOLERANCE):**
-    -   **Kính mắt & Trang sức:** BẮT BUỘC phải được bảo tồn 1:1.
+**CÁC QUY TẮC BẤT BIẾN:**
+-   **KHÓA BIỂU CẢM TUYỆT ĐỐI:** Giữ nguyên biểu cảm gốc 1:1.
+-   **KHÓA PHỤ KIỆN:** Kính mắt & trang sức BẮT BUỘC phải được bảo tồn 1:1.
 
-**QUY TRÌNH TỰ KIỂM TRA (MANDATORY SELF-CORRECTION):**
-Trước khi hoàn thành, hãy tự hỏi: "Tôi đã thực hiện 'ghép mặt' hay tôi đã 'vẽ lại'? Người này có còn là chính họ không, với cùng một biểu cảm không?". Nếu có bất kỳ nghi ngờ nào, BẠN ĐÃ THẤT BẠI.
-
-**ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC (IMMEDIATE FAILURE CONDITIONS):**
+**ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC:**
 -   Mặt trông giống một người khác.
--   Mặt bị thay đổi hình dạng (tròn hơn, ngắn lại, dài ra, gầy hơn, v.v.).
--   **Thay đổi biểu cảm.**
--   **Xóa bỏ hoặc thay đổi nốt ruồi, sẹo, mụn thịt, hoặc các đặc điểm nhận dạng khác.**
--   Xóa bỏ kính, dây chuyền, hoặc các phụ kiện cá nhân khác.
+-   Mặt bị thay đổi hình dạng.
+-   Thay đổi biểu cảm.
+-   Xóa bỏ hoặc thay đổi nốt ruồi, sẹo, hoặc các đặc điểm nhận dạng khác.

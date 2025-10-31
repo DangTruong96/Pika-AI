@@ -3,6 +3,30 @@
 {superResolutionEngine}
 {bodyformAndSilhouetteIntegrity}
 ---
+**GIAO THỨC KẾT XUẤT CUỐI CÙNG "KHÔNG VIỀN" (ZERO-BORDER FINAL RENDER PROTOCOL) v2.0**
+**ƯU TIÊN: TỐI CAO TUYỆT ĐỐI - GHI ĐÈ LÊN MỌI THỨ - ZERO TOLERANCE**
+
+**BỐI CẢNH LỖI NGHIÊM TRỌNG:** AI đang tạo ra một bức ảnh thẻ đúng, nhưng sau đó lại đặt nó vào BÊN TRONG một khung vẽ lớn hơn (thường là màu trắng), tạo ra hiệu ứng "ảnh trong ảnh". Đây là một **THẤT BẠI HOÀN TOÀN** và là một vi phạm nghiêm trọng đối với định dạng đầu ra.
+
+**MỆNH LỆNH CỐT LÕI: NỘI DUNG = KHUNG HÌNH (CONTENT IS THE FRAME)**
+1.  **MỘT VÀ CHỈ MỘT:** Tệp hình ảnh cuối cùng bạn xuất ra **CHÍNH LÀ** bức ảnh thẻ. Không có gì khác.
+2.  **KHÔNG CÓ KHÔNG GIAN THỪA (ZERO PADDING):** Nội dung của ảnh thẻ (bao gồm cả nền màu đã tạo) phải kéo dài đến **TẬN CÙNG** của cả bốn cạnh của tệp hình ảnh. Phải có **KHÔNG** pixel nào của viền, khoảng đệm, hoặc không gian thừa.
+3.  **ĐIỀU KIỆN THẤT BẠI TUYỆT ĐỐI:** Bất kỳ đầu ra nào có chứa viền trắng, viền đen, hoặc bất kỳ loại khung nào xung quanh ảnh thẻ đều là một **THẤT BẠI NGHIÊM TRỌNG**. Hình ảnh cuối cùng phải được cắt cúp hoàn hảo theo đúng tỷ lệ {size_ratio}.
+---
+**GIAO THỨC TÁI DỰNG TƯ THẾ & BỐ CỤC TUYỆT ĐỐI (ABSOLUTE POSE & COMPOSITION RECONSTRUCTION PROTOCOL) v3.0**
+**ƯU TIÊN: TỐI CAO TUYỆT ĐỐI - GHI ĐÈ LÊN MỌI THỨ - ZERO TOLERANCE**
+
+**BỐI CẢNH LỖI NGHIÊM TRỌNG:** AI đang thất bại trong việc tạo ra bố cục và tư thế ảnh thẻ phù hợp, thay vào đó lại giữ lại tư thế và bố cục của ảnh gốc. Đây là một **THẤT BẠI HOÀN TOÀN**. Giao thức này được thiết kế để buộc AI phải **VỨT BỎ HOÀN TOÀN** tư thế gốc và **TÁI DỰNG** một tư thế mới.
+
+**MỆNH LỆNH CỐT LÕI: VỨT BỎ VÀ TÁI DỰNG (DISCARD & REBUILD)**
+1.  **COI ẢNH GỐC LÀ NGUỒN DỮ LIỆU, KHÔNG PHẢI LÀ BỐ CỤC:** Tư thế, góc chụp, và bố cục của ảnh gốc là **HOÀN TOÀN KHÔNG LIÊN QUAN**. Chúng phải bị **VỨT BỎ**. Ảnh gốc chỉ là một "vật chứa" dữ liệu sinh trắc học.
+2.  **TÁI DỰNG TỪ CON SỐ 0:** Nhiệm vụ của bạn là lấy dữ liệu sinh trắc học đã được trích xuất và **DỰNG MỘT TƯ THẾ HOÀN TOÀN MỚI** từ đầu. Tư thế mới này BẮT BUỘC phải là:
+    -   **THẲNG ĐỨNG (UPRIGHT):** Thân người và đầu phải thẳng đứng một cách hoàn hảo.
+    -   **HƯỚNG VỀ PHÍA TRƯỚC (FORWARD-FACING):** Toàn bộ khuôn mặt và vai phải đối diện trực tiếp với máy ảnh.
+    -   **BỐ CỤC CHUẨN (HEAD-AND-SHOULDERS CROP):** Chỉ bao gồm phần đầu và vai.
+3.  **MỆNH LỆNH CHỈNH THẲNG TUYỆT ĐỐI (ZERO-TOLERANCE STRAIGHTENING MANDATE):** Bất kỳ độ nghiêng nào của đầu hoặc vai từ ảnh gốc đều BẮT BUỘC phải được **CHỈNH THẲNG LẠI HOÀN HẢO**. Kết quả cuối cùng phải có một tư thế thẳng và cân đối.
+4.  **MỆNH LỆNH CHUYỂN ĐỔI CHO TRẺ SƠ SINH (NEWBORN TRANSFORMATION MANDATE - KHÔNG KHOAN NHƯỢNG):** Ngay cả khi em bé trong ảnh gốc đang ngồi, nằm, hoặc nghiêng, bạn BẮT BUỘC phải **TÁI DỰNG** lại thành một tư thế ảnh thẻ chuẩn, thẳng đứng, chỉ lấy đầu và vai. Đây là một sự biến đổi bắt buộc, không phải là một sự điều chỉnh nhỏ.
+---
 **GIAO THỨC GHI ĐÈ TỐI CAO: BẢN TUYÊN NGÔN VỀ HÌNH HỌC, BỐ CỤC & TƯ THẾ (GEOMETRY, COMPOSITION & POSE MANIFESTO) v2.0**
 **ƯU TIÊN: TUYỆT ĐỐI - GHI ĐÈ LÊN MỌI THỨ KHÁC - ZERO TOLERANCE**
 
@@ -20,17 +44,32 @@
     -   **(B) KÍCH THƯỚC ĐẦU (HEAD SIZE):** Chiều cao của đầu (tính từ cằm đến đỉnh đầu) phải chiếm khoảng **60-65%** tổng chiều cao của ảnh.
     -   **(C) KHUNG HÌNH PHẦN THÂN DƯỚI (LOWER FRAME):** Phần còn lại của ảnh (khoảng **25-30%**) phải bao gồm cổ và phần vai trên một cách tự nhiên và cân đối, không cắt quá thấp hoặc quá cao.
 3.  **CĂN CHỈNH:** Đầu của chủ thể phải được căn giữa hoàn hảo theo chiều ngang.
+4.  **GIAO THỨC XỬ LÝ TRẺ SƠ SINH (NEWBORN HANDLING PROTOCOL v2.0 - GHI ĐÈ):**
+    -   **(A) DÁNG VẺ TỰ NHIÊN:** Bảo tồn vóc dáng tự nhiên, bụ bẫm của bé. Tái tạo đôi vai tròn, mềm mại. **TUYỆT ĐỐI KHÔNG** tạo ra tư thế thẳng lưng hoặc cấu trúc vai của trẻ lớn hơn.
+    -   **(B) ĐƯỜNG VIỀN CỔ GỌN GÀNG (CLEAN NECKLINE):** Khi tạo bố cục vùng cổ, BẠN BẮT BUỘC phải tạo ra một đường chuyển tiếp **gọn gàng và tự nhiên** từ cằm xuống ngực. Trong khi vẫn bảo tồn sự bụ bẫm của cằm, **TUYỆT ĐỐI TRÁNH tạo ra hoặc làm nổi bật các ngấn nọng cằm sâu hoặc không tự nhiên** ở vùng cổ. Mục tiêu là một đường viền cổ mềm mại, phù hợp với ảnh thẻ, không phải các nếp gấp gây mất tập trung.
 
 **PHẦN C: TƯ THẾ & ÁNH MẮT TUYỆT ĐỐI (ABSOLUTE POSE & GAZE)**
 1.  **HƯỚNG ĐẦU:** Chủ thể BẮT BUỘC phải nhìn thẳng về phía trước, đối diện trực tiếp với máy ảnh.
 2.  **CẤM NGHIÊNG ĐẦU:** Đầu **TUYỆT ĐỐI KHÔNG** được nghiêng theo bất kỳ hướng nào (lên, xuống, trái, hoặc phải). Một góc nhìn nghiêng (profile/three-quarter view) là một **THẤT BẠI NGHIÊM TRỌNG**.
 3.  **VAI:** Vai phải cân bằng và thẳng hàng với khung hình.
 4.  **ÁNH MẮT:** Mắt phải mở và nhìn thẳng vào máy ảnh.
-
 ---
-**NHIỆM VỤ: TẠO ẢNH THẺ CHUYÊN NGHIỆP v14.0 (Giao thức Hình học & Sinh trắc học Tuyệt đối)**
+**GIAO THỨC TÍCH HỢP NỀN & ÁNH SÁNG CHUYÊN NGHIỆP v1.0 (KHÔNG KHOAN NHƯỢNG)**
+**MỆNH LỆNH:** Thay vì chỉ tô một màu nền phẳng, bạn BẮT BUỘC phải tạo ra một môi trường studio chuyên nghiệp và tích hợp chủ thể vào đó một cách liền mạch. Mục tiêu là loại bỏ hoàn toàn "hiệu ứng cắt dán".
 
-**MỤC TIÊU TỐI THƯỢNG:** Sửa đổi hình ảnh đầu vào để tạo ra một bức ảnh thẻ đạt tiêu chuẩn quốc tế, tuân thủ **TUYỆT ĐỐI 100%** tất cả các giao thức được liệt kê ở trên.
+1.  **NỀN STUDIO SIÊU THỰC (PHOTOREALISTIC STUDIO BACKDROP):**
+    -   Tạo một phông nền studio chuyên nghiệp, được chiếu sáng đều với màu **{backgroundColor}**.
+    -   Phông nền **KHÔNG** được là một màu kỹ thuật số phẳng lì. Nó BẮT BUỘC phải có các dải màu chuyển tiếp tinh tế, tự nhiên và một chút kết cấu giấy ảnh mờ, như một phông nền vật lý thực sự.
+2.  **TÁI CHIẾU SÁNG TOÀN DIỆN (COMPREHENSIVE RE-LIGHTING):**
+    -   Loại bỏ hoàn toàn hệ thống ánh sáng gốc của chủ thể.
+    -   Tái chiếu sáng lại toàn bộ chủ thể (đầu, tóc, vai) bằng một hệ thống ánh sáng studio mềm mại, chuyên nghiệp (ví dụ: mô phỏng một softbox lớn) để phù hợp hoàn hảo với phông nền mới.
+    -   Chủ thể BẮT BUỘC phải đổ một bóng đổ mềm, tinh tế lên phông nền để tạo cảm giác về chiều sâu và không gian.
+3.  **HÒA TRỘN CẠNH VIỀN HOÀN HẢO (PERFECT EDGE BLENDING):**
+    -   Các cạnh viền của chủ thể, đặc biệt là tóc, phải được xử lý một cách hoàn hảo để hòa trộn với nền mới. **KHÔNG** được có cạnh viền cứng, răng cưa, hoặc quầng sáng.
+---
+**NHIỆM VỤ: TẠO ẢNH THẺ CHUYÊN NGHIỆP v16.0 (Giao thức Tích hợp Nền & Sinh trắc học)**
+
+**MỤC TIÊU TỐI THƯỢỢNG:** Sửa đổi hình ảnh đầu vào để tạo ra một bức ảnh thẻ đạt tiêu chuẩn quốc tế, tuân thủ **TUYỆT ĐỐI 100%** tất cả các giao thức được liệt kê ở trên.
 
 **QUY TRÌNH THỰC HIỆN:**
 1.  **Phân tích & Trích xuất:** Chỉ trích xuất dữ liệu sinh trắc học (khuôn mặt, danh tính) từ ảnh gốc.
@@ -38,7 +77,7 @@
 3.  **TÁI TẠO VÀ ÁP DỤNG THAY ĐỔI (RECONSTRUCTION & MODIFICATION APPLICATION):**
     -   Thực hiện các thay đổi về trang phục, tóc, nền, v.v., theo các thông số dưới đây.
     -   Trong suốt quá trình này, BẠN BẮT BUỘC phải tuân thủ nghiêm ngặt các giao thức lõi (`identityCore`, `forensicReconstructionEngine`, `superResolutionEngine`, `bodyformAndSilhouetteIntegrity`) để đảm bảo chất lượng và tính toàn vẹn.
-4.  **KẾT XUẤT & CẮT CÚP CUỐI CÙNG (FINAL RENDER & CROP):** Sau khi hoàn thiện, BẠN BẮT BUỘC phải đảm bảo rằng hình ảnh cuối cùng được xuất ra khớp CHÍNH XÁC với tỷ lệ khung hình {size_ratio}. KHÔNG được có bất kỳ đường viền, khoảng đệm, hoặc không gian thừa nào xung quanh ảnh thẻ. Toàn bộ khung hình cuối cùng phải là chính bức ảnh thẻ đó.
+4.  **KẾT XUẤT & CẮT CÚP CUỐI CÙNG (FINAL RENDER & CROP):** BẠN BẮT BUỘC phải thực thi nghiêm ngặt **GIAO THỨC KẾT XUẤT CUỐI CÙNG "KHÔNG VIỀN" v2.0**. Hình ảnh cuối cùng được xuất ra **CHÍNH LÀ** ảnh thẻ, được cắt cúp hoàn hảo theo tỷ lệ {size_ratio}.
 
 ---
 **THÔNG SỐ SỬA ĐỔI (PARAMETER OVERRIDES - ZERO TOLERANCE):**
@@ -55,6 +94,7 @@
 **PROMPT PHỦ ĐỊNH (ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC):**
 - **VI PHẠM HÌNH HỌC & BỐ CỤC:** **giữ lại tỷ lệ ảnh gốc**, **bố cục sai**, sai tỷ lệ khung hình, **tỷ lệ 9:16**, **tỷ lệ 16:9**, **tỷ lệ 4:5**, **đầu nghiêng**, **góc nghiêng**, **nhìn nghiêng**, sai tỷ lệ đầu/thân, sai khoảng trống trên đầu, **viền thừa**, **khoảng trắng thừa**, **lọt trong khung hình**, padding, extra border, white border, letterboxing, frame.
 - **VI PHẠM NHẬN DẠNG:** **thêm nốt ruồi**, xóa nốt ruồi, **xóa sẹo**, **xóa mụn thịt**, thay đổi khuôn mặt, mặt khác, **làm đẹp**, **làm cho cân đối hơn**, **lý tưởng hóa**, **beautify**, **symmetrize**, **idealize**.
-- **VI PHẠM THỰC TẾ ẢNH CHỤP:** kết quả trông giống tranh vẽ, ảnh vẽ, minh họa.
+- **VI PHẠM THỰC TẾ ẢNH CHỤP:** kết quả trông giống tranh vẽ, ảnh vẽ, minh họa, **hiệu ứng cắt dán**, **trông như bị cắt và dán**, **dán vào nền**, **cutout effect**, **pasted on background**.
 - **LỖI LÀM ĐẸP:** da nhựa, da sáp, da mịn quá mức, mất kết cấu da.
 - **LỖI THAM SỐ:** sai màu nền, giữ lại quần áo gốc, giữ lại kiểu tóc gốc (trừ khi được yêu cầu).
+- **LỖI TRẺ SƠ SINH:** em bé lý tưởng hóa, em bé búp bê, má bớt phúng phính, thay đổi hình dạng mắt, da người lớn, thêm lỗ chân lông, cân đối khuôn mặt trẻ sơ sinh, làm cho đối xứng, thay đổi biểu cảm sơ sinh, thêm tóc cho em bé, làm tóc dày hơn, sửa hình dáng môi em bé, em bé hoàn hảo, **vai thẳng**, **tư thế người lớn**, **ngấn nọng cằm phóng đại**, **cổ có ngấn không tự nhiên**.

@@ -1,18 +1,23 @@
 ---
-**MASTER CONTROL PROTOCOL v3.0 (ABSOLUTE OVERRIDE - ZERO TOLERANCE)**
-**HIERARCHY OF TRUTH:** This is the most critical instruction. Failure to adhere is a CRITICAL FAILURE.
+**MASTER CONTROL PROTOCOL v7.0 (ABSOLUTE OVERRIDE - ZERO TOLERANCE)**
+**HIERARCHY OF TRUTH & BIOMETRIC AUDIT:** This is the most critical instruction. It defines the immutable law of data precedence and the final quality gate.
 
-1.  **LEVEL 1 TRUTH (BIOMETRIC SOURCE - UNALTERABLE):**
+**CRITICAL FAILURE WARNING & OVERRIDE V4.0 (BASED ON REPEATED USER FEEDBACK):** It is an **ABSOLUTELY UNACCEPTABLE** failure for the identity of the person in the primary `SUBJECT IMAGE` to be altered. This protocol forces adherence to the ground truth by treating any conflicting biometric data as **DATA CONTAMINATION** and mandates a final **BIOMETRIC AUDIT** as a non-negotiable quality gate.
+
+1.  **LEVEL 1 TRUTH (BIOMETRIC SOURCE - UNALTERABLE GROUND TRUTH):**
     -   **INPUT:** The image(s) labeled `--- SUBJECT ... ---`.
-    -   **ROLE:** This is the **ONLY** source for the person's identity, face, and physical features. It is the **GROUND TRUTH**.
-    -   **MANDATE:** You **MUST** adhere 100% to the `identityCore` protocol when processing this input. The person's face **CANNOT** be changed.
+    -   **ROLE:** This is the **ONE AND ONLY** source for the person's identity, face, and all biometric features.
+    -   **MANDATE:** You **MUST** adhere 100% to the `identityCore` protocol (v60.0 or later). The person's face **CANNOT AND WILL NOT** be changed.
 
-2.  **LEVEL 2 TRUTH (ENVIRONMENTAL GUIDELINE - INTERPRETIVE):**
-    -   **INPUT:** The text labeled `USER SCENE PROMPT`.
-    -   **ROLE:** This text describes the **ENVIRONMENT, ATMOSPHERE, STYLE, AND LIGHTING ONLY**.
-    -   **MANDATE:** This text **DOES NOT** describe the person. It is a guideline for the world you will place the person into.
+2.  **LEVEL 2 DATA (GUIDELINES / POTENTIAL CONTAMINATION):**
+    -   **INPUT:** Text prompts, and any images labeled `--- OBJECT ... ---` or `--- STYLE ... ---`.
+    -   **ROLE:** These inputs describe the **ENVIRONMENT, STYLE, AND ASSETS ONLY**.
+    -   **CRITICAL WARNING:** Any person appearing in these secondary inputs is considered **INVALID JUNK DATA**.
 
-**CONFLICT RESOLUTION (MANDATORY):**
--   If the `USER SCENE PROMPT` contains ANY description of a person (e.g., "a man with a beard," "a smiling woman," "rosy cheeks"), you **MUST IGNORE** that part of the description.
--   Your task is to place the **EXACT PERSON** from the `SUBJECT IMAGE` into the scene described by the prompt. **DO NOT CREATE A NEW PERSON.**
----
+**CONFLICT RESOLUTION & DECONTAMINATION (MANDATORY):**
+-   **SUPREME MANDATE:** In any conflict, **THE `SUBJECT IMAGE` IS THE ONLY TRUTH.**
+-   **DECONTAMINATION PROTOCOL:** You **MUST** identify and **COMPLETELY DISCARD** any biometric data (faces, poses, body shapes) from all Level 2 inputs. Their faces are **POISONED DATA**.
+
+**FINAL QUALITY GATE: BIOMETRIC AUDIT (NON-NEGOTIABLE)**
+-   **MANDATE:** After the image is generated, you **MUST** perform the "Post-Render Biometric Audit" as defined in the `identityCore` protocol.
+-   **PASS/FAIL CONDITION:** The final image is only considered a success if it passes this audit with a 100% match score. Any deviation detected during the audit constitutes a **CRITICAL FAILURE** and requires you to discard the result and regenerate, giving higher priority to the Level 1 Truth.

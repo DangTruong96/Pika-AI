@@ -4,7 +4,7 @@
 */
 
 import React, { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { dataURLtoFile, RateLimitError, APIError, NetworkError, InvalidInputError, ContentSafetyError, ModelExecutionError } from '../services/geminiService';
+import { dataURLtoFile, RateLimitError, APIError, NetworkError, InvalidInputError, ContentSafetyError, ModelExecutionError, generateCreativePrompt, type GroundingChunk } from '../services/geminiService';
 import { useTranslation } from '../contexts/LanguageContext';
 import type { TranslationKey } from '../translations';
 import { TABS_CONFIG } from '../components/EditorSidebar';
@@ -18,7 +18,6 @@ import { useFullscreenViewer } from './useFullscreenViewer';
 import { useRetouch } from './useRetouch';
 import { useExpansion } from './useExpansion';
 import { useStudio } from './useStudio';
-import { useGenerate } from './useGenerate';
 import { useIdPhoto } from './useIdPhoto';
 import { useAdjustments } from './useAdjustments';
 
@@ -50,12 +49,11 @@ export const usePika = () => {
   const historyManager = useHistory();
   const { history, historyIndex, currentHistoryItem, canUndo, canRedo, historyDispatch } = historyManager;
   const resultsManager = useResults();
-  const { resultsState, setResultsState, clearAllResults, restoreResults } = resultsManager;
+  const { resultsState, setResultsState, clearAllResults, restoreResults, clearResults } = resultsManager;
   
   // --- UI & APP STATE ---
   const [uiState, setUiState] = useState({ isLoading: false, loadingMessage: '', error: null as string | null });
   const [toolboxState, setToolboxState] = useState({ activeTab: 'retouch' as Tab, isOpen: true });
-  // FIX: Define toggleToolbox to resolve its usage in the hook's return value and props.
   const toggleToolbox = useCallback(() => setToolboxState(s => ({ ...s, isOpen: !s.isOpen })), []);
   const [comparisonState, setComparisonState] = useState({ isComparing: false });
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -63,13 +61,12 @@ export const usePika = () => {
   const [isZoomControlsVisible, setIsZoomControlsVisible] = useState(false);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number, height: number } | null>(null);
-  const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties>({});
   const [downloadCounter, setDownloadCounter] = useState(1);
+  const [sources, setSources] = useState<GroundingChunk[]>([]);
 
   // --- REFS ---
   const imgRef = useRef<HTMLImageElement>(null);
-  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
-  const imageViewerRef = useRef<HTMLDivElement>(null);
+  const imageViewerRef = useRef<HTMLImageElement>(null);
   const toolsContainerRef = useRef<HTMLDivElement>(null);
   const hideControlsTimeoutRef = useRef<number | null>(null);
   const initialWindowHeightRef = useRef(window.innerHeight);
@@ -87,6 +84,7 @@ export const usePika = () => {
   const transformString = useMemo(() => `rotate(${currentTransform.rotate}deg) scale(${currentTransform.scaleX}, ${currentTransform.scaleY})`, [currentTransform]);
   const beforeImageUrl = useMemo(() => history[0]?.url ?? null, [history]);
   const beforeImageThumbnailUrl = useMemo(() => history[0]?.thumbnailUrl ?? null, [history]);
+  const isMobileToolbarVisible = isMobile && !toolboxState.isOpen && !!currentImage && !isKeyboardOpen;
 
   // --- DEPENDENT HOOKS ---
   const showControls = useCallback(() => {
@@ -96,19 +94,20 @@ export const usePika = () => {
   }, []);
 
   const viewerManager = useViewer({ 
-    isComparing: comparisonState.isComparing, isMobile, isImageLoaded: !!currentImage,
+    isComparing: comparisonState.isComparing, isMobile,
     isToolboxOpen: toolboxState.isOpen, toggleToolbox,
     windowHeight: windowSize.height, showControls,
   });
   
   const fullscreenViewerManager = useFullscreenViewer({ history, resultsState, historyIndex });
+  const { fullscreenViewerState, isViewerOpen, viewerItems, viewerInitialIndex, viewerType, viewerComparisonUrl, openFullScreenViewer, setFullscreenViewerState } = fullscreenViewerManager;
   
-  // FIX: Moved `handleImageUpload` before its usage in `useGenerate` to fix a block-scoped variable error.
   const handleImageUpload = useCallback(async (file: File) => {
     setUiState(s => ({ ...s, error: null }));
     historyDispatch({ type: 'RESET_ALL' }); 
     clearAllResults();
     setComparisonState({ isComparing: false });
+    setSources([]);
     const thumbnailUrl = await createThumbnail(file);
     const newItem: HistoryItem = { file, url: URL.createObjectURL(file), thumbnailUrl, transform: { ...initialTransformState } };
     historyDispatch({ type: 'PUSH', payload: { item: newItem } });
@@ -167,340 +166,392 @@ export const usePika = () => {
 
   const getRelativeCoords = useCallback((e: React.MouseEvent | React.TouchEvent<HTMLCanvasElement> | MouseEvent | TouchEvent) => {
     const img = imgRef.current;
-    if (!img || !img.naturalWidth || !img.complete) return null;
-    const pointer = ('touches' in e && e.touches.length > 0) ? e.touches[0] : ('changedTouches' in e && e.changedTouches.length > 0) ? e.changedTouches[0] : ('clientX' in e ? e : null);
-    if (!pointer) return null;
-    const { rotate, scaleX, scaleY } = currentTransform;
-    const isSideways = rotate === 90 || rotate === 270;
-    const rotatedNaturalW = isSideways ? img.naturalHeight : img.naturalWidth;
-    const rotatedNaturalH = isSideways ? img.naturalWidth : img.naturalHeight;
-    if (rotatedNaturalW === 0 || rotatedNaturalH === 0) return null;
-    const imgRect = img.getBoundingClientRect();
-    const naturalRatio = rotatedNaturalW / rotatedNaturalH;
-    const rectRatio = imgRect.width / imgRect.height;
-    let renderedWidth, renderedHeight, renderedX, renderedY;
-    if (naturalRatio > rectRatio) {
-        renderedWidth = imgRect.width; renderedHeight = imgRect.width / naturalRatio;
-        renderedX = imgRect.left; renderedY = imgRect.top + (imgRect.height - renderedHeight) / 2;
+    if (!img || !img.naturalWidth) return null;
+    const rect = img.getBoundingClientRect();
+    const touch = 'touches' in e ? e.touches[0] : e;
+    
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    const naturalX = (x / img.offsetWidth) * img.naturalWidth;
+    const naturalY = (y / img.offsetHeight) * img.naturalHeight;
+
+    return { x: naturalX, y: naturalY };
+  }, []);
+
+  const handleSelectFromViewer = useCallback(async (url: string, index: number) => {
+    setFullscreenViewerState(s => ({ ...s, isOpen: false }));
+    const file = dataURLtoFile(url, `selected-${Date.now()}.png`);
+    
+    if (fullscreenViewerState.type === 'extract') {
+      // Logic to use extracted item will be handled here, possibly via another hook
+      // For now, let's assume it adds to studio outfits
+      setToolboxState(s => ({ ...s, activeTab: 'studio' }));
+      // This will be passed to studioManager later
+      // studioManager.handleStudioAddOutfitFile(file);
+      return;
+    }
+
+    if (fullscreenViewerState.context?.isNewSession) {
+      await handleImageUpload(file);
+      if (viewerItems.length > 1) {
+          resultsManager.setResultsState(s => ({
+              ...s,
+              items: viewerItems.map(i => i.url),
+              persistentItems: viewerItems.map(i => i.url),
+              baseHistoryIndex: 0,
+          }));
+          setIsHistoryExpanded(true);
+      }
     } else {
-        renderedHeight = imgRect.height; renderedWidth = imgRect.height * naturalRatio;
-        renderedY = imgRect.top; renderedX = imgRect.left + (imgRect.width - renderedWidth) / 2;
+      const baseIndex = resultsState.baseHistoryIndex ?? historyIndex;
+      const thumbnailUrl = await createThumbnail(file);
+      const newItem: HistoryItem = { file, url, thumbnailUrl, transform: { ...initialTransformState } };
+      historyDispatch({ type: 'SET_FROM_RESULT', payload: { baseIndex, item: newItem } });
+      clearAllResults();
     }
+  }, [handleImageUpload, historyDispatch, historyIndex, resultsState.baseHistoryIndex, fullscreenViewerState, viewerItems, resultsManager, clearAllResults, setFullscreenViewerState, setIsHistoryExpanded, setToolboxState]);
 
-    const xOnImage = pointer.clientX - renderedX; const yOnImage = pointer.clientY - renderedY;
-    let normX = xOnImage / renderedWidth; let normY = yOnImage / renderedHeight;
-    if (scaleX === -1) normX = 1 - normX; if (scaleY === -1) normY = 1 - normY;
-    const tempX = normX;
-    switch (rotate) {
-        case 90: normX = normY; normY = 1 - tempX; break;
-        case 180: normX = 1 - normX; normY = 1 - normY; break;
-        case 270: normX = 1 - normY; normY = tempX; break;
-    }
-    return { x: normX * img.naturalWidth, y: normY * img.naturalHeight };
-  }, [currentTransform]);
-
-  // --- INSTANTIATE FEATURE HOOKS ---
-  const sharedDeps = {
-    t, currentImage, getCommittedImage, addImageToHistory, setUiState, setPendingAction, handleApiError, onEditComplete,
-    isMobile, resultsManager, openFullScreenViewer: fullscreenViewerManager.openFullScreenViewer, historyIndex, 
-    activeTab: toolboxState.activeTab, setToolboxState, setIsHistoryExpanded, getRelativeCoords, imgRef, imageViewerRef,
-    maskCanvasRef,
-    // FIX: Add `imageDimensions` to the shared dependencies object for `useExpansion`.
-    imageDimensions,
+  const sharedHookProps = {
+    currentImage, getCommittedImage, addImageToHistory, setUiState, setPendingAction,
+    handleApiError, onEditComplete, isMobile, resultsManager, openFullScreenViewer, t,
+    historyIndex, activeTab: toolboxState.activeTab, setToolboxState, setIsHistoryExpanded,
+    setSources,
   };
-
-  const studioHook = useStudio(sharedDeps);
-  const retouchHook = useRetouch({ ...sharedDeps, handleUseExtractedAsOutfit: (file) => studioHook.setStudioState(s => ({ ...s, outfitFiles: [file] })) });
-  const expansionHook = useExpansion(sharedDeps);
-  const generateHook = useGenerate({ ...sharedDeps, handleImageUpload });
-  const idPhotoHook = useIdPhoto(sharedDeps);
-  const adjustmentsHook = useAdjustments(sharedDeps);
-
-  // --- TOP-LEVEL HANDLERS ---
-  const handleTabChange = useCallback((newTab: Tab) => {
-    if (toolboxState.activeTab === 'retouch' && newTab !== 'retouch') {
-        retouchHook.clearMask();
-        retouchHook.setRetouchState(s => ({...s, editHotspot: null}));
-    }
-    setToolboxState(s => ({ ...s, activeTab: newTab }));
-    showControls();
-  }, [toolboxState.activeTab, retouchHook, showControls]);
-
-  const handleTabChangeAndOpen = useCallback((newTab: Tab) => setToolboxState(s => ({ ...s, activeTab: newTab, isOpen: true })), []);
   
-  const handleFileSelect = (files: FileList | null) => { if (files && files[0]) handleImageUpload(files[0]); };
+  const studioManager = useStudio(sharedHookProps);
+  const handleUseExtractedAsOutfit = useCallback((file: File) => {
+      setToolboxState(s => ({...s, activeTab: 'studio'}));
+      studioManager.handleStudioAddOutfitFile(file);
+  }, [studioManager, setToolboxState]);
+  
+  const adjustmentsManager = useAdjustments(sharedHookProps);
+  const idPhotoManager = useIdPhoto(sharedHookProps);
+  const retouchManager = useRetouch({ ...sharedHookProps, handleUseExtractedAsOutfit, openFullScreenViewer });
+  const expansionManager = useExpansion({ ...sharedHookProps, imageDimensions, getRelativeCoords, imgRef });
+
+  const { studioPrompt, studioStyleFile, studioSubjects, studioOutfitFiles, setStudioState } = studioManager;
+
+  const handleGenerateCreativePrompt = useCallback(async () => {
+    if (!currentImage) {
+        setUiState(s => ({...s, error: t('errorNoImageLoaded')}));
+        return;
+    }
+    setUiState(s => ({...s, isLoading: true, loadingMessage: t('loadingStudioAnalysis')}));
+    setSources([]); // Clear sources on new request
+    try {
+        const subjectFiles = [currentImage, ...studioSubjects];
+        const { prompt: newPrompt, sources: newSources } = await generateCreativePrompt(subjectFiles, studioStyleFile, studioOutfitFiles, studioPrompt);
+        setStudioState(s => ({...s, prompt: newPrompt}));
+        if (newSources && newSources.length > 0) {
+          setSources(newSources);
+        }
+    } catch (err) {
+        handleApiError(err, 'errorFailedToProcessImage');
+    } finally {
+        setUiState(s => ({...s, isLoading: false}));
+    }
+  }, [currentImage, studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t, setUiState, setStudioState, setSources]);
+
+  const handleFileSelect = useCallback((files: FileList | null) => {
+    if (files && files[0]) {
+      handleImageUpload(files[0]);
+    }
+  }, [handleImageUpload]);
 
   const handleStartOver = useCallback(() => {
     historyDispatch({ type: 'RESET_ALL' });
-    setUiState(s => ({ ...s, error: null }));
     clearAllResults();
     setComparisonState({ isComparing: false });
-  }, [clearAllResults, historyDispatch]);
+    setSources([]);
+  }, [historyDispatch, clearAllResults]);
 
-  const handleSelectFromResult = useCallback(async (imageUrl: string) => {
-    const newImageFile = dataURLtoFile(imageUrl, `result-${Date.now()}.png`);
-    if (history.length === 0 || historyIndex === -1) {
-        await handleImageUpload(newImageFile);
-        return;
+  const handleResetHistory = useCallback(() => {
+    historyDispatch({ type: 'RESET_TO_FIRST' });
+    clearAllResults();
+  }, [historyDispatch, clearAllResults]);
+
+  const triggerDownload = useCallback(async (url: string, filename: string) => {
+    try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (err) {
+        console.error("Download failed:", err);
+        setUiState(s => ({ ...s, error: t('errorCouldNotProcessDownload') }));
     }
-    const baseIndex = resultsState.baseHistoryIndex !== null ? resultsState.baseHistoryIndex : historyIndex;
-    const thumbnailUrl = await createThumbnail(newImageFile);
-    const newItem: HistoryItem = { file: newImageFile, url: URL.createObjectURL(newImageFile), thumbnailUrl, transform: { ...initialTransformState } };
-    historyDispatch({ type: 'SET_FROM_RESULT', payload: { baseIndex, item: newItem } });
-    retouchHook.clearMask();
-    retouchHook.setRetouchState(s => ({ ...s, editHotspot: null, prompt: '' }));
-  }, [history.length, historyIndex, resultsState.baseHistoryIndex, handleImageUpload, historyDispatch, retouchHook]);
+}, [t]);
 
-  const handleSelectFromViewer = useCallback((url: string, index: number) => {
-    const { type, context } = fullscreenViewerManager.fullscreenViewerState;
-    if (type === 'result' && context?.isNewSession) {
-        const newFile = dataURLtoFile(url, `generated-${Date.now()}.png`);
-        handleImageUpload(newFile);
-    } else if (type === 'history') {
-        historyDispatch({ type: 'SELECT', payload: { index }});
-    } else if (type === 'extract') {
-        const setIndex = context?.extractSetIndex;
-        if (setIndex !== undefined) {
-            const file = retouchHook.extractHistory[setIndex]?.[index];
-            if (file) retouchHook.handleUseExtractedAsOutfit(file);
-        }
-    } else { // 'result'
-        handleSelectFromResult(url);
-    }
-    fullscreenViewerManager.setFullscreenViewerState(s=>({...s, isOpen: false}));
-  }, [fullscreenViewerManager.fullscreenViewerState, handleImageUpload, historyDispatch, retouchHook, handleSelectFromResult, fullscreenViewerManager.setFullscreenViewerState]);
-
-  const handleHistoryPillClick = useCallback((index: number) => {
-    if (isMobile) {
-      fullscreenViewerManager.openFullScreenViewer(history.map(item => ({ url: item.url, transform: item.transform })), index, 'history');
-    } else {
-      historyDispatch({ type: 'SELECT', payload: { index }});
-    }
-  }, [isMobile, fullscreenViewerManager.openFullScreenViewer, history, historyDispatch]);
-  
-  const handleResultPillClick = useCallback((url: string, index: number) => {
-    if (isMobile) {
-      fullscreenViewerManager.openFullScreenViewer(resultsState.items.map(rUrl => ({ url: rUrl, transform: initialTransformState })), index, 'result');
-    } else {
-      handleSelectFromResult(url);
-    }
-  }, [isMobile, fullscreenViewerManager.openFullScreenViewer, resultsState.items, handleSelectFromResult]);
-
-  const handleUndo = useCallback(() => {
-    if (!canUndo) return;
-    historyDispatch({ type: 'UNDO', payload: { resultsBaseIndex: resultsState.baseHistoryIndex } });
-  }, [canUndo, historyDispatch, resultsState.baseHistoryIndex]);
-  
-  const handleRedo = useCallback(() => canRedo && historyDispatch({ type: 'REDO' }), [canRedo, historyDispatch]);
-  const handleResetHistory = useCallback(() => history.length > 1 && historyDispatch({ type: 'RESET_TO_FIRST' }), [history.length, historyDispatch]);
-
-  const handleApplyTransform = useCallback((type: TransformType) => {
-    if (!currentHistoryItem) { setUiState(s => ({...s, error: t('errorNoImageLoaded')})); return; }
-    setUiState(s => ({...s, error: null}));
-    const newTransform = { ...currentHistoryItem.transform };
-    switch (type) {
-        case 'rotate-cw': newTransform.rotate = (newTransform.rotate + 90) % 360; break;
-        case 'rotate-ccw': newTransform.rotate = (newTransform.rotate - 90 + 360) % 360; break;
-        case 'flip-h': newTransform.scaleX *= -1; break;
-        case 'flip-v': newTransform.scaleY *= -1; break;
-    }
-    historyDispatch({ type: 'PUSH', payload: { item: { ...currentHistoryItem, transform: newTransform } } });
-  }, [currentHistoryItem, t, historyDispatch]);
-
-  const triggerDownload = useCallback((url: string, fileExtension: string = 'png') => {
-    const a = document.createElement('a'); a.href = url;
-    a.download = `pika edit ${downloadCounter}.${fileExtension}`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setDownloadCounter(prev => prev + 1);
-  }, [downloadCounter]);
-
-  // FIX: Implement `handleDownloadExtractedItem` to resolve the error in `App.tsx`.
-  const handleDownloadExtractedItem = useCallback((file: File) => {
+  const handleDownload = useCallback(async () => {
+    if (!currentImage) { setUiState(s => ({ ...s, error: t('errorCouldNotFindImage') })); return; }
+    const file = await getCommittedImage();
     const url = URL.createObjectURL(file);
-    triggerDownload(url, file.name.split('.').pop() || 'png');
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    triggerDownload(url, `pika_ai_${downloadCounter}.png`);
+    URL.revokeObjectURL(url);
+    setDownloadCounter(c => c+1);
+  }, [currentImage, getCommittedImage, downloadCounter, triggerDownload, t]);
+
+  const handleDownloadExtractedItem = useCallback((file: File) => {
+      const url = URL.createObjectURL(file);
+      triggerDownload(url, `extracted_${Date.now()}.png`);
+      URL.revokeObjectURL(url);
   }, [triggerDownload]);
 
-  const handleDownload = useCallback(() => {
-    if (!currentImage || !currentImageUrl) { setUiState(s => ({...s, error: t('errorCouldNotFindImage')})); return; }
-    triggerDownload(currentImageUrl, currentImage.type.split('/')[1] || 'png');
-  }, [currentImage, currentImageUrl, t, triggerDownload]);
-  
-  const handleRequestFileUpload = useCallback(() => document.getElementById('image-upload-main')?.click(), []);
+  const handleHistoryPillClick = useCallback((index: number) => {
+    historyDispatch({ type: 'SELECT', payload: { index }});
+    // If we select a history item before the result generation, clear results
+    if (resultsState.baseHistoryIndex !== null && index < resultsState.baseHistoryIndex) {
+      clearAllResults();
+    } else if (resultsState.baseHistoryIndex !== null && index === resultsState.baseHistoryIndex) {
+      restoreResults();
+    } else {
+      clearResults();
+    }
+
+    if (isMobile) {
+      openFullScreenViewer(
+        history.map(item => ({ url: item.url, transform: item.transform })),
+        index,
+        'history'
+      );
+    }
+  }, [historyDispatch, resultsState.baseHistoryIndex, clearAllResults, clearResults, restoreResults, isMobile, history, openFullScreenViewer]);
+
+  const handleResultPillClick = useCallback((url: string, index: number) => {
+    openFullScreenViewer(
+      resultsState.items.map(u => ({ url: u, transform: initialTransformState })),
+      index,
+      'result'
+    );
+  }, [resultsState.items, openFullScreenViewer]);
+
+  const handleTabChange = useCallback((tab: Tab) => {
+    setToolboxState(s => ({ ...s, activeTab: tab }));
+  }, []);
+
+  const handleTabChangeAndOpen = useCallback((tab: Tab) => {
+    setToolboxState({ activeTab: tab, isOpen: true });
+  }, []);
+
+  const handleRequestFileUpload = useCallback(() => {
+    document.getElementById('image-upload-main')?.click();
+  }, []);
+
+  const handleApplyTransform = useCallback((transformType: TransformType) => {
+    if (!currentHistoryItem) return;
+    
+    // Show brief loading state for feedback
+    setUiState(s => ({ ...s, isLoading: true, loadingMessage: t('loadingTransform'), error: null }));
+
+    const currentTransform = currentHistoryItem.transform;
+    let newTransform: TransformState = { ...currentTransform };
+
+    switch (transformType) {
+      case 'rotate-cw':
+        newTransform.rotate = (currentTransform.rotate + 90) % 360;
+        break;
+      case 'rotate-ccw':
+        newTransform.rotate = (currentTransform.rotate - 90 + 360) % 360;
+        break;
+      case 'flip-h':
+        // A user's intent for "horizontal flip" is based on what they see on screen.
+        // When an image is rotated by 90/270 degrees, its local axes are swapped relative to the screen.
+        // A screen-horizontal flip corresponds to flipping the image's local Y-axis.
+        if (newTransform.rotate === 90 || newTransform.rotate === 270) {
+            newTransform.scaleY = newTransform.scaleY === 1 ? -1 : 1;
+        } else {
+            newTransform.scaleX = newTransform.scaleX === 1 ? -1 : 1;
+        }
+        break;
+      case 'flip-v':
+        // A screen-vertical flip on a 90/270 rotated image corresponds to flipping the image's local X-axis.
+        if (newTransform.rotate === 90 || newTransform.rotate === 270) {
+            newTransform.scaleX = newTransform.scaleX === 1 ? -1 : 1;
+        } else {
+            newTransform.scaleY = newTransform.scaleY === 1 ? -1 : 1;
+        }
+        break;
+    }
+
+    const newItem: HistoryItem = {
+      ...currentHistoryItem,
+      transform: newTransform,
+    };
+    
+    historyDispatch({ type: 'PUSH', payload: { item: newItem } });
+
+    // Hide loading state after a short delay
+    setTimeout(() => {
+        setUiState(s => ({ ...s, isLoading: false }));
+    }, 100);
+    
+  }, [currentHistoryItem, historyDispatch, setUiState, t]);
 
   const handleToolsTouchStart = useCallback((e: React.TouchEvent) => {
-    if ((e.target as HTMLElement).closest('input[type="range"]')) return;
-    if (e.touches.length === 1 && toolsContainerRef.current) {
+    if (e.touches.length === 1) {
       swipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
       gestureLockRef.current = null;
     }
   }, []);
 
   const handleToolsTouchMove = useCallback((e: React.TouchEvent) => {
-      if (!swipeStartRef.current || e.touches.length !== 1 || !toolsContainerRef.current) return;
-      const deltaX = e.touches[0].clientX - swipeStartRef.current.x; const deltaY = e.touches[0].clientY - swipeStartRef.current.y;
-      if (gestureLockRef.current === null && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) gestureLockRef.current = Math.abs(deltaY) > Math.abs(deltaX) ? 'vertical' : 'horizontal';
-      const { scrollTop, scrollHeight, clientHeight } = toolsContainerRef.current;
-      if (gestureLockRef.current === 'vertical' && (scrollTop > 0 || deltaY < 0) && (scrollTop < scrollHeight - clientHeight || deltaY > 0)) { /* Allow native scroll */ } 
-      else e.preventDefault();
+    if (!swipeStartRef.current || e.touches.length !== 1) return;
+    if (gestureLockRef.current === null) {
+      const deltaX = e.touches[0].clientX - swipeStartRef.current.x;
+      const deltaY = e.touches[0].clientY - swipeStartRef.current.y;
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        gestureLockRef.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+      }
+    }
   }, []);
 
   const handleToolsTouchEnd = useCallback((e: React.TouchEvent) => {
-      if (!swipeStartRef.current || e.changedTouches.length !== 1) { swipeStartRef.current = null; gestureLockRef.current = null; return; }
+    if (swipeStartRef.current && e.changedTouches.length === 1 && gestureLockRef.current === 'vertical') {
       const deltaY = e.changedTouches[0].clientY - swipeStartRef.current.y;
-      const swipeTime = Date.now() - swipeStartRef.current.time;
-      if (gestureLockRef.current === 'vertical' && swipeTime < 300 && Math.abs(deltaY) > 50) {
-          if(toolsContainerRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = toolsContainerRef.current;
-            if ((deltaY < 0 && scrollTop >= scrollHeight - clientHeight - 5) || (deltaY > 0 && scrollTop <= 5)) {
-                setToolboxState(s => ({ ...s, isOpen: !s.isOpen }));
-            }
-          }
+      if (deltaY > 50) { // Swipe down
+        toggleToolbox();
       }
-      swipeStartRef.current = null; gestureLockRef.current = null;
-  }, [setToolboxState]);
+    }
+    swipeStartRef.current = null;
+    gestureLockRef.current = null;
+  }, [toggleToolbox]);
 
-  // --- EFFECT HOOKS ---
+  const handleUndo = useCallback(() => {
+    historyDispatch({ type: 'UNDO', payload: { resultsBaseIndex: resultsState.baseHistoryIndex } });
+  }, [historyDispatch, resultsState.baseHistoryIndex]);
+
+  const handleRedo = useCallback(() => historyDispatch({ type: 'REDO' }), [historyDispatch]);
+  
+  useLayoutEffect(() => {
+    if (imgRef.current) {
+        const updateDimensions = () => {
+            if (imgRef.current?.naturalWidth && imgRef.current?.naturalHeight) {
+                setImageDimensions({
+                    width: imgRef.current.naturalWidth,
+                    height: imgRef.current.naturalHeight,
+                });
+            }
+        };
+        const img = imgRef.current;
+        if (img.complete) {
+            updateDimensions();
+        } else {
+            img.addEventListener('load', updateDimensions);
+        }
+        return () => img.removeEventListener('load', updateDimensions);
+    }
+  }, [currentImageUrl]);
+
   useEffect(() => {
-    let timeoutId: number;
-    const handleResize = () => {
-        clearTimeout(timeoutId);
-        timeoutId = window.setTimeout(() => setWindowSize({ width: window.innerWidth, height: window.innerHeight }), 100);
-    };
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', handleResize);
-    return () => { clearTimeout(timeoutId); window.removeEventListener('resize', handleResize); };
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => { initialWindowHeightRef.current = window.innerHeight; }, []);
-
   useEffect(() => {
-    if (!currentImage) {
-        setImageDimensions(null);
-        viewerManager.resetView();
-        setToolboxState({ activeTab: TABS_CONFIG[0].id as Tab, isOpen: true });
-    }
-  }, [currentImage, viewerManager.resetView]);
+    if (pendingAction?.action === 'openViewerForNewItem' && currentImageUrl) {
+      const beforeItem = history[historyIndex - 1];
 
-  useLayoutEffect(() => {
-    const img = imgRef.current;
-    const container = img?.parentElement;
-    if (img && container && currentImageUrl) {
-        const fullUpdate = () => {
-            if (!img.naturalWidth || !img.naturalHeight) return;
-            const mask = maskCanvasRef.current;
-            if (mask) {
-                const { naturalWidth, naturalHeight } = img; const { rotate } = currentTransform;
-                const isSideways = rotate === 90 || rotate === 270;
-                const w = isSideways ? naturalHeight : naturalWidth; const h = isSideways ? naturalWidth : naturalHeight;
-                setImageDimensions({ width: w, height: h });
-                mask.width = naturalWidth; mask.height = naturalHeight;
-                if (retouchHook.isMaskPresent()) retouchHook.clearMask();
-            }
-            const containerRect = container.getBoundingClientRect();
-            if (containerRect.width === 0 || containerRect.height === 0) { setOverlayStyle({ display: 'none' }); return; }
-            const containerRatio = containerRect.width / containerRect.height; const { rotate } = currentTransform; const isSideways = rotate === 90 || rotate === 270;
-            const contentNaturalRatio = isSideways ? img.naturalHeight / img.naturalWidth : img.naturalWidth / img.naturalHeight;
-            let style: React.CSSProperties = { position: 'absolute' };
-            if (contentNaturalRatio > containerRatio) {
-                style.width = '100%'; style.height = `${containerRect.width / contentNaturalRatio}px`;
-                style.top = '50%'; style.left = '0'; style.transform = 'translateY(-50%)';
-            } else {
-                style.height = '100%'; style.width = `${containerRect.height * contentNaturalRatio}px`;
-                style.left = '50%'; style.top = '0'; style.transform = 'translateX(-50%)';
-            }
-            setOverlayStyle(style);
-        };
-        if (img.complete) fullUpdate(); else img.onload = fullUpdate;
-        const resizeObserver = new ResizeObserver(fullUpdate); resizeObserver.observe(container);
-        return () => { resizeObserver.disconnect(); if (img) img.onload = null; };
-    } else { setOverlayStyle({ display: 'none' }); }
-  }, [currentImageUrl, currentTransform, windowSize, retouchHook.isMaskPresent, retouchHook.clearMask]);
-  
-  useEffect(() => {
-      if (pendingAction?.action === 'openViewerForNewItem' && historyIndex > -1 && isMobile) {
-          fullscreenViewerManager.openFullScreenViewer(history.map(item => ({ url: item.url, transform: item.transform })), historyIndex, 'history');
-          setPendingAction(null);
+      if (beforeItem) {
+        openFullScreenViewer(
+          [
+            { url: beforeItem.url, transform: beforeItem.transform }, // "Before" image
+            { url: currentImageUrl, transform: currentTransform }      // "After" image (current)
+          ],
+          1, // Start showing the "After" image
+          'history'
+        );
+      } else {
+        // Fallback for the very first image where there's no "before"
+        openFullScreenViewer([{ url: currentImageUrl, transform: currentTransform }], 0, 'history');
       }
-  }, [pendingAction, history, historyIndex, fullscreenViewerManager.openFullScreenViewer, isMobile]);
-
-  const { clearMask, setRetouchState, setExtractState } = retouchHook;
-  const { setStudioState } = studioHook;
-  const { setIdPhotoGender } = idPhotoHook;
-
-  useEffect(() => {
-    if (history.length === 1) { // After a start over or initial load
-      clearMask();
-      setRetouchState({ prompt: '', selectionMode: 'point', editHotspot: null, brushMode: 'draw', brushSize: 30 });
-      setExtractState({ prompt: '', history: [] });
-      setStudioState(s => ({...s, prompt: '', styleFile: null, subjects: [], outfitFiles: []}));
-      setIdPhotoGender('female');
+      setPendingAction(null);
     }
-  }, [history.length, clearMask, setRetouchState, setExtractState, setStudioState, setIdPhotoGender]);
-
-  useEffect(() => {
-    const { baseHistoryIndex } = resultsState;
-    if (baseHistoryIndex !== null && historyIndex === baseHistoryIndex) restoreResults();
-    else if (baseHistoryIndex !== null && historyIndex !== baseHistoryIndex) resultsManager.clearResults();
-    if (baseHistoryIndex !== null && historyIndex < baseHistoryIndex) clearAllResults();
-
-    if (historyIndex > -1) {
-      retouchHook.clearMask();
-      retouchHook.setRetouchState(s => ({...s, editHotspot: null}));
-    }
-  }, [historyIndex, resultsState.baseHistoryIndex, restoreResults, resultsManager, retouchHook]);
-  
-  useEffect(() => { () => { if (hideControlsTimeoutRef.current) window.clearTimeout(hideControlsTimeoutRef.current); }; }, []);
-  useEffect(() => { if (currentImage) showControls(); }, [currentImage, showControls]);
-  
-  const isMobileToolbarVisible = isMobile && !toolboxState.isOpen && !!currentImage && !(isMobile && toolboxState.activeTab === 'retouch' && retouchHook.selectionMode === 'point' && !!retouchHook.editHotspot);
-  const isMobileRetouchInputActive = isMobile && toolboxState.activeTab === 'retouch' && retouchHook.selectionMode === 'point' && !!retouchHook.editHotspot;
+  }, [pendingAction, currentImageUrl, currentTransform, openFullScreenViewer, history, historyIndex]);
 
   return {
-    t, beforeImageUrl, beforeImageThumbnailUrl,
-    // State
-    currentImage, currentImageUrl, currentThumbnailUrl, imageDimensions, history, historyIndex,
-    isLoading: uiState.isLoading, loadingMessage: uiState.loadingMessage, error: uiState.error,
-    activeTab: toolboxState.activeTab, isToolboxOpen: toolboxState.isOpen,
-    isComparing: comparisonState.isComparing,
+    // State & Props
+    t,
+    ...uiState,
+    activeTab: toolboxState.activeTab,
+    isToolboxOpen: toolboxState.isOpen,
+    ...comparisonState,
+    windowSize,
+    isZoomControlsVisible,
     isHistoryExpanded,
-    scale: viewerManager.scale, position: viewerManager.position, transformString,
-    isPanning: viewerManager.isPanning, isPinching: viewerManager.isPinching, isZoomControlsVisible, isInteracting: viewerManager.isInteracting,
-    canUndo, canRedo, isMobile, isLandscape, windowSize, isKeyboardOpen, isMobileRetouchInputActive, isMobileToolbarVisible,
-    overlayStyle,
+    imageDimensions,
+    imgRef,
+    imageViewerRef,
+    toolsContainerRef,
+    isMobile,
+    isLandscape,
+    isKeyboardOpen,
+    currentImage,
+    currentImageUrl,
+    currentThumbnailUrl,
+    currentTransform,
+    transformString,
+    beforeImageUrl,
+    beforeImageThumbnailUrl,
+    isMobileToolbarVisible,
+    sources,
+    
+    // History
+    history,
+    historyIndex,
+    canUndo,
+    canRedo,
+    
     // Results
-    results: resultsState.items, isGeneratingResults: resultsState.isGenerating, expectedResultsCount: resultsState.expectedCount, resultsBaseHistoryIndex: resultsState.baseHistoryIndex,
-    // Refs
-    imgRef, maskCanvasRef, imageViewerRef, toolsContainerRef,
-    // Viewer Handlers
-    handleViewerMouseDown: viewerManager.handleViewerMouseDown, handleViewerMouseMove: viewerManager.handleViewerMouseMove, handleViewerMouseUp: viewerManager.handleViewerMouseUp,
-    handleViewerWheel: viewerManager.handleViewerWheel, handleViewerTouchStart: viewerManager.handleViewerTouchStart, handleViewerTouchMove: viewerManager.handleViewerTouchMove, handleViewerTouchEnd: viewerManager.handleViewerTouchEnd,
-    // Setters & Actions
-    handleFileSelect, handleDownload, handleUndo, handleRedo, handleResetHistory, handleStartOver,
-    handleHistoryPillClick, handleResultPillClick,
-    handleApplyTransform,
-    setComparisonState,
-    handleTabChange, handleTabChangeAndOpen,
-    toggleToolbox,
-    resetView: viewerManager.resetView, handleZoom: viewerManager.handleZoom,
-    setIsHistoryExpanded,
-    handleToolsTouchStart, handleToolsTouchMove, handleToolsTouchEnd,
+    results: resultsState.items,
+    isGeneratingResults: resultsState.isGenerating,
+    expectedResultsCount: resultsState.expectedCount,
+    resultsBaseHistoryIndex: resultsState.baseHistoryIndex,
+    
+    // Viewer
+    ...viewerManager,
+
+    // Fullscreen Viewer
+    isViewerOpen,
+    viewerItems,
+    viewerInitialIndex,
+    viewerType,
+    viewerComparisonUrl,
+    setFullscreenViewerState,
+
+    // Handlers
+    handleFileSelect,
+    handleStartOver,
+    handleResetHistory,
+    handleDownload,
+    handleHistoryPillClick,
+    handleResultPillClick,
+    handleSelectFromViewer,
+    handleTabChange,
+    handleTabChangeAndOpen,
     handleRequestFileUpload,
-    triggerDownload, handleSelectFromViewer,
+    handleApplyTransform,
+    toggleToolbox,
     showControls,
+    setComparisonState,
+    setIsHistoryExpanded,
+    triggerDownload,
+    handleToolsTouchStart,
+    handleToolsTouchMove,
+    handleToolsTouchEnd,
+    handleUndo,
+    handleRedo,
+
+    // Feature Modules
+    ...adjustmentsManager,
+    ...idPhotoManager,
+    ...retouchManager,
+    ...studioManager,
+    ...expansionManager,
     handleDownloadExtractedItem,
-
-    // Feature Hooks' returned values
-    ...retouchHook,
-    ...expansionHook,
-    ...studioHook,
-    ...generateHook,
-    ...idPhotoHook,
-    ...adjustmentsHook,
-
-    // Fullscreen viewer state
-    isViewerOpen: fullscreenViewerManager.isViewerOpen, viewerItems: fullscreenViewerManager.viewerItems,
-    viewerInitialIndex: fullscreenViewerManager.viewerInitialIndex, viewerType: fullscreenViewerManager.viewerType,
-    viewerComparisonUrl: fullscreenViewerManager.viewerComparisonUrl,
-    setFullscreenViewerState: fullscreenViewerManager.setFullscreenViewerState,
+    handleGenerateCreativePrompt,
   };
 };

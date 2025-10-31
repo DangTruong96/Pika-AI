@@ -5,15 +5,18 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BrushIcon, IdCardIcon, ExpandIcon, SparklesIcon, UsersIcon, LightbulbIcon } from './icons';
-import type { Tab, Gender, SelectionMode, BrushMode, AspectRatio } from '../types';
+import { BrushIcon, IdCardIcon, ExpandIcon, SparklesIcon, UsersIcon } from './icons';
+import type { Tab, Gender, SelectionMode } from '../types';
+import type { IdPhotoOptions } from '../services/geminiService';
+
+// Statically import panels to eliminate loading delays when switching tabs.
+// This increases initial bundle size but improves in-app responsiveness.
 import RetouchPanel from './RetouchPanel';
 import IdPhotoPanel from './IdPhotoPanel';
 import AdjustmentPanel from './AdjustmentPanel';
 import { ExpandPanel } from './ExpandPanel';
 import StudioPanel from './StudioPanel';
-import GeneratePanel from './GeneratePanel';
-import type { IdPhotoOptions } from '../services/geminiService';
+
 
 interface EditorSidebarProps {
   className?: string;
@@ -43,19 +46,11 @@ interface EditorSidebarProps {
   onUseExtractedAsOutfit: (file: File) => void;
   onDownloadExtractedItem: (file: File) => void;
   onClearExtractHistory: () => void;
-  isMaskPresent: boolean;
-  clearMask: () => void;
   retouchPrompt: string;
   onRetouchPromptChange: (prompt: string) => void;
   retouchPromptInputRef: React.RefObject<HTMLTextAreaElement>;
   selectionMode: SelectionMode;
   onSelectionModeChange: (mode: SelectionMode) => void;
-  brushMode: BrushMode;
-  setBrushMode: (mode: BrushMode) => void;
-  brushSize: number;
-  setBrushSize: (size: number) => void;
-  isHotspotSelected: boolean;
-  onClearHotspot: () => void;
   onRequestFileUpload: () => void;
   studioPrompt: string;
   onStudioPromptChange: (prompt: string) => void;
@@ -70,14 +65,7 @@ interface EditorSidebarProps {
   onStudioRemoveSubject: (index: number) => void;
   expandActiveAspect: number | null;
   onGenerateCreativePrompt: () => void;
-  onGenerateImageFromText: () => void;
-  generatePrompt: string;
-  onGeneratePromptChange: (prompt: string) => void;
-  generateAspectRatio: AspectRatio;
-  onGenerateAspectRatioChange: (aspect: AspectRatio) => void;
-  generateNumImages: number;
-  // FIX: Add missing onGenerateNumImagesChange to EditorSidebarProps interface.
-  onGenerateNumImagesChange: (num: number) => void;
+  sources: any[];
   onViewExtractedItem: (setIndex: number, itemIndex: number) => void;
   isMobile?: boolean;
   onToggleToolbox: () => void;
@@ -87,7 +75,6 @@ export const TABS_CONFIG = [
     { id: 'retouch', icon: BrushIcon, tooltip: 'tooltipRetouch' },
     { id: 'adjust', icon: SparklesIcon, tooltip: 'tooltipAdjust' },
     { id: 'studio', icon: UsersIcon, tooltip: 'tooltipStudio' },
-    { id: 'generate', icon: LightbulbIcon, tooltip: 'tooltipGenerate' },
     { id: 'idphoto', icon: IdCardIcon, tooltip: 'tooltipIdPhoto' },
     { id: 'expand', icon: ExpandIcon, tooltip: 'tooltipExpand' },
 ];
@@ -133,17 +120,9 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
         return <RetouchPanel 
           onApplyRetouch={props.onApplyRetouch}
           isLoading={isLoading}
-          isHotspotSelected={props.isHotspotSelected}
-          onClearHotspot={props.onClearHotspot}
           selectionMode={props.selectionMode}
           onSelectionModeChange={props.onSelectionModeChange}
-          brushMode={props.brushMode}
-          onBrushModeChange={props.setBrushMode}
-          brushSize={props.brushSize}
-          onBrushSizeChange={props.setBrushSize}
-          onClearMask={props.clearMask}
           isImageLoaded={isImageLoaded}
-          isMaskPresent={props.isMaskPresent}
           prompt={props.retouchPrompt}
           onPromptChange={props.onRetouchPromptChange}
           promptInputRef={props.retouchPromptInputRef}
@@ -219,21 +198,6 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
             isMobile={props.isMobile}
             onToggleToolbox={props.onToggleToolbox}
         />;
-      case 'generate':
-        return <GeneratePanel
-          isLoading={isLoading}
-          prompt={props.generatePrompt}
-          onPromptChange={props.onGeneratePromptChange}
-          onGenerate={props.onGenerateImageFromText}
-          aspectRatio={props.generateAspectRatio}
-          onAspectRatioChange={props.onGenerateAspectRatioChange}
-          numImages={props.generateNumImages}
-          // FIX: Pass correct prop 'onGenerateNumImagesChange' to child component.
-          onNumImagesChange={props.onGenerateNumImagesChange}
-          setActiveTab={props.setActiveTab}
-          isMobile={props.isMobile}
-          onToggleToolbox={props.onToggleToolbox}
-        />;
       default:
         return null;
     }
@@ -246,7 +210,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
         <div className="w-full flex items-center justify-center p-1 bg-black/20 rounded-2xl border border-white/10 mb-3 sticky top-2 z-10">
             <div ref={tabsContainerRef} className="flex items-center gap-1.5 overflow-x-auto pb-1.5 -mb-1.5">
                 {TABS_CONFIG.map(tab => {
-                    const isTabDisabled = !isImageLoaded && !['studio', 'generate'].includes(tab.id);
+                    const isTabDisabled = !isImageLoaded && !['studio'].includes(tab.id);
                     const isActive = activeTab === tab.id && !isTabDisabled;
                     const label = isTabDisabled ? t('uploadImage') : t(tab.tooltip as any);
                     
@@ -279,6 +243,21 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       )}
       
       {renderActivePanel()}
+      
+      {props.sources && props.sources.length > 0 && (
+        <div className="w-full p-3 bg-black/20 rounded-2xl text-xs mt-2 animate-fade-in border border-white/10">
+          <p className="text-gray-300 font-semibold mb-2">Nguồn tham khảo từ Google Search:</p>
+          <ul className="list-disc list-inside space-y-1.5 text-gray-400">
+            {props.sources.map((source, index) => source.web && (
+              <li key={index} className="truncate">
+                <a href={source.web.uri} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline" title={source.web.title || source.web.uri}>
+                  {source.web.title || source.web.uri}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
     </div>
   );

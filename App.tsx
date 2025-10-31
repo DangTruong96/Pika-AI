@@ -10,9 +10,8 @@ import type { Tab } from './types';
 
 import Header from './components/Header';
 import EditorSidebar, { TABS_CONFIG } from './components/EditorSidebar';
-import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, UploadIcon, PaperAirplaneIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon, EyeIcon, EyeSlashIcon, XMarkIcon } from './components/icons';
+import { ArrowsPointingOutIcon, ZoomInIcon, ZoomOutIcon, UploadIcon, UndoIcon, RedoIcon, FlipHorizontalIcon, FlipVerticalIcon, EyeIcon, EyeSlashIcon } from './components/icons';
 import { useTranslation } from './contexts/LanguageContext';
-import { SelectionMode } from './components/RetouchPanel';
 import HistoryPills from './components/HistoryPills';
 import FullScreenViewerModal from './components/FullScreenViewerModal';
 import ExpansionFrame from './components/ExpansionFrame';
@@ -94,7 +93,7 @@ const CompactMobileToolbar: React.FC<CompactMobileToolbarProps> = React.memo(({ 
       const deltaX = e.changedTouches[0].clientX - swipeStartRef.current.x;
 
       if (Math.abs(deltaX) > 50) {
-        const availableTabs = TABS_CONFIG.filter(tab => isImageLoaded || ['studio', 'generate'].includes(tab.id));
+        const availableTabs = TABS_CONFIG.filter(tab => isImageLoaded || ['studio'].includes(tab.id));
         const currentIndex = availableTabs.findIndex(tab => tab.id === activeTab);
         if (currentIndex === -1) return;
 
@@ -120,7 +119,7 @@ const CompactMobileToolbar: React.FC<CompactMobileToolbarProps> = React.memo(({ 
     if (containerRef.current && scrollContainerRef.current) {
         const activeButton = containerRef.current.querySelector<HTMLButtonElement>(`[data-tab-id="${activeTab}"]`);
         
-        const availableTabs = TABS_CONFIG.filter(tab => isImageLoaded || ['studio', 'generate'].includes(tab.id));
+        const availableTabs = TABS_CONFIG.filter(tab => isImageLoaded || ['studio'].includes(tab.id));
         const isActiveTabAvailable = availableTabs.some(tab => tab.id === activeTab);
 
         if (activeButton && isActiveTabAvailable) {
@@ -152,11 +151,15 @@ const CompactMobileToolbar: React.FC<CompactMobileToolbarProps> = React.memo(({ 
             style={pillStyle}
           />
           {TABS_CONFIG.map(tab => {
-            const isTabDisabled = !isImageLoaded && !['studio', 'generate'].includes(tab.id);
+            const isTabDisabled = !isImageLoaded && !['studio'].includes(tab.id);
             const isActive = activeTab === tab.id && !isTabDisabled;
             const label = isTabDisabled ? t('uploadImage') : t(tab.tooltip as any);
             
             const handleTabClick = () => {
+                if (navigator.vibrate) {
+                  navigator.vibrate(10); // Short vibration for haptic feedback
+                }
+
                 if (isTabDisabled) {
                     onRequestFileUpload();
                 } else {
@@ -182,65 +185,6 @@ const CompactMobileToolbar: React.FC<CompactMobileToolbarProps> = React.memo(({ 
         </div>
       </div>
     </div>
-  );
-});
-
-const MobileRetouchInputBar: React.FC<{
-  prompt: string;
-  onPromptChange: (value: string) => void;
-  onGenerate: () => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}> = React.memo(({ prompt, onPromptChange, onGenerate, onCancel, isLoading }) => {
-  const { t } = useTranslation();
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    // Small timeout to allow the keyboard animation to start
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 150);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (prompt.trim()) {
-      onGenerate();
-    }
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-xl border-t border-white/10 p-2 z-[70] flex items-center gap-2 animate-slide-up pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
-    >
-      <button
-        type="button"
-        onClick={onCancel}
-        className="p-3 bg-white/10 rounded-lg text-gray-300 hover:bg-white/20 transition-colors"
-        aria-label={t('cancelEdit')}
-      >
-        <XMarkIcon className="w-6 h-6" />
-      </button>
-      <input
-        ref={inputRef}
-        type="text"
-        value={prompt}
-        onChange={(e) => onPromptChange(e.target.value)}
-        placeholder={t('retouchPlaceholderGenerative')}
-        className="flex-grow bg-white/5 border border-white/10 text-gray-200 rounded-lg p-3 focus:ring-1 focus:ring-cyan-300 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base focus:bg-white/10"
-        disabled={isLoading}
-      />
-      <button
-        type="submit"
-        className="p-3 bg-cyan-500 rounded-lg text-white transition-colors disabled:bg-cyan-800 disabled:opacity-70"
-        disabled={isLoading || !prompt.trim()}
-        aria-label={t('generateEdit')}
-      >
-        <PaperAirplaneIcon className="w-6 h-6" />
-      </button>
-    </form>
   );
 });
 
@@ -305,7 +249,7 @@ const App: React.FC = () => {
                 </div>
             )}
             {!pika.currentImage ? <ImagePlaceholder onFileSelect={pika.handleFileSelect} /> : (
-                <div ref={pika.imageViewerRef} className="w-full h-full relative" onMouseLeave={() => pika.setMousePosition(null)}>
+                <div ref={pika.imageViewerRef} className="w-full h-full relative">
                     {pika.isComparing && pika.isMobile && (
                         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm font-bold py-1 px-3 rounded-md pointer-events-none z-30 animate-fade-in">
                             {pika.t('historyOriginal')}
@@ -332,15 +276,6 @@ const App: React.FC = () => {
                                     className={`max-w-full max-h-full object-contain`}
                                 />
                             )}
-                            <canvas ref={pika.maskCanvasRef} className={'absolute pointer-events-none opacity-50'} style={pika.overlayStyle} />
-                            {pika.activeTab === 'retouch' && (
-                                <canvas className={`absolute ${pika.selectionMode === 'brush' ? 'cursor-none' : 'cursor-crosshair'}`}
-                                    style={{...pika.overlayStyle, pointerEvents: 'auto'}}
-                                    onMouseDown={e => pika.handleCanvasInteraction(e, 'start')} onMouseMove={e => pika.handleCanvasInteraction(e, 'move')} onMouseUp={e => pika.handleCanvasInteraction(e, 'end')} onMouseLeave={e => pika.handleCanvasInteraction(e, 'end')}
-                                    onTouchStart={e => pika.handleCanvasInteraction(e, 'start')} onTouchMove={e => pika.handleCanvasInteraction(e, 'move')} onTouchEnd={e => pika.handleCanvasInteraction(e, 'end')}
-                                    onClick={pika.selectionMode === 'point' ? pika.handleViewerClick : undefined}
-                                />
-                            )}
                             {pika.activeTab === 'expand' && pika.currentImage && pika.imgRef.current && (
                                 <ExpansionFrame
                                     imgRef={pika.imgRef}
@@ -349,10 +284,7 @@ const App: React.FC = () => {
                                 />
                             )}
                         </div>
-                        {pika.hotspotDisplayPosition && <div className="absolute w-4 h-4 bg-cyan-400 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none ring-2 ring-black/50 animate-pulse z-20" style={pika.hotspotDisplayPosition} />}
                     </div>
-                    
-                    {pika.activeTab === 'retouch' && pika.selectionMode === 'brush' && pika.mousePosition && (<div className={`absolute rounded-full border-2 pointer-events-none z-50 ${pika.brushMode === 'draw' ? 'bg-fuchsia-500/30 border-fuchsia-500' : 'bg-red-500/30 border-red-500'} ${pika.isDrawing ? 'opacity-0' : 'opacity-70'} transition-opacity duration-100`} style={{ left: pika.mousePosition.x, top: pika.mousePosition.y, width: pika.brushSize, height: pika.brushSize, transform: 'translate(-50%, -50%)' }} />)}
                 </div>
             )}
             {pika.currentImage && (
@@ -380,7 +312,7 @@ const App: React.FC = () => {
         
         <div ref={pika.toolsContainerRef} className={`flex-shrink-0 bg-black/30 transition-all duration-300 ease-in-out ${ pika.isMobile ? (pika.isLandscape ? `h-full ${pika.isToolboxOpen ? 'w-[40%]' : 'w-0'}` : `w-full ${pika.isToolboxOpen ? 'h-[40%]' : 'h-0'}`) : `h-full ${pika.isToolboxOpen ? 'lg:w-[30%]' : 'lg:w-0'}` } ${ pika.isToolboxOpen ? 'overflow-y-auto will-change-scroll' : 'overflow-hidden' } ${pika.isMobile ? (pika.isToolboxOpen ? 'pb-4' : 'p-0') : 'lg:pb-4'}`} onTouchStart={pika.handleToolsTouchStart} onTouchMove={pika.handleToolsTouchMove} onTouchEnd={pika.handleToolsTouchEnd}>
             <EditorSidebar className="w-full" isImageLoaded={!!pika.currentImage} isLoading={pika.isLoading} activeTab={pika.activeTab} setActiveTab={pika.handleTabChange} currentImage={pika.currentImage}
-              onApplyRetouch={pika.handleGenerate} retouchPrompt={pika.retouchPrompt} onRetouchPromptChange={v => pika.setRetouchState(s=>({...s, prompt: v}))} retouchPromptInputRef={pika.retouchPromptInputRef} isHotspotSelected={!!pika.editHotspot} onClearHotspot={() => pika.setRetouchState(s=>({...s, editHotspot: null}))} selectionMode={pika.selectionMode} onSelectionModeChange={pika.handleSelectionModeChange} brushMode={pika.brushMode} setBrushMode={v => pika.setRetouchState(s=>({...s, brushMode: v}))} brushSize={pika.brushSize} setBrushSize={v => pika.setRetouchState(s=>({...s, brushSize: v}))} clearMask={pika.clearMask} isMaskPresent={pika.isMaskPresent()}
+              onApplyRetouch={pika.handleGenerate} retouchPrompt={pika.retouchPrompt} onRetouchPromptChange={v => pika.setRetouchState(s=>({...s, prompt: v}))} retouchPromptInputRef={pika.retouchPromptInputRef} selectionMode={pika.selectionMode} onSelectionModeChange={pika.handleSelectionModeChange}
               onApplyIdPhoto={pika.handleGenerateIdPhoto} idPhotoGender={pika.idPhotoGender} onIdPhotoGenderChange={pika.setIdPhotoGender}
               onApplyAdjustment={pika.handleApplyAdjustment} onApplyMultipleAdjustments={pika.handleApplyMultipleAdjustments} onApplyFilter={pika.handleApplyFilter}
               onApplyExpansion={pika.handleGenerateExpandedImage} expandPrompt={pika.expandPrompt} onExpandPromptChange={v => pika.setExpandState(s=>({...s, prompt: v}))} hasExpansion={pika.hasExpansion} onSetAspectExpansion={pika.setExpansionByAspect} imageDimensions={pika.imageDimensions} expandActiveAspect={pika.expandActiveAspect}
@@ -390,20 +322,17 @@ const App: React.FC = () => {
               studioSubjects={pika.studioSubjects} onStudioAddSubject={pika.handleStudioAddSubject} onStudioRemoveSubject={pika.handleStudioRemoveSubject}
               onRequestFileUpload={pika.handleRequestFileUpload}
               onGenerateCreativePrompt={pika.handleGenerateCreativePrompt}
-              // FIX: Pass missing props for text-to-image generation.
-              onGenerateImageFromText={pika.handleGenerateImageFromText} generatePrompt={pika.generatePrompt} onGeneratePromptChange={v => pika.setGenerateState(s=>({...s, prompt: v}))} generateAspectRatio={pika.generateAspectRatio} onGenerateAspectRatioChange={v => pika.setGenerateState(s=>({...s, aspectRatio: v}))} generateNumImages={pika.generateNumImages} onGenerateNumImagesChange={v => pika.setGenerateState(s=>({...s, numImages: v}))}
+              sources={pika.sources}
               isMobile={pika.isMobile}
               onToggleToolbox={pika.toggleToolbox}
             />
           </div>
           
-          {pika.currentImage && !pika.isMobileRetouchInputActive && !pika.isKeyboardOpen && (
+          {pika.currentImage && !pika.isKeyboardOpen && (
               <HistoryPills historyItems={pika.history.map(item => ({ url: item.url, thumbnailUrl: item.thumbnailUrl, transform: item.transform }))} results={pika.results} isGeneratingResults={pika.isGeneratingResults} expectedResultsCount={pika.expectedResultsCount} currentIndex={pika.historyIndex} resultsBaseHistoryIndex={pika.resultsBaseHistoryIndex} onHistorySelect={pika.handleHistoryPillClick} onResultSelect={pika.handleResultPillClick} isExpanded={pika.isHistoryExpanded} onToggle={() => pika.setIsHistoryExpanded(p => !p)} isMobileToolbarVisible={pika.isMobileToolbarVisible} isMobile={pika.isMobile} isControlsVisible={areControlsVisible} />
           )}
-
-          {pika.isMobileRetouchInputActive && <MobileRetouchInputBar key={pika.mobileInputKey} prompt={pika.retouchPrompt} onPromptChange={v => pika.setRetouchState(s=>({...s, prompt: v}))} onGenerate={() => pika.handleGenerate()} onCancel={() => pika.setRetouchState(s=>({...s, editHotspot: null}))} isLoading={pika.isLoading}/>}
           
-          {pika.isViewerOpen && <FullScreenViewerModal items={pika.viewerItems} initialIndex={pika.viewerInitialIndex} type={pika.viewerType} comparisonUrl={pika.viewerComparisonUrl} onClose={() => pika.setFullscreenViewerState(s=>({...s, isOpen: false}))} onDownload={pika.triggerDownload} onSelect={pika.handleSelectFromViewer} />}
+          {pika.isViewerOpen && <FullScreenViewerModal items={pika.viewerItems} initialIndex={pika.viewerInitialIndex} type={pika.viewerType} comparisonUrl={pika.viewerComparisonUrl} onClose={() => pika.setFullscreenViewerState(s=>({...s, isOpen: false}))} onDownload={(url) => pika.triggerDownload(url, `pika_ai_viewer_${Date.now()}.png`)} onSelect={pika.handleSelectFromViewer} />}
           {pika.isMobileToolbarVisible && <CompactMobileToolbar activeTab={pika.activeTab} setActiveTab={pika.handleTabChange} onOpenEditorToTab={pika.handleTabChangeAndOpen} isImageLoaded={!!pika.currentImage} onRequestFileUpload={pika.handleRequestFileUpload} areControlsVisible={pika.isZoomControlsVisible} isInteracting={pika.isInteracting} showControls={pika.showControls} />}
       </main>
     </div>

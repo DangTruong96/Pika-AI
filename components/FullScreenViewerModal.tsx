@@ -76,23 +76,29 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
         setPosition({ x: 0, y: 0 });
     }, []);
 
+    const canCompare = !!comparisonUrl;
+
     const handleNext = useCallback(() => {
         if (items.length > 1) {
             setCurrentIndex(prev => (prev + 1) % items.length);
+        } else if (canCompare) {
+            setIsComparing(prev => !prev);
         }
-    }, [items.length]);
+    }, [items.length, canCompare]);
     
     const handlePrev = useCallback(() => {
         if (items.length > 1) {
             setCurrentIndex(prev => (prev - 1 + items.length) % items.length);
+        } else if (canCompare) {
+            setIsComparing(prev => !prev);
         }
-    }, [items.length]);
+    }, [items.length, canCompare]);
     
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 onClose();
-            } else if (items.length > 1) {
+            } else if (items.length > 1 || canCompare) {
                 if (e.key === 'ArrowRight') handleNext();
                 if (e.key === 'ArrowLeft') handlePrev();
             }
@@ -101,7 +107,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [onClose, handleNext, handlePrev, items.length]);
+    }, [onClose, handleNext, handlePrev, items.length, canCompare]);
     
     // Reset index and view when the modal is reopened with new data
     useEffect(() => {
@@ -110,7 +116,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
         showControls();
         resetView();
     }, [initialIndex, items, showControls, resetView]);
-
+    
     // Reset view when swiping to a new image
     useEffect(() => {
         setIsComparing(false);
@@ -151,7 +157,6 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
     };
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-        showControls();
         if ((e.target as HTMLElement).closest('button')) return;
 
         e.preventDefault();
@@ -187,7 +192,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
             const newDist = getDistanceBetweenTouches(e.touches);
             const ratio = newDist / pinchStartDistRef.current;
             const newScale = pinchStartScaleRef.current * ratio;
-            setScale(Math.max(0.5, Math.min(5, newScale))); // Clamp scale
+            setScale(Math.max(0.5, Math.min(10, newScale))); // Clamp scale
         } else if (isPanning && panStartRef.current && e.touches.length === 1) { // Pan move
             const dx = e.touches[0].clientX - panStartRef.current.startX;
             const dy = e.touches[0].clientY - panStartRef.current.startY;
@@ -202,7 +207,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
         if ((e.target as HTMLElement).closest('button')) return;
 
         // Swipe logic
-        if (items.length > 1 && swipeStartRef.current && e.changedTouches.length === 1 && !isPanning && scale === 1) {
+        if ((items.length > 1 || canCompare) && swipeStartRef.current && e.changedTouches.length === 1 && !isPanning && scale === 1) {
             const deltaX = e.changedTouches[0].clientX - swipeStartRef.current.x;
             const deltaY = Math.abs(e.changedTouches[0].clientY - swipeStartRef.current.y);
 
@@ -238,7 +243,61 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
         panStartRef.current = null;
     };
 
-    const canCompare = !!comparisonUrl;
+    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        if (e.button !== 0) return; // Only main mouse button
+
+        // Allow panning if zoomed in, or if in side-by-side comparison mode on desktop
+        if (scale <= 1 && !(isDesktop && isComparing)) return;
+
+        e.preventDefault();
+        
+        setIsGesturing(true);
+        setIsPanning(true);
+        panStartRef.current = {
+            startX: e.clientX,
+            startY: e.clientY,
+            initialPosition: position,
+        };
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isPanning || !panStartRef.current) return;
+        e.preventDefault();
+        const dx = e.clientX - panStartRef.current.startX;
+        const dy = e.clientY - panStartRef.current.startY;
+        setPosition({
+            x: panStartRef.current.initialPosition.x + dx,
+            y: panStartRef.current.initialPosition.y + dy,
+        });
+    };
+
+    const handleMouseUpAndLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isPanning) return;
+        e.preventDefault();
+        setIsGesturing(false);
+        setIsPanning(false);
+        panStartRef.current = null;
+    };
+
+    const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        // The multiplier is sensitive, 0.001 is a good starting point
+        const newScale = scale * (1 - e.deltaY * 0.001);
+        setScale(Math.max(0.5, Math.min(10, newScale))); // Clamp scale
+        showControls();
+    };
+
+    const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        e.preventDefault();
+        if (scale > 1) {
+            resetView();
+        } else {
+            // Zoom to a specific point could be an improvement, but for now, center zoom is fine.
+            setScale(2.5);
+        }
+    };
     
     const selectButtonText = useMemo(() => {
         if (type === 'extract') {
@@ -258,15 +317,26 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
 
             <div 
                 className="flex-grow w-full h-full flex items-center justify-center relative overflow-hidden"
+                onClick={(e) => {
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    showControls();
+                }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpAndLeave}
+                onMouseLeave={handleMouseUpAndLeave}
+                onWheel={handleWheel}
+                onDoubleClick={handleDoubleClick}
             >
                  {/* Background click handler */}
                 <div 
                     className="absolute inset-0" 
                     onClick={(e) => {
                         if (e.target === e.currentTarget) {
+                            e.stopPropagation();
                             onClose();
                         }
                     }}
@@ -274,7 +344,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
 
                 <div
                     className="relative w-full h-full flex items-center justify-center"
-                    style={{ cursor: isPanning ? 'grabbing' : (scale > 1 ? 'grab' : 'default') }}
+                    style={{ cursor: isPanning ? 'grabbing' : ((scale > 1 || (isDesktop && isComparing)) ? 'grab' : 'default') }}
                 >
                     <div
                         className={`${isGesturing ? '' : 'transition-transform duration-300 ease-out'} w-full h-full flex items-center justify-center`}
@@ -318,7 +388,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                                 <img
                                     key={`${currentIndex}-${isComparing}`}
                                     src={isComparing && comparisonUrl ? comparisonUrl : imageUrl}
-                                    alt={isComparing ? t('historyOriginal') : t('fullScreenResult')}
+                                    alt={isComparing ? t('historyOriginal') : t('viewEdited')}
                                     className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl pointer-events-none animate-fade-in"
                                 />
                             </div>
@@ -329,7 +399,7 @@ const FullScreenViewerModal: React.FC<FullScreenViewerModalProps> = ({ items, in
                     {isComparing ? t('historyOriginal') : (type === 'history' && currentIndex === 0 ? t('historyOriginal') : t('viewEdited'))}
                 </div>
 
-                {items.length > 1 && (
+                {(items.length > 1 || canCompare) && (
                     <>
                         <button onClick={handlePrev} className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all z-[110] ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-label={t('previousImage')}>
                             <ChevronLeftIcon className="w-7 h-7" />

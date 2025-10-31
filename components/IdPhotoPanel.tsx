@@ -7,7 +7,7 @@
 import React, { useState, useCallback, useRef, useLayoutEffect, useEffect, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { type IdPhotoOptions } from '../services/geminiService';
-import { IdCardIcon, ExpandIcon, LightbulbIcon } from './icons';
+import { IdCardIcon, ExpandIcon, UsersIcon } from './icons';
 import type { Gender, Tab } from '../types';
 
 interface IdPhotoPanelProps {
@@ -263,13 +263,13 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
     <div className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-4 backdrop-blur-xl shadow-2xl shadow-black/30">
       <div className="w-full flex items-center justify-between">
         <button 
-          onClick={() => setActiveTab('generate')} 
+          onClick={() => setActiveTab('studio')} 
           className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title={t('tooltipGenerate')}
+          title={t('tooltipStudio')}
           disabled={isLoading}
-          aria-label={t('tooltipGenerate')}
+          aria-label={t('tooltipStudio')}
         >
-          <LightbulbIcon className="w-6 h-6" />
+          <UsersIcon className="w-6 h-6" />
         </button>
         {isMobile ? (
             <button onClick={onToggleToolbox} className={`${commonTitleClasses} transition-colors hover:bg-black/40`}>

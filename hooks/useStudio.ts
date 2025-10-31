@@ -6,14 +6,16 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { 
   generatePhotoshootImage, generateCompositeImage, generatePromptFromStyleImage, 
-  generateCreativePrompt, inferOutfitFromPrompt, generateOutfitDescriptionFromFiles 
+  generateCreativePrompt, inferOutfitFromPrompt, generateOutfitDescriptionFromFiles, 
+  type GroundingChunk
 } from '../services/geminiService';
 import { initialTransformState } from '../types';
 
 export const useStudio = ({
   currentImage, getCommittedImage, setUiState, 
   handleApiError, resultsManager, isMobile, openFullScreenViewer, t, 
-  historyIndex, activeTab, setToolboxState, setIsHistoryExpanded
+  historyIndex, activeTab, setToolboxState, setIsHistoryExpanded,
+  setSources,
 }) => {
   const [studioState, setStudioState] = useState({
     prompt: '',
@@ -66,7 +68,9 @@ export const useStudio = ({
             setStudioState(s => ({...s, prompt: finalPrompt}));
         } else if (!finalPrompt) {
             setUiState(s => ({...s, loadingMessage: t('loadingAnalyzingScene')}));
-            finalPrompt = await generateCreativePrompt(allSubjects, null, [], '');
+            // FIX: Destructure the response to get the prompt string.
+            const { prompt: creativePrompt } = await generateCreativePrompt(allSubjects, null, [], '');
+            finalPrompt = creativePrompt;
             setStudioState(s => ({...s, prompt: finalPrompt}));
         }
 
@@ -100,11 +104,15 @@ export const useStudio = ({
             generationPromises = seeds.map(() => generatePhotoshootImage(imageToProcess, finalPrompt, outfitDescription, studioStyleFile, studioOutfitFiles));
         }
 
-        const promises = generationPromises.map(p => p.then(imageUrl => {
+        const allSources: GroundingChunk[] = [];
+        const promises = generationPromises.map(p => p.then(response => {
             completedCount++;
             setUiState(s => ({ ...s, loadingMessage: `${t('generatePhotoshoot')} (${completedCount}/${seeds.length})` }));
-            resultsManager.addResult(imageUrl);
-            return imageUrl;
+            resultsManager.addResult(response.imageUrl);
+            if (response.sources) {
+              allSources.push(...response.sources);
+            }
+            return response.imageUrl;
         }).catch(err => {
             console.warn(`Generation failed:`, err);
             completedCount++;
@@ -117,6 +125,15 @@ export const useStudio = ({
         
         if (successfulUrls.length === 0) throw new Error("All photoshoot image generations failed.");
 
+        const seenUris = new Set<string>();
+        const uniqueSources = allSources.filter(s => {
+          if (!s.web || !s.web.uri) return false;
+          if (seenUris.has(s.web.uri)) return false;
+          seenUris.add(s.web.uri);
+          return true;
+        });
+        setSources(uniqueSources);
+
         if (isMobile && successfulUrls.length > 0) {
             openFullScreenViewer(successfulUrls.map(url => ({ url, transform: initialTransformState })), 0, 'result');
         }
@@ -125,7 +142,7 @@ export const useStudio = ({
       setUiState(s => ({...s, isLoading: false})); 
       resultsManager.finishGeneratingResults();
     }
-  }, [currentImage, studioSubjects, studioPrompt, studioStyleFile, t, handleApiError, historyIndex, activeTab, isMobile, getCommittedImage, studioOutfitFiles, openFullScreenViewer, setUiState, resultsManager, setToolboxState, setIsHistoryExpanded]);
+  }, [currentImage, studioSubjects, studioPrompt, studioStyleFile, t, handleApiError, historyIndex, activeTab, isMobile, getCommittedImage, studioOutfitFiles, openFullScreenViewer, setUiState, resultsManager, setToolboxState, setIsHistoryExpanded, setSources]);
 
   const handleGenerateCreativePrompt = useCallback(async () => {
     if (!currentImage) {
@@ -135,7 +152,8 @@ export const useStudio = ({
     setUiState(s => ({...s, isLoading: true, loadingMessage: t('loadingStudioAnalysis')}));
     try {
         const subjectFiles = [currentImage, ...studioSubjects];
-        const newPrompt = await generateCreativePrompt(subjectFiles, studioStyleFile, studioOutfitFiles, studioPrompt);
+        // FIX: Destructure the response object to get the prompt string.
+        const { prompt: newPrompt } = await generateCreativePrompt(subjectFiles, studioStyleFile, studioOutfitFiles, studioPrompt);
         setStudioState(s => ({...s, prompt: newPrompt}));
     } catch (err) {
         handleApiError(err, 'errorFailedToProcessImage');

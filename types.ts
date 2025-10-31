@@ -25,8 +25,7 @@ export type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' 
 export type Gender = 'male' | 'female';
 
 // From RetouchPanel
-export type SelectionMode = 'point' | 'brush' | 'extract';
-export type BrushMode = 'draw' | 'erase';
+export type SelectionMode = 'retouch' | 'extract';
 
 // From GeneratePanel
 export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4';

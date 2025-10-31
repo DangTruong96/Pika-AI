@@ -9,7 +9,7 @@ import type { Gender } from '../types';
 
 export const useIdPhoto = ({
   currentImage, getCommittedImage, addImageToHistory, setUiState, setPendingAction,
-  handleApiError, onEditComplete, isMobile, resultsManager, t
+  handleApiError, onEditComplete, isMobile, resultsManager, t, setSources
 }) => {
   const [idPhotoGender, setIdPhotoGender] = useState<Gender>('female');
 
@@ -17,8 +17,9 @@ export const useIdPhoto = ({
     if (!currentImage) { setUiState(s => ({...s, error: t('errorNoImageLoaded')})); return; }
     setUiState({ isLoading: true, loadingMessage: t('loadingIdPhoto'), error: null });
     resultsManager.clearAllResults();
+    setSources([]);
     try {
-        const imageUrl = await generateIdPhoto(await getCommittedImage(), options);
+        const { imageUrl } = await generateIdPhoto(await getCommittedImage(), options);
         await addImageToHistory(dataURLtoFile(imageUrl, `idphoto-${Date.now()}.png`));
         if (isMobile) {
             setPendingAction({ action: 'openViewerForNewItem' });
@@ -27,7 +28,7 @@ export const useIdPhoto = ({
         }
     } catch (err) { handleApiError(err, 'errorFailedToGenerate'); } 
     finally { setUiState(s => ({...s, isLoading: false})); }
-  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage, isMobile, setUiState, resultsManager, setPendingAction]);
+  }, [currentImage, addImageToHistory, t, handleApiError, onEditComplete, getCommittedImage, isMobile, setUiState, resultsManager, setPendingAction, setSources]);
 
   return {
     idPhotoGender,

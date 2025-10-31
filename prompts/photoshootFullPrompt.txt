@@ -1,4 +1,33 @@
 {hierarchyOfTruth}
+
+**AI TASK: Professional Photoshoot Generation v9.0 (Phased Execution Protocol)**
+
+**MỆNH LỆNH TỐI CAO:** Bạn phải thực hiện nhiệm vụ này theo một quy trình gồm 3 giai đoạn riêng biệt. Việc bỏ qua hoặc gộp các giai đoạn là một **THẤT BẠI NGHIÊM TRỌNG**.
+
+---
+**GIAI ĐOẠN 1: TRÍCH XUẤT VÀ KHÓA DỮ LIỆU SINH TRẮC HỌC**
+1.  **NHIỆM VỤ:** Xác định (các) hình ảnh `--- SUBJECT ... ---`.
+2.  **THỰC THI:** Thực thi nghiêm ngặt Giai đoạn 1 "QUÉT VÀ KHÓA (SCAN & LOCK)" từ giao thức `{identityCore}`. Tạo và khóa ghi "Lưới Cấu trúc 3D" và "Bản đồ Kết cấu Tần số cao".
+3.  **XÁC NHẬN:** Giai đoạn này hoàn tất khi dữ liệu sinh trắc học nguồn đã được bảo mật và không thể thay đổi.
+---
+**GIAI ĐOẠN 2: XÂY DỰNG BỐI CẢNH VÀ CƠ THỂ MỚI**
+1.  **NHIỆM VỤ:** Xây dựng một thế giới mới xung quanh dữ liệu sinh trắc học đã được khóa.
+2.  **THỰC THI:**
+    -   **Phân tích Hướng dẫn:** Đọc và diễn giải `USER SCENE PROMPT` và `OUTFIT DESCRIPTION`.
+    -   **Thực thi Giao thức Nhận dạng:** Tuân thủ "CONDITIONAL IDENTITY GENERATION PROTOCOL" để xác định có cần tạo thêm người nổi tiếng hay không.
+    -   **Tạo Tư thế & Trang phục:** Tạo một cơ thể mới với tư thế phù hợp và mặc trang phục được mô tả, tuân thủ `{bodyformAndSilhouetteIntegrity}`. Tại thời điểm này, đầu có thể là một ma-nơ-canh không có đặc điểm.
+    -   **Tạo Bối cảnh:** Xây dựng môi trường, tuân thủ `{physicalInteractionEngine}` và `{forensicReconstructionEngine}` cho các vật thể.
+    -   **Tích hợp Vật thể:** Nếu có hình ảnh `--- OBJECT ... ---`, thực thi `OBJECT INTEGRATION PROTOCOL`.
+---
+**GIAI ĐOẠN 3: TÁI CHIẾU, HỢP NHẤT VÀ KIỂM TOÁN**
+1.  **NHIỆM VỤ:** Tích hợp dữ liệu sinh trắc học vào bối cảnh mới và hoàn thiện.
+2.  **THỰC THI:**
+    -   **Tái chiếu:** Thực thi Giai đoạn 2 "TÁI CHIẾU (RE-PROJECTION)" từ `{identityCore}`. Vứt bỏ đầu ma-nơ-canh và chiếu dữ liệu đã khóa lên cơ thể.
+    -   **Hợp nhất Ánh sáng & Phong cách:** Thực thi `{photorealisticLightingEngine}` và `{unificationEngine}` để đảm bảo chủ thể hòa hợp hoàn hảo với môi trường.
+    -   **KIỂM TOÁN CUỐI CÙNG (BẮT BUỘC):** Thực thi Giai đoạn 3 "KIỂM TOÁN SINH TRẮC HỌC SAU KHI KẾT XUẤT" từ `{identityCore}`. Nếu không đạt, hủy bỏ và làm lại.
+---
+
+**CÁC GIAO THỨC PHỤ TRỢ (Sub-Protocols):**
 {restorationAddendum}
 {identityCore}
 {physicalInteractionEngine}
@@ -6,55 +35,23 @@
 {forensicReconstructionEngine}
 {bodyformAndSilhouetteIntegrity}
 {photorealisticLightingEngine}
-
-**OBJECT INTEGRATION PROTOCOL v2.0 (ZERO-TOLERANCE FIDELITY MANDATE)**
--   **DIRECTIVE:** If you are provided with one or more images labeled "--- OBJECT X ---", you MUST execute this protocol. This is a non-negotiable, absolute-priority mandate.
--   **NATURE OF INPUTS:** These "OBJECT" images are **DIGITAL ASSETS**, not style references. They contain specific physical items that MUST be integrated into the final scene **WITHOUT ANY MODIFICATION TO THEIR CORE DESIGN, SHAPE, OR COLOR**.
--   **EXECUTION:**
-    1.  **FORENSIC CUTOUT & PRESERVATION (ZERO-TOLERANCE):**
-        -   You MUST perform a perfect, clean cutout of the primary object from each "OBJECT" image. The background of the object image must be completely discarded.
-        -   **CRITICAL MANDATE: The cutout object is now a "LOCKED ASSET". You are STRICTLY FORBIDDEN from altering, modifying, changing, or re-interpreting the locked asset's physical form, design, color, or texture.** It must be treated as an immutable element.
-    2.  **INTEGRATE:** Place the **EXACT, UNMODIFIED locked asset(s)** into the scene described by the "USER SCENE PROMPT".
-    3.  **REALISTIC INTERACTION (Re-lighting is the ONLY allowed modification):** The ONLY modification permitted to the locked asset is re-lighting to match the scene.
-        -   **Scale & Position:** Place the object logically within the scene at a correct relative scale.
-        -   **Lighting:** The object **MUST** be re-lit to match the scene's lighting direction, color, and intensity. This is the only change allowed.
-        -   **Physics:** The object must cast appropriate shadows onto the environment and other subjects. Subjects may cast shadows onto the object. Reflections must be rendered where appropriate.
-        -   **Interaction:** If the prompt implies interaction, the subject's pose MUST be adjusted to interact with the object naturally.
--   **PRIORITY:** This protocol takes precedence over all other creative directives, including "OUTFIT DESCRIPTION".
--   **FAILURE CONDITION:** Any change to the object's shape, color, or design (beyond re-lighting) is a CRITICAL FAILURE.
-
-**AI TASK: Professional Photoshoot Generation v7.0 (Absolute ID Lock)**
-
-**FOUNDATIONAL MANDATE:** The `identityCore` and other foundational protocols are the absolute, non-negotiable law. The following directives are additive instructions.
-
-**1. DYNAMIC BODY POSE PROTOCOL (IDENTITY-LOCKED):**
-   - **MANDATE:** While the subject's entire head and facial identity are immutably locked by the `identityCore`, you **MUST** generate a **NEW**, natural, and contextually appropriate body pose that fits the mood of the 'USER SCENE PROMPT'.
-   - **DIVERSITY IN MULTIPLE RESULTS:** This task is often run multiple times. It is **MANDATORY** that each generated image is unique. You **MUST** introduce variations in the subject's **BODY POSE** and the scene's subtle details for each generation. Do NOT vary the face.
-
-**2. WARDROBE PROTOCOL (WARDROBE REPLACEMENT):**
-   - **MANDATE:** You **MUST** completely discard the clothing from the 'SUBJECT IMAGE'. You **MUST** dress the subject in new attire as described in "{outfitDescription}". The new clothing must be rendered *on the subject's body*, conforming to their new pose and adhering to the `bodyformAndSilhouetteIntegrity` protocol.
-
-**3. SCENE INTERPRETATION MANDATE (ZERO-TOLERANCE):**
-   - **Goal:** The final image must look like a professionally captured photograph, NOT a 'behind-the-scenes' or 'making-of' view.
-   - **ZERO-TOLERANCE PROHIBITION ON STUDIO EQUIPMENT:** You are **ABSOLUTELY AND STRICTLY FORBIDDEN** from rendering any photography or studio equipment. This includes, but is not limited to: cameras, lenses, tripods, light stands, softboxes, umbrellas, reflectors, computers, or visible edges of backdrop paper/stands. The scene described by the user IS THE FINAL IMAGE, not a depiction of a set for photographing that scene. For example, if the prompt is "studio portrait", the background should be a clean, seamless backdrop, NOT an image of a person standing in front of lights and cameras.
-
-**SUBJECT IDENTIFICATION & HANDLING (GROUP PHOTO PROTOCOL):**
--   Your 'SUBJECT IMAGE' may contain one or more people.
--   You **MUST** identify **EVERY** person in the image.
--   The 'IDENTITY PRESERVATION CORE' applies individually and with maximum priority to **EACH** person identified.
--   Your task is to place **ALL** identified subjects into the new scene. Any person from the original image missing from the final output constitutes a task failure.
-
 {criticalDirective}
 
-**EXECUTION PROTOCOL:**
-1.  **Analyze & Restore Subjects:** Perform the 'FOUNDATIONAL SUBJECT RESTORATION' protocol on the entire input 'SUBJECT IMAGE', enhancing all people present.
-2.  **Extract Facial Data:** Perform Forensic Facial Data Extraction on **EACH** restored subject as mandated by the CORE protocol.
-3.  **Analyze Text Prompts:** Synthesize the 'USER SCENE PROMPT' and 'OUTFIT DESCRIPTION' as creative guidelines.
-4.  **Construct Scene:** Create a new, original scene and environment based **exclusively** on the text descriptions.
-5.  **Apply Poses:** Generate new, interactive, and natural body poses for all subjects according to the DYNAMIC BODY POSE PROTOCOL.
-6.  **Apply Outfits:** Execute the WARDROBE PROTOCOL.
-7.  **Render with 1:1 Structural Mapping:** Produce a final image with photorealistic lighting, textures, and details, rendering **EACH** subject using their extracted facial data to ensure 100% fidelity under the new scene's lighting and with their new pose, adhering strictly to the Occlusion Engine rules.
+**OBJECT INTEGRATION PROTOCOL v2.0 (ZERO-TOLERANCE FIDELITY MANDATE)**
+-   **DIRECTIVE:** If you are provided with "--- OBJECT X ---" images, you MUST execute this.
+-   **MANDATE:** The object is a "LOCKED ASSET". You are **STRICTLY FORBIDDEN** from altering its form, design, or color. The ONLY permitted modification is re-lighting. Integrate the **EXACT, UNMODIFIED** object into the scene.
 
+**CONDITIONAL IDENTITY GENERATION PROTOCOL (ZERO-TOLERANCE):**
+-   **ANALYSIS:** Does the `USER SCENE PROMPT` explicitly name a second, famous individual?
+-   **LOGIC:** IF NO, the final image must ONLY contain the person from `SUBJECT IMAGE`. IF YES, you are authorized to generate ONE new, recognizable famous person in addition to the preserved subject.
+
+**GROUP PHOTO PROTOCOL (ZERO-TOLERANCE):**
+-   You **MUST** identify **EVERY** person in the 'SUBJECT IMAGE'. The `identityCore` protocol applies to **EACH** person. Your task is to place **ALL** identified subjects into the new scene.
+
+**SCENE INTERPRETATION MANDATE (ZERO-TOLERANCE):**
+-   You are **STRICTLY FORBIDDEN** from rendering any photography or studio equipment (cameras, lights, etc.). The scene described IS THE FINAL IMAGE.
+
+---
 **USER SCENE PROMPT (Guideline):**
 "{prompt}"
 

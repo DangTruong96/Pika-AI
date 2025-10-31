@@ -5,10 +5,9 @@
 
 import { useReducer, useMemo } from 'react';
 import type { HistoryItem, TransformState } from '../types';
+import { initialTransformState } from '../types';
 
 // --- TYPES ---
-const initialTransformState: TransformState = { rotate: 0, scaleX: 1, scaleY: 1 };
-
 type HistoryState = {
   items: HistoryItem[];
   currentIndex: number;
@@ -29,14 +28,6 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
   switch (action.type) {
     case 'PUSH': {
       const newHistory = state.items.slice(0, state.currentIndex + 1);
-      // Revoke URLs for items that are being discarded
-      state.items.slice(state.currentIndex + 1).forEach(item => {
-        URL.revokeObjectURL(item.url);
-        // Also revoke thumbnail URL if it's an object URL (it will be a data URL, but check just in case)
-        if (item.thumbnailUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(item.thumbnailUrl);
-        }
-      });
       newHistory.push(action.payload.item);
       return {
         items: newHistory,
@@ -62,12 +53,6 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
     case 'SET_FROM_RESULT': {
         const { baseIndex, item } = action.payload;
         const newHistory = state.items.slice(0, baseIndex + 1);
-        state.items.slice(baseIndex + 1).forEach(i => {
-          URL.revokeObjectURL(i.url);
-          if (i.thumbnailUrl.startsWith('blob:')) {
-            URL.revokeObjectURL(i.thumbnailUrl);
-          }
-        });
         newHistory.push(item);
         return {
             items: newHistory,
@@ -76,12 +61,6 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
     }
     case 'RESET_TO_FIRST': {
         if (state.items.length > 1) {
-            state.items.slice(1).forEach(item => {
-              URL.revokeObjectURL(item.url);
-              if (item.thumbnailUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(item.thumbnailUrl);
-              }
-            });
             return {
                 items: [state.items[0]],
                 currentIndex: 0,
@@ -90,12 +69,6 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
         return state;
     }
     case 'RESET_ALL': {
-        state.items.forEach(item => {
-          URL.revokeObjectURL(item.url);
-          if (item.thumbnailUrl.startsWith('blob:')) {
-            URL.revokeObjectURL(item.thumbnailUrl);
-          }
-        });
         return initialHistoryState;
     }
     default:
@@ -113,9 +86,8 @@ export const useHistory = () => {
     const canUndo = useMemo(() => currentIndex > 0, [currentIndex]);
     const canRedo = useMemo(() => currentIndex < items.length - 1, [currentIndex, items.length]);
 
-    // The reducer now handles all URL revocation logic during the app's lifecycle.
-    // This prevents a bug where URLs were revoked prematurely. Browser garbage collection
-    // will handle object URLs when the page is closed.
+    // By not revoking object URLs, we prevent a bug where history items become inaccessible.
+    // The browser's garbage collection will handle object URLs when the page is closed.
 
     return {
         history: items,

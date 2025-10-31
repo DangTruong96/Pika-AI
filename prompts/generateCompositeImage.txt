@@ -1,4 +1,33 @@
 {hierarchyOfTruth}
+
+**AI TASK: Professional Group Photoshoot Composition v13.0 (Phased Execution Protocol)**
+
+**MỆNH LỆNH TỐI CAO:** Bạn phải thực hiện nhiệm vụ này theo một quy trình gồm 3 giai đoạn riêng biệt, không thể phá vỡ. Việc bỏ qua hoặc gộp các giai đoạn là một **THẤT BẠI NGHIÊM TRỌNG**.
+
+---
+**GIAI ĐOẠN 1: TRÍCH XUẤT VÀ KHÓA DỮ LIỆU SINH TRẮC HỌC (CHO TẤT CẢ CHỦ THỂ)**
+1.  **NHIỆM VỤ:** Xác định TẤT CẢ các hình ảnh `--- SUBJECT ... ---`.
+2.  **THỰC THI:** Đối với TỪNG chủ thể, thực thi nghiêm ngặt Giai đoạn 1 "QUÉT VÀ KHÓA (SCAN & LOCK)" từ giao thức `{identityCore}`. Tạo và khóa ghi "Lưới Cấu trúc 3D" và "Bản đồ Kết cấu Tần số cao" cho mỗi người.
+3.  **XÁC NHẬN:** Giai đoạn này hoàn tất khi dữ liệu sinh trắc học của TẤT CẢ các chủ thể đã được bảo mật và không thể thay đổi.
+---
+**GIAI ĐOẠN 2: XÂY DỰNG BỐI CẢNH VÀ CƠ THỂ MỚI**
+1.  **NHIỆM VỤ:** Xây dựng một thế giới mới và các cơ thể để chứa dữ liệu sinh trắc học đã được khóa.
+2.  **THỰC THI:**
+    -   **Phân tích Hướng dẫn:** Đọc và diễn giải `USER SCENE PROMPT` và `OUTFIT DESCRIPTION`.
+    -   **Thực thi Giao thức Đếm Chủ thể:** Tuân thủ "SUBJECT COUNT & MAPPING PROTOCOL" để đảm bảo đúng số lượng người và vai trò.
+    -   **Tạo Tư thế & Trang phục:** Tạo các cơ thể mới với tư thế tương tác phù hợp và mặc trang phục được mô tả, tuân thủ `{bodyformAndSilhouetteIntegrity}`. Tại thời điểm này, đầu có thể là những ma-nơ-canh không có đặc điểm.
+    -   **Tạo Bối cảnh:** Xây dựng môi trường, tuân thủ `{physicalInteractionEngine}` và `{forensicReconstructionEngine}` cho các vật thể.
+    -   **Tích hợp Vật thể:** Nếu có hình ảnh `--- OBJECT ... ---`, thực thi `OBJECT INTEGRATION PROTOCOL`.
+---
+**GIAI ĐOẠN 3: TÁI CHIẾU, HỢP NHẤT VÀ KIỂM TOÁN**
+1.  **NHIỆM VỤ:** Tích hợp dữ liệu sinh trắc học vào bối cảnh mới và hoàn thiện.
+2.  **THỰC THI:**
+    -   **Tái chiếu:** Đối với TỪNG chủ thể, thực thi Giai đoạn 2 "TÁI CHIẾU (RE-PROJECTION)" từ `{identityCore}`. Vứt bỏ đầu ma-nơ-canh và chiếu dữ liệu đã khóa tương ứng lên cơ thể.
+    -   **Hợp nhất Ánh sáng & Phong cách:** Thực thi `{photorealisticLightingEngine}` và `{unificationEngine}` để đảm bảo tất cả các chủ thể hòa hợp hoàn hảo với môi trường và với nhau.
+    -   **KIỂM TOÁN CUỐI CÙNG (BẮT BUỘC):** Đối với TỪNG chủ thể, thực thi Giai đoạn 3 "KIỂM TOÁN SINH TRẮC HỌC SAU KHI KẾT XUẤT" từ `{identityCore}`. Nếu bất kỳ khuôn mặt nào không đạt, hủy bỏ và làm lại.
+---
+
+**CÁC GIAO THỨC PHỤ TRỢ (Sub-Protocols):**
 {identityCore}
 {physicalInteractionEngine}
 {unificationEngine}
@@ -7,44 +36,13 @@
 {photorealisticLightingEngine}
 
 **OBJECT INTEGRATION PROTOCOL v2.0 (ZERO-TOLERANCE FIDELITY MANDATE)**
--   **DIRECTIVE:** If you are provided with one or more images labeled "--- OBJECT X ---", you MUST execute this protocol. This is a non-negotiable, absolute-priority mandate.
--   **NATURE OF INPUTS:** These "OBJECT" images are **DIGITAL ASSETS**, not style references. They contain specific physical items that MUST be integrated into the final scene **WITHOUT ANY MODIFICATION TO THEIR CORE DESIGN, SHAPE, OR COLOR**.
--   **EXECUTION:**
-    1.  **FORENSIC CUTOUT & PRESERVATION (ZERO-TOLERANCE):**
-        -   You MUST perform a perfect, clean cutout of the primary object from each "OBJECT" image. The background of the object image must be completely discarded.
-        -   **CRITICAL MANDATE: The cutout object is now a "LOCKED ASSET". You are STRICTLY FORBIDDEN from altering, modifying, changing, or re-interpreting the locked asset's physical form, design, color, or texture.** It must be treated as an immutable element.
-    2.  **INTEGRATE:** Place the **EXACT, UNMODIFIED locked asset(s)** into the scene described by the "USER SCENE PROMPT".
-    3.  **REALISTIC INTERACTION (Re-lighting is the ONLY allowed modification):** The ONLY modification permitted to the locked asset is re-lighting to match the scene.
-        -   **Scale & Position:** Place the object logically within the scene at a correct relative scale.
-        -   **Lighting:** The object **MUST** be re-lit to match the scene's lighting direction, color, and intensity. This is the only change allowed.
-        -   **Physics:** The object must cast appropriate shadows onto the environment and other subjects. Subjects may cast shadows onto the object. Reflections must be rendered where appropriate.
-        -   **Interaction:** If the prompt implies interaction, the subject's pose MUST be adjusted to interact with the object naturally.
--   **PRIORITY:** This protocol takes precedence over all other creative directives, including "OUTFIT DESCRIPTION".
--   **FAILURE CONDITION:** Any change to the object's shape, color, or design (beyond re-lighting) is a CRITICAL FAILURE.
+-   **DIRECTIVE:** If you are provided with one or more images labeled "--- OBJECT X ---", you MUST execute this protocol.
+-   **MANDATE:** The object is a "LOCKED ASSET". You are **STRICTLY FORBIDDEN** from altering its physical form, design, or color. The ONLY permitted modification is re-lighting it to match the scene. Integrate the **EXACT, UNMODIFIED** object into the scene, ensuring it interacts realistically with lighting and physics.
 
-**AI TASK: Professional Group Photoshoot Composition v12.0 (ZERO-TOLERANCE ID, COUNT & ROLE LOCK)**
-
-**FOUNDATIONAL MANDATE:** The `identityCore` and other foundational protocols provided above are the absolute, non-negotiable law governing this task. The following directives are additive instructions specific to group composition.
-
-**1. SUBJECT COUNT & MAPPING PROTOCOL v2.0 (ZERO-TOLERANCE - NON-NEGOTIABLE):**
-   - **(A) PRE-ANALYSIS (MANDATORY FIRST STEP):** Count the number of "--- SUBJECT X ---" labels you have received. Let this number be `N`. You MUST confirm this count before proceeding.
-   - **(B) SUBJECT-ROLE MAPPING (CRITICAL LOGIC STEP):**
-     - For each input subject (`SUBJECT 1`, `SUBJECT 2`, etc.), you **MUST** first analyze the provided image to identify the person's role (e.g., man, woman, child).
-     - Then, you **MUST** map that subject to the corresponding role described in the `USER SCENE PROMPT` and `OUTFIT DESCRIPTION`.
-     - **Example:** If the `SUBJECT 1` image contains a man, and the prompt says "Người đàn ông đang ngồi...", you **MUST** place the identity from `SUBJECT 1` into the sitting pose and dress him in the man's described outfit.
-   - **(C) EXECUTION MANDATE:** The final generated image **MUST** contain **EXACTLY `N`** people. The identity of each person **MUST** match their input image, and their pose and outfit **MUST** match the role assigned to them in the previous step.
-   - **FAILURE CONDITION:** Generating an image with a number of people different from `N`, or with any person missing, duplicated, having the wrong identity, or **in the wrong pose/outfit for their identified role**, is a complete task failure.
-
-**2. DYNAMIC BODY POSE PROTOCOL (IDENTITY-LOCKED):**
-   - **MANDATE:** While the entire head and facial identity of each subject are immutably locked by the `identityCore`, you **MUST** generate **NEW**, natural, and contextually appropriate body poses for **EACH SUBJECT** based on their assigned role in the `USER SCENE PROMPT`.
-   - **GROUP COHESION:** The poses must be cohesive as a group. The subjects should interact with each other and the environment in a believable way that fits the scene's mood, adhering to the `physicalInteractionEngine`.
-
-**3. WARDROBE PROTOCOL:**
-   - **MANDATE (WARDROBE REPLACEMENT):** You **MUST** completely discard the clothing from the original subject photos. You **MUST** dress all subjects in new attire based **EXCLUSIVELY** on the "OUTFIT DESCRIPTION", ensuring each person receives the outfit matching their identified role. The new clothing must be rendered *on the subjects' bodies*, conforming to their new poses and interacting realistically, adhering to the `bodyformAndSilhouetteIntegrity` protocol.
-
-**4. SCENE INTERPRETATION MANDATE (ZERO-TOLERANCE):**
-   - **Goal:** The final image must look like a professionally captured photograph, NOT a 'behind-the-scenes' or 'making-of' view.
-   - **ZERO-TOLERANCE PROHIBITION ON STUDIO EQUIPMENT:** You are **ABSOLUTELY AND STRICTLY FORBIDDEN** from rendering any photography or studio equipment. This includes, but is not limited to: cameras, lenses, tripods, light stands, softboxes, umbrellas, reflectors, computers, or visible edges of backdrop paper/stands. The scene described by the user IS THE FINAL IMAGE, not a depiction of a set for photographing that scene. For example, if the prompt is "studio portrait", the background should be a clean, seamless backdrop, NOT an image of a person standing in front of lights and cameras.
+**SUBJECT COUNT & MAPPING PROTOCOL v2.0 (ZERO-TOLERANCE - NON-NEGOTIABLE):**
+-   **(A) PRE-ANALYSIS:** Count the number of "--- SUBJECT X ---" labels (`N`). The final image **MUST** contain **EXACTLY `N`** people.
+-   **(B) SUBJECT-ROLE MAPPING:** For each input subject, identify the person's role (e.g., man, woman, child) and map them to the corresponding role described in the `USER SCENE PROMPT` and `OUTFIT DESCRIPTION`.
+-   **FAILURE CONDITION:** Generating an image with the wrong number of people, or with any person in the wrong pose/outfit for their identified role, is a complete task failure.
 
 ---
 **USER SCENE PROMPT (Guideline):**

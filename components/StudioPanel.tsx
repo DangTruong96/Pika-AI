@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { UsersIcon, XMarkIcon, UploadIcon, SparklesIcon, LightbulbIcon } from './icons';
+import { UsersIcon, XMarkIcon, UploadIcon, SparklesIcon, IdCardIcon } from './icons';
 // Fix: Corrected the import path for the 'Tab' type from '../hooks/usePika' to '../types' to resolve module export error.
 import type { Tab } from '../types';
 
@@ -116,13 +116,13 @@ const StudioPanel: React.FC<StudioPanelProps> = React.memo(
                     </h3>
                 )}
                 <button 
-                  onClick={() => setActiveTab('generate')} 
+                  onClick={() => setActiveTab('idphoto')} 
                   className="p-2 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={t('tooltipGenerate')}
+                  title={t('tooltipIdPhoto')}
                   disabled={isLoading}
-                  aria-label={t('tooltipGenerate')}
+                  aria-label={t('tooltipIdPhoto')}
                 >
-                  <LightbulbIcon className="w-6 h-6" />
+                  <IdCardIcon className="w-6 h-6" />
                 </button>
             </div>
             <p className="text-sm text-gray-400 -mt-2 text-center">{t('studioDescription')}</p>
@@ -175,7 +175,7 @@ const StudioPanel: React.FC<StudioPanelProps> = React.memo(
                         <SparklesIcon className="w-6 h-6" />
                     </button>
                 </div>
-
+                
                 <div className="w-full flex flex-row items-start justify-center gap-4">
                     <div className="flex-1 flex flex-col items-center gap-2">
                         <span className="text-sm font-semibold text-gray-300">{t('studioStyle')}</span>
