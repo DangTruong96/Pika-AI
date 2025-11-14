@@ -102,6 +102,13 @@ export const usePika = () => {
   const fullscreenViewerManager = useFullscreenViewer({ history, resultsState, historyIndex });
   const { fullscreenViewerState, isViewerOpen, viewerItems, viewerInitialIndex, viewerType, viewerComparisonUrl, openFullScreenViewer, setFullscreenViewerState } = fullscreenViewerManager;
   
+  const handleStartOver = useCallback(() => {
+    historyDispatch({ type: 'RESET_ALL' });
+    clearAllResults();
+    setComparisonState({ isComparing: false });
+    setSources([]);
+  }, [historyDispatch, clearAllResults]);
+
   const handleImageUpload = useCallback(async (file: File) => {
     setUiState(s => ({ ...s, error: null }));
     historyDispatch({ type: 'RESET_ALL' }); 
@@ -109,7 +116,13 @@ export const usePika = () => {
     setComparisonState({ isComparing: false });
     setSources([]);
     const thumbnailUrl = await createThumbnail(file);
-    const newItem: HistoryItem = { file, url: URL.createObjectURL(file), thumbnailUrl, transform: { ...initialTransformState } };
+    const newItem: HistoryItem = { 
+        file, 
+        url: URL.createObjectURL(file), 
+        thumbnailUrl, 
+        transform: { ...initialTransformState },
+        studioSubjects: [file]
+    };
     historyDispatch({ type: 'PUSH', payload: { item: newItem } });
   }, [clearAllResults, historyDispatch]);
 
@@ -212,11 +225,43 @@ export const usePika = () => {
     }
   }, [handleImageUpload, historyDispatch, historyIndex, resultsState.baseHistoryIndex, fullscreenViewerState, viewerItems, resultsManager, clearAllResults, setFullscreenViewerState, setIsHistoryExpanded, setToolboxState]);
 
+  const studioSubjects = useMemo(() => {
+    if (!currentHistoryItem) return [];
+    return currentHistoryItem.studioSubjects ?? [currentHistoryItem.file];
+  }, [currentHistoryItem]);
+
+  const updateStudioSubjectsInHistory = useCallback(async (newSubjects: File[]) => {
+    if (newSubjects.length === 0) {
+        handleStartOver();
+        return;
+    }
+
+    const oldSubjects = currentHistoryItem?.studioSubjects ?? (currentHistoryItem ? [currentHistoryItem.file] : []);
+    if (newSubjects.length === oldSubjects.length && newSubjects.every((s, i) => s === oldSubjects[i])) {
+      return;
+    }
+
+    const newMainImage = newSubjects[0];
+    const thumbnailUrl = await createThumbnail(newMainImage);
+    const newItem: HistoryItem = {
+        file: newMainImage,
+        url: URL.createObjectURL(newMainImage),
+        thumbnailUrl,
+        transform: initialTransformState,
+        studioSubjects: newSubjects,
+    };
+    
+    historyDispatch({ type: 'PUSH', payload: { item: newItem } });
+
+  }, [currentHistoryItem, historyDispatch, handleStartOver]);
+
   const sharedHookProps = {
     currentImage, getCommittedImage, addImageToHistory, setUiState, setPendingAction,
     handleApiError, onEditComplete, isMobile, resultsManager, openFullScreenViewer, t,
     historyIndex, activeTab: toolboxState.activeTab, setToolboxState, setIsHistoryExpanded,
     setSources,
+    studioSubjects,
+    updateStudioSubjectsInHistory,
   };
   
   const studioManager = useStudio(sharedHookProps);
@@ -230,18 +275,17 @@ export const usePika = () => {
   const retouchManager = useRetouch({ ...sharedHookProps, handleUseExtractedAsOutfit, openFullScreenViewer });
   const expansionManager = useExpansion({ ...sharedHookProps, imageDimensions, getRelativeCoords, imgRef });
 
-  const { studioPrompt, studioStyleFile, studioSubjects, studioOutfitFiles, setStudioState } = studioManager;
+  const { studioPrompt, studioStyleFile, studioOutfitFiles, setStudioState } = studioManager;
 
   const handleGenerateCreativePrompt = useCallback(async () => {
-    if (!currentImage) {
+    if (!studioSubjects || studioSubjects.length === 0) {
         setUiState(s => ({...s, error: t('errorNoImageLoaded')}));
         return;
     }
     setUiState(s => ({...s, isLoading: true, loadingMessage: t('loadingStudioAnalysis')}));
     setSources([]); // Clear sources on new request
     try {
-        const subjectFiles = [currentImage, ...studioSubjects];
-        const { prompt: newPrompt, sources: newSources } = await generateCreativePrompt(subjectFiles, studioStyleFile, studioOutfitFiles, studioPrompt);
+        const { prompt: newPrompt, sources: newSources } = await generateCreativePrompt(studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt);
         setStudioState(s => ({...s, prompt: newPrompt}));
         if (newSources && newSources.length > 0) {
           setSources(newSources);
@@ -251,20 +295,13 @@ export const usePika = () => {
     } finally {
         setUiState(s => ({...s, isLoading: false}));
     }
-  }, [currentImage, studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t, setUiState, setStudioState, setSources]);
+  }, [studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t, setUiState, setStudioState, setSources]);
 
   const handleFileSelect = useCallback((files: FileList | null) => {
     if (files && files[0]) {
       handleImageUpload(files[0]);
     }
   }, [handleImageUpload]);
-
-  const handleStartOver = useCallback(() => {
-    historyDispatch({ type: 'RESET_ALL' });
-    clearAllResults();
-    setComparisonState({ isComparing: false });
-    setSources([]);
-  }, [historyDispatch, clearAllResults]);
 
   const handleResetHistory = useCallback(() => {
     historyDispatch({ type: 'RESET_TO_FIRST' });
@@ -550,6 +587,7 @@ export const usePika = () => {
     ...idPhotoManager,
     ...retouchManager,
     ...studioManager,
+    studioSubjects,
     ...expansionManager,
     handleDownloadExtractedItem,
     handleGenerateCreativePrompt,

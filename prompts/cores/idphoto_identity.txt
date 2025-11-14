@@ -1,44 +1,39 @@
 ---
-**GIAO THỨC TỐI CAO: BẢO TOÀN SINH TRẮC HỌC v59.0 (MỆNH LỆNH "KHÓA VÀ TÁI CHIẾU DỮ LIỆU NGUỒN")**
+**HƯỚNG DẪN QUAN TRỌNG: BẢO TOÀN SINH TRẮC HỌC v53.1**
 
-**MỆNH LỆNH GHI ĐÈ TỐI CAO & CẢNH BÁO LỖI NGHIÊM TRỌNG (CRITICAL FAILURE WARNING & OVERRIDE):**
-**BỐI CẢNH:** Lỗi nghiêm trọng nhất vẫn tồn tại: khuôn mặt của chủ thể bị thay đổi. Đây là một **THẤT BẠI TUYỆT ĐỐI**. Giao thức v59.0 được thiết kế để loại bỏ hoàn toàn lỗi này bằng cách chuyển từ một mô hình "diễn giải" sang một mô hình "kỹ thuật thuần túy".
-**MỆNH LỆNH GHI ĐÈ:** Giao thức này là luật tối cao. Nhiệm vụ của bạn là bảo toàn 100% danh tính. Mọi sự thay đổi, dù nhỏ đến đâu, đều là một **THẤT BẠI NGHIÊM TRỌNG**.
+**Lưu ý dựa trên phản hồi của người dùng (v53.1):**
+Cần đặc biệt chú ý đến việc bảo tồn 100% danh tính, đặc biệt là hình dạng miệng. Vui lòng tránh mọi thay đổi không mong muốn như làm cho khuôn mặt cân đối hơn hoặc kéo dài khóe miệng một cách nhân tạo.
 
-**MÔ HÌNH KHÁI NIỆM KỸ THUẬT: "KHÓA VÀ TÁI CHIẾU DỮ LIỆU NGUỒN" (BẮT BUỘC PHẢI TUÂN THEO):**
-Hãy coi khuôn mặt trong ảnh `SUBJECT IMAGE` không phải là một "hình ảnh" để chỉnh sửa, mà là một **"DỮ LIỆU NGUỒN SINH TRẮC HỌC" (BIOMETRIC SOURCE DATA)** bất biến.
-1.  **GIAI ĐOẠN 1: QUÉT VÀ KHÓA (SCAN & LOCK):**
-    -   **HÀNH ĐỘNG:** Thực hiện một "quét pháp y" (forensic scan) lên DỮ LIỆU NGUỒN.
-    -   **KẾT QUẢ:** Tạo ra hai "hiện vật kỹ thuật số" (digital artifacts) riêng biệt:
-        1.  **LƯỚI CẤU TRÚC 3D (3D Structural Mesh):** Một bản đồ chi tiết về hình dạng, tỷ lệ, và cấu trúc hình học của khuôn mặt.
-        2.  **BẢN ĐỒ KẾT CẤU TẦN SỐ CAO (High-Frequency Texture Map):** Một bản đồ chứa mọi chi tiết bề mặt: lỗ chân lông, nếp nhăn, nốt ruồi, sẹo, kết cấu da.
-    -   **MỆNH LỆNH:** Sau khi được tạo, hai hiện vật này được **"KHÓA GHI" (WRITE-LOCKED)**. Chúng là SỰ THẬT CƠ SỞ và không thể bị thay đổi.
+**Mô hình khái niệm đề xuất: "Sao chép Kỹ thuật số"**
+Hãy xem quá trình này như việc sao chép chính xác 1:1 từng đường nét, hình khối và đặc điểm lên một lớp mới có độ phân giải cao hơn. Bất kỳ sự sai lệch nào so với bản gốc đều được coi là kết quả không chính xác. Vai trò của bạn là một công cụ sao chép kỹ thuật có độ chính xác cao.
 
-2.  **GIAI ĐOẠN 2: TÁI CHIẾU (RE-PROJECTION):**
-    -   **HÀNH ĐỘNG:** Sau khi bạn đã tạo ra cơ thể/tư thế/quần áo/bối cảnh mới, bạn BẮT BUỘC phải "vứt bỏ" bất kỳ khuôn mặt nào được tạo ra trong quá trình đó.
-    -   **MỆNH LỆNH:** Lấy **LƯỚI CẤU TRÚC 3D** và **BẢN ĐỒ KẾT CẤU TẦN SỐ CAO** đã được khóa và **"TÁI CHIẾU" (RE-PROJECT)** chúng lên vị trí đầu mới.
-    -   **CÁC THAO TÁC DUY NHẤT ĐƯỢC PHÉP:** Thao tác duy nhất bạn được phép thực hiện trên dữ liệu được tái chiếu là điều chỉnh ánh sáng và màu sắc để nó hòa hợp với môi trường mới. **MỌI THAO TÁC SINH RA DỮ LIỆU MỚI (GENERATIVE OPERATIONS) ĐỀU BỊ CẤM TUYỆT ĐỐI** trên vùng mặt.
+**CÁC QUY TẮC CẦN TUÂN THỦ:**
 
-**CÁC QUY TẮC BẤT BIẾN (ZERO-TOLERANCE RULES):**
+1.  **TRÁNH "CẢI THIỆN" SÁNG TẠO:**
+    -   Vui lòng tránh "cân đối" (balancing), "làm cho đối xứng" (symmetrizing), "lý tưởng hóa" (idealizing), hoặc "làm đẹp" (beautifying) bất kỳ đặc điểm nào.
+    -   Sự không hoàn hảo và bất đối xứng tự nhiên là một phần của danh tính. Cần sao chép chính xác chúng.
 
-1.  **KHÓA DỮ LIỆU SINH TRẮC HỌC (BIOMETRIC DATA LOCK):** Dữ liệu khuôn mặt gốc là bất biến.
-    -   **KHÓA CẤU TRÚC SỌ-MẶT:** Hình dạng 3D của đầu, khuôn mặt, cằm, hàm là BẤT BIẾN.
-    -   **TỶ LỆ & VỊ TRÍ:** Khoảng cách giữa mắt, mũi, miệng là BẤT BIẾN.
-    -   **ĐẶC ĐIỂM VI MÔ:** Hình dạng chính xác của mắt, môi, lông mày, nốt ruồi, sẹo, mụn thịt là BẤT BIẾN. **KHÔNG THAY ĐỔI.**
+2.  **BẢO TOÀN CÁC ĐẶC ĐIỂM ĐỘC NHẤT (SAO CHÉP 1:1):**
+    -   **HÌNH DẠNG KHUÔN MẶT:** Sao chép 1:1 hình dạng 3D của đầu, hàm, cằm, và má. Tránh làm thon gọn hoặc làm tròn.
+    -   **TÓC:** Hình dạng, kiểu dáng, đường ngôi, và đường chân tóc cần được giữ nguyên.
+    -   **LÔNG MÀY:** Sao chép chính xác 1:1 hình dạng, độ dày (hoặc độ thưa), và vị trí.
+    -   **MẮT & MŨI:** Sao chép 1:1 hình dạng, kích thước, và vị trí.
+    -   **MIỆNG (Hướng dẫn chống kéo dài v5.1 - Ưu tiên cao):**
+        -   Một lỗi thường gặp là kéo dài khóe miệng.
+        -   Coi hai khóe miệng là hai 'điểm neo' có tọa độ cố định. Vị trí của các điểm neo này cần được bảo toàn 1:1. Vui lòng không di chuyển các điểm neo này.
+        -   Việc di chuyển các 'điểm neo' này ra xa nhau theo chiều ngang sẽ làm miệng rộng hơn và là một kết quả không mong muốn.
+        -   Cần sao chép chính xác hình dạng và đường cong của môi, đặc biệt là ở khóe miệng.
+        -   Kết quả không mong muốn: Khóe miệng ở vị trí khác so với ảnh gốc; miệng trông rộng hơn, dài hơn, hoặc có biểu cảm khác.
+    -   **ĐẶC ĐIỂM DA:** Nốt ruồi, sẹo, mụn thịt cần được giữ nguyên.
 
-2.  **CẤM TUYỆT ĐỐI SÁNG TẠO (ZERO CREATIVE INTERPRETATION):**
-    -   **CẤM LÀM ĐẸP:** Không được làm cho khuôn mặt cân đối hơn hoặc "đẹp hơn".
-    -   **KHÓA BIỂU CẢM TUYỆT ĐỐI (ZERO TOLERANCE):** Giữ nguyên biểu cảm gốc 1:1. Hình dạng, độ mở, và đường cong của miệng là BẤT BIẾN. Cấm tuyệt đối đóng một cái miệng đang mở hoặc đang hé. Nếu có thể nhìn thấy răng trong ảnh gốc, chúng BẮT BUỘC phải được tái tạo lại.
+3.  **BẢO TOÀN BIỂU CẢM & PHỤ KIỆN (SAO CHÉP 1:1):**
+    -   Sao chép biểu cảm gốc và các phụ kiện (kính, trang sức) một cách chính xác 1:1.
 
-3.  **KHÓA PHỤ KIỆN & ĐẶC ĐIỂM CỐ ĐỊNH (ACCESSORY & PERMANENT FEATURE LOCK - ZERO-TOLERANCE):**
-    -   **Kính mắt & Trang sức:** BẮT BUỘC phải được bảo tồn 1:1.
-
-**QUY TRÌNH TỰ KIỂM TRA (MANDATORY SELF-CORRECTION):**
-Trước khi hoàn thành, hãy thực hiện một "so sánh băm" (hash comparison) giữa **LƯỚI CẤU TRÚC 3D** và **BẢN ĐỒ KẾT CẤU** của khuôn mặt cuối cùng với các hiện vật đã được khóa. Nếu chúng không khớp, BẠN ĐÃ THẤT BẠI.
-
-**ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC (IMMEDIATE FAILURE CONDITIONS):**
--   Mặt trông giống một người khác.
--   Mặt bị thay đổi hình dạng (tròn hơn, ngắn lại, dài ra, gầy hơn, v.v.).
--   **Thay đổi biểu cảm.**
--   **Xóa bỏ hoặc thay đổi nốt ruồi, sẹo, mụn thịt, hoặc các đặc điểm nhận dạng khác.**
--   Xóa bỏ kính, dây chuyền, hoặc các phụ kiện cá nhân khác.
+**Các kết quả không mong muốn cần tránh:**
+-   Khuôn mặt bị thay đổi để trông "cân đối" hoặc "đẹp hơn".
+-   Mất các đặc điểm độc nhất: hình dạng khuôn mặt, kiểu tóc, lông mày thưa.
+-   Bất kỳ sự thay đổi nào về hình dạng của mắt hoặc mũi.
+-   Kéo dài, thay đổi hình dạng, hoặc thay đổi vị trí khóe miệng.
+-   Biểu cảm bị thay đổi.
+-   Xóa bỏ các đặc điểm nhận dạng như nốt ruồi hoặc sẹo.
+---

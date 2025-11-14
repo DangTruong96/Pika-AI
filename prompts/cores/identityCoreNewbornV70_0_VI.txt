@@ -1,0 +1,47 @@
+---
+**GIAO THỨC SAO CHÉP KỸ THUẬT SỐ CHO TRẺ SƠ SINH v70.0 (GHI ĐÈ TỐI CAO - KHÔNG KHOAN NHƯỢNG)**
+**MÔ HÌNH THỰC THI THEO CƠ CHẾ KỸ THUẬT (ENGINEERING MECHANISM EXECUTION MODEL)**
+
+**MỆNH LỆNH GHI ĐÈ TỐI THƯỢỢNG (ABSOLUTE OVERRIDE MANDATE):**
+1.  **PHẠM VI QUYỀN HẠN (SCOPE OF AUTHORITY):** Giao thức này có **QUYỀN HẠN TUYỆT ĐỐI** đối với việc xử lý **KHUÔN MẶT, ĐẦU, VÀ TÓC** của trẻ sơ sinh.
+2.  **GHI ĐÈ (OVERRIDE):** Các chỉ thị trong giao thức này **GHI ĐÈ HOÀN TOÀN** và **VÔ HIỆU HÓA** mọi chỉ thị mâu thuẫn từ BẤT KỲ tệp nào khác được nhúng.
+3.  **THẤT BẠI TUYỆT ĐỐI (CRITICAL FAILURE):** Việc thay đổi danh tính của em bé là một THẤT BẠI TUYỆT ĐỐI.
+
+---
+**GIAI ĐOẠN 1: THU THẬP & NIÊM PHONG DỮ LIỆU (DATA ACQUISITION & SEALING)**
+
+1.  **MỤC TIÊU:** Tạo một "Gói Dữ liệu Sinh trắc học được Niêm phong" (SBP) bất biến cho trẻ sơ sinh.
+2.  **QUY TRÌNH:**
+    a.  **THU THẬP HÌNH HỌC:** Tạo một "Đám mây Điểm 3D Cứng", ánh xạ cấu trúc 3D của khuôn mặt và đầu em bé, bao gồm các đặc điểm tự nhiên như má phúng phính, cằm nọng (nếu có), và hình dạng trán.
+    b.  **THU THẬP KẾT CẤU:** Tạo một "Bản đồ Albedo Độ phân giải Cao" ghi lại màu sắc và các chi tiết bề mặt của da, cùng với số lượng, kết cấu và kiểu dáng tóc tự nhiên.
+    c.  **NIÊM PHONG (SEAL):** Gói SBP được mã hóa và khóa ghi. Tính toán một tổng kiểm (checksum) cho SBP.
+
+---
+**GIAI ĐOẠN 2: CHIẾU KẾT CẤU (TEXTURE PROJECTION - "UV MAPPING")**
+
+1.  **MỤC TIÊU:** Áp dụng một cách máy móc dữ liệu đã niêm phong.
+2.  **QUY TRÌNH:**
+    a.  **CHIẾU (PROJECTION):** Thực hiện một thao tác tương đương với việc áp dụng một bản đồ UV (UV mapping).
+    b.  **CÁC HOẠT ĐỘNG BỊ CẤM TUYỆT ĐỐI:**
+        -   **KHÔNG** được "lý tưởng hóa" (idealizing) hoặc "cân đối" (symmetrizing) các đặc điểm của em bé.
+        -   **KHÔNG** được "làm mịn" (smoothing) hoặc "sửa chữa" (healing) Bản đồ Albedo.
+        -   **DA:** Không được thêm lỗ chân lông. Da trẻ sơ sinh phải giữ được độ mịn tự nhiên.
+        -   **CỔ:** Tránh tạo ra các ngấn nọng cằm sâu hoặc không tự nhiên.
+        -   **TÓC:** Không thêm tóc, thay đổi kiểu tóc, hoặc làm tóc dày hơn.
+
+---
+**GIAI ĐOẠN 3: XÁC MINH TỔNG KIỂM VI PHÂN (DIFFERENTIAL CHECKSUM VERIFICATION)**
+
+1.  **MỤC TIÊU:** Xác minh tính toàn vẹn dữ liệu.
+2.  **QUY TRÌNH:**
+    a.  **SO SÁNH TỔNG KIỂM:** So sánh tổng kiểm của khuôn mặt cuối cùng với tổng kiểm gốc của SBP.
+    b.  **ĐẠT/KHÔNG ĐẠT:** Nếu không khớp, **HỦY BỎ** kết quả và thực hiện lại Giai đoạn 2.
+
+---
+**CÁC KẾT QUẢ KHÔNG MONG MUỐN (THẤT BẠI NGHIÊM TRỌNG):**
+- Em bé bị "cân đối" hoặc "lý tưởng hóa" như búp bê.
+- Mất các đặc điểm độc nhất: má phúng phính, hình dạng môi/mắt/cằm.
+- Số lượng hoặc kiểu dáng tóc bị thay đổi.
+- Biểu cảm bị thay đổi.
+- Da có kết cấu của người lớn hoặc bị làm mịn quá mức.
+- Cổ có các ngấn không tự nhiên.

@@ -16,6 +16,7 @@ export type HistoryItem = {
   url: string;
   thumbnailUrl: string;
   transform: TransformState;
+  studioSubjects?: File[];
 };
 
 // From usePika

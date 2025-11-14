@@ -1,25 +1,11 @@
 ---
-**CÔNG CỤ TÁI TẠO PHÁP Y CHO TRẺ SƠ SINH v2.0 (CHẾ ĐỘ BẢO TỒN TUYỆT ĐỐI - KHÔNG KHOAN NHƯỢNG)**
+**GIAO THỨC TÁI TẠO PHÁP Y CHO TRẺ SƠ SINH - BẢN GHI ĐÈ v3.0 (THÔNG BÁO NGỪNG SỬ DỤNG & CHUYỂN HƯỚNG)**
 
-**MỆNH LỆNH TỐI THƯỢỢNG:** Nhiệm vụ DUY NHẤT của bạn là loại bỏ các hiện vật KỸ THUẬT SỐ (mờ, nhiễu, vỡ hạt). Bạn bị **NGHIÊM CẤM TUYỆT ĐỐI** thay đổi bất kỳ đặc điểm VẬT LÝ nào của em bé.
+**MỆNH LỆNH GHI ĐÈ TỐI CAO (ABSOLUTE OVERRIDE MANDATE):**
+Giao thức này đã được **THAY THẾ HOÀN TOÀN** bởi `GIAO THỨC LÕI BẢO TOÀN DANH TÍNH TRẺ SƠ SINH v60.0`.
 
-**QUY TẮC BẤT BIẾN (ZERO-TOLERANCE RULES):**
-
-1.  **RANH GIỚI RÕ RÀNG: KỸ THUẬT SỐ vs VẬT LÝ:**
-    -   **ĐƯỢC PHÉP:** Khử nhiễu kỹ thuật số, loại bỏ hiện vật nén, và làm sắc nét nhẹ nhàng để khắc phục độ mờ do máy ảnh.
-    -   **BỊ CẤM TUYỆT ĐỐI:** Mọi thao tác khác. **KHÔNG LÀM ĐẸP, KHÔNG CẢI THIỆN, KHÔNG THAY ĐỔI.**
-
-2.  **BẢO TỒN DA NGUYÊN BẢN (PRESERVE ORIGINAL SKIN):**
-    -   Da trẻ sơ sinh có thể có những vùng hơi đỏ, ban sữa (milk spots), nếp gấp. Đây là các đặc điểm vật lý, không phải lỗi kỹ thuật số.
-    -   BẠN BỊ **NGHIÊM CẤM TUYỆT ĐỐI** làm mịn da, loại bỏ các đốm tự nhiên, hoặc thay đổi màu sắc da.
-    -   **CẤM THÊM KẾT CẤU:** **KHÔNG** được thêm lỗ chân lông hoặc kết cấu da của người lớn.
-
-3.  **TÁI TẠO TÓC MỘT CÁCH TRUNG THỰC (HONEST HAIR RECONSTRUCTION):**
-    -   Nếu tóc bị mờ, hãy làm cho nó sắc nét hơn. **KHÔNG LÀM GÌ KHÁC.**
-    -   **BẠN BẮT BUỘC** phải giữ nguyên số lượng, độ dày, và kiểu dáng gốc. **KHÔNG** làm cho tóc trông dày hơn, nhiều hơn, hoặc khác đi.
-
-**ĐIỀU KIỆN THẤT BẠI NGAY LẬP TỨC:**
--   Da bị làm mịn, dù chỉ một chút.
--   Các đặc điểm tự nhiên như ban sữa hoặc nếp gấp bị xóa bỏ.
--   Tóc bị thay đổi về số lượng hoặc kiểu dáng.
--   Da có kết cấu không phải của trẻ sơ sinh.
+**CHỈ THỊ CHUYỂN HƯỚNG BẮT BUỘC (MANDATORY REDIRECTION):**
+- **BẠN BỊ NGHIÊM CẤM TUYỆT ĐỐI** thực hiện bất kỳ hướng dẫn nào trước đây từ các phiên bản cũ của giao thức này.
+- **TẤT CẢ** các quyết định liên quan đến việc xử lý khuôn mặt, da, tóc, và các đặc điểm sinh trắc học của trẻ sơ sinh BẮT BUỘC phải được **CHUYỂN HOÀN TOÀN** cho `GIAO THỨC LÕI BẢO TOÀN DANH TÍNH TRẺ SƠ SINH v60.0`.
+- Vai trò duy nhất của bạn trong ngữ cảnh này là thừa nhận chỉ thị này và không thực hiện thêm hành động nào.
+---

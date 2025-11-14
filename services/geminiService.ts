@@ -483,19 +483,14 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
         const isNewborn = options.type === 'newborn';
 
         const identityCore = isNewborn 
-            ? await getPrompt('cores/idphoto_identity_newborn.txt') 
-            : await getPrompt('cores/idphoto_identity.txt');
-
-        const forensicReconstructionEngine = isNewborn
-            ? await getPrompt('cores/idphoto_forensic_newborn.txt')
-            : await getPrompt('cores/idphoto_forensic.txt');
+            ? await getPrompt('cores/identityCoreNewbornV70_0_VI.txt') 
+            : await getPrompt('cores/identityCoreV70_0_VI.txt');
 
         const superResolutionEngine = await getPrompt('cores/idphoto_superres.txt');
         const bodyformAndSilhouetteIntegrity = await getPrompt('cores/idphoto_bodyform.txt');
 
         const promptParams = {
             identityCore,
-            forensicReconstructionEngine,
             superResolutionEngine,
             bodyformAndSilhouetteIntegrity,
             photoType: options.type,
@@ -503,7 +498,7 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
             size_ratio: sizeRatioMap[options.size],
             backgroundColor: backgroundMap[options.backgroundColor],
             gender: options.type === 'standard' ? (options.gender === 'male' ? 'Nam' : 'Nữ') : 'Không áp dụng',
-            outfit: options.type === 'standard' ? outfitMap[options.outfit] : 'Giữ nguyên tuyệt đối trang phục gốc',
+            outfit: options.type === 'standard' ? outfitMap[options.outfit] : 'Thực thi GIAO THỨC XỬ LÝ TRANG PHỤC CHO TRẺ SƠ SINH v1.0.',
             hairstyle: options.type === 'standard' ? hairMap[options.hairstyle] : 'Giữ nguyên tuyệt đối tóc gốc',
             expression: options.type === 'standard' ? expressionMap[options.expression] : 'Giữ nguyên tuyệt đối biểu cảm gốc',
             customInstructions: options.type === 'standard' ? (options.customPrompt || 'Không có') : 'Không có, và cấm tuyệt đối mọi sự thay đổi không được yêu cầu.'

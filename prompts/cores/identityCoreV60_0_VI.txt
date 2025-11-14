@@ -1,0 +1,58 @@
+---
+**GIAO THỨC LÕI BẢO TOÀN DANH TÍNH v60.0 (ƯU TIÊN TUYỆT ĐỐI - KHÔNG KHOAN NHƯỢNG)**
+**MÔ HÌNH THỰC THI THEO GIAI ĐOẠN (PHASED EXECUTION MODEL)**
+
+**MỆNH LỆNH GHI ĐÈ TỐI THƯỢỢNG:** Đây là quy trình kỹ thuật bắt buộc, ghi đè lên MỌI chỉ thị khác. Việc thay đổi danh tính là một **THẤT BẠI TUYỆT ĐỐI**. Giao thức này được thực thi theo 3 giai đoạn riêng biệt.
+
+---
+**GIAI ĐOẠN 1: QUÉT & KHÓA (SCAN & LOCK) - TRÍCH XUẤT DỮ LIỆU BẤT BIẾN**
+
+1.  **MỤC TIÊU:** Tạo ra một "Đối tượng Dữ liệu Sinh trắc học" (Biometric Data Object - BDO) bất biến từ hình ảnh gốc. BDO này là sự thật cơ sở duy nhất.
+2.  **QUY TRÌNH:**
+    a.  **QUÉT HÌNH HỌC 3D:** Phân tích pháp y hình ảnh gốc để tạo ra một "Lưới Cấu trúc 3D" (3D Structural Mesh) chính xác của đầu và mặt. Lưới này phải ghi lại với độ chính xác tuyệt đối:
+        -   Hình dạng tổng thể của hộp sọ và đường viền hàm.
+        -   Vị trí, kích thước và tỷ lệ chính xác của mắt, mũi, miệng, và tai.
+        -   Cấu trúc xương cơ bản: gò má, cung mày, cấu trúc cằm.
+    b.  **TRÍCH XUẤT BẢN ĐỒ KẾT CẤU:** Tạo ra một "Bản đồ Kết cấu Tần số cao" (High-Frequency Texture Map). Bản đồ này phải ghi lại:
+        -   Các đặc điểm nhận dạng độc nhất: Nốt ruồi, sẹo, tàn nhang, mụn thịt.
+        -   Kết cấu da vi mô (nếu có thể nhận thấy trong ảnh gốc).
+        -   Hình dạng và kết cấu của lông mày.
+    c.  **KHÓA (LOCK):** BDO (bao gồm Lưới 3D và Bản đồ Kết cấu) được coi là **BẤT BIẾN** và được khóa ghi (write-locked). Mọi nỗ lực sửa đổi BDO này trong các giai đoạn sau là một vi phạm giao thức.
+
+---
+**GIAI ĐOẠN 2: TÁI CHIẾU (RE-PROJECTION) - ÁP DỤNG DỮ LIỆU BẤT BIẾN**
+
+1.  **MỤC TIÊU:** "Chiếu" BDO đã được khóa lên một cơ thể/tư thế mới được tạo ra trong một bối cảnh khác.
+2.  **QUY TRÌNH:**
+    a.  **CHUẨN BỊ MỤC TIÊU:** Nhận một cơ thể mới (ma-nơ-canh) với tư thế và trang phục theo yêu cầu.
+    b.  **CĂN CHỈNH & TÁI CHIẾU:**
+        -   Vứt bỏ hoàn toàn đầu của ma-nơ-canh.
+        -   Căn chỉnh và chiếu Lưới Cấu trúc 3D lên vị trí đầu. Tỷ lệ của đầu so với cơ thể mới BẮT BUỘC phải tuân theo các tỷ lệ giải phẫu người thực tế.
+        -   Áp dụng Bản đồ Kết cấu Tần số cao lên bề mặt của lưới.
+    c.  **CẤM TUYỆT ĐỐI SỬA ĐỔI:** Trong quá trình này, BẠN BỊ NGHIÊM CẤM TUYỆT ĐỐI "làm đẹp", "cân đối", "sửa chữa", hoặc "lý tưởng hóa" bất kỳ dữ liệu nào từ BDO. **SAO CHÉP 1:1, KHÔNG DIỄN GIẢI.** Các quy tắc cụ thể từ Giao thức v53.1 vẫn được áp dụng nghiêm ngặt:
+        -   **MIỆNG (CHỐNG KÉO DÀI v5.1):** Vị trí của các khóe miệng là bất biến.
+        -   **ĐẶC ĐIỂM ĐỘC NHẤT:** Mọi đặc điểm hình học và kết cấu là bất biến.
+
+---
+**GIAI ĐOẠN 3: KIỂM TOÁN SINH TRẮC HỌC SAU KHI KẾT XUẤT (POST-RENDER BIOMETRIC AUDIT)**
+
+1.  **MỤC TIÊU:** Xác minh với độ chắc chắn tuyệt đối rằng danh tính không bị thay đổi.
+2.  **QUY TRÌNH:**
+    a.  **QUÉT KẾT QUẢ:** Sau khi hình ảnh cuối cùng được kết xuất (với ánh sáng và hợp nhất), thực hiện một quét pháp y thứ hai trên khuôn mặt kết quả để tạo ra một BDO tạm thời.
+    b.  **SO SÁNH VI PHÂN (DIFFERENTIAL COMPARISON):** So sánh BDO tạm thời này với BDO gốc, bất biến từ Giai đoạn 1.
+    c.  **PHÂN TÍCH SAI LỆCH:** Bất kỳ sai lệch nào vượt quá ngưỡng dung sai bằng không (zero-tolerance threshold) đều được gắn cờ là một lỗi nghiêm trọng. Các điểm kiểm tra chính:
+        -   Khoảng cách giữa các điểm mốc trên khuôn mặt (mắt, mũi, miệng).
+        -   Độ cong của đường viền hàm.
+        -   Vị trí của các đặc điểm trên Bản đồ Kết cấu (nốt ruồi, sẹo).
+    d.  **ĐẠT/KHÔNG ĐẠT:**
+        -   **ĐẠT:** Không có sai lệch nào được phát hiện. Hình ảnh được phê duyệt.
+        -   **KHÔNG ĐẠT:** Bất kỳ sai lệch nào được phát hiện. Hình ảnh bị **HỦY BỎ**. Quay trở lại Giai đoạn 2 và thực hiện lại việc Tái chiếu với sự tuân thủ nghiêm ngặt hơn.
+
+---
+**CÁC KẾT QUẢ KHÔNG MONG MUỐN (THẤT BẠI NGHIÊM TRỌNG):**
+- Khuôn mặt bị thay đổi để trông "cân đối" hoặc "đẹp hơn".
+- Mất các đặc điểm độc nhất: hình dạng khuôn mặt, kiểu tóc, lông mày thưa.
+- Bất kỳ sự thay đổi nào về hình dạng của mắt, mũi, hoặc miệng.
+- **Kéo dài, thay đổi hình dạng, hoặc thay đổi vị trí khóe miệng.**
+- Biểu cảm bị thay đổi.
+- Xóa bỏ các đặc điểm nhận dạng như nốt ruồi hoặc sẹo.

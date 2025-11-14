@@ -3,41 +3,73 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { 
   generatePhotoshootImage, generateCompositeImage, generatePromptFromStyleImage, 
   generateCreativePrompt, inferOutfitFromPrompt, generateOutfitDescriptionFromFiles, 
   type GroundingChunk
 } from '../services/geminiService';
 import { initialTransformState } from '../types';
+import type { FullscreenViewerState, Tab, TransformState } from '../types';
+import type { TranslationKey } from '../translations';
+import { useResults } from './useResults';
+
+type StudioHookProps = {
+  currentImage: File | null;
+  getCommittedImage: () => Promise<File>;
+  addImageToHistory: (newImageFile: File) => Promise<void>;
+  setUiState: React.Dispatch<React.SetStateAction<{ isLoading: boolean; loadingMessage: string; error: string | null; }>>;
+  setPendingAction: React.Dispatch<React.SetStateAction<{ action: 'openViewerForNewItem'; } | null>>;
+  handleApiError: (err: unknown, contextKey: TranslationKey) => void;
+  onEditComplete: () => void;
+  isMobile: boolean;
+  resultsManager: ReturnType<typeof useResults>;
+  openFullScreenViewer: (items: Array<{ url: string; transform: TransformState; }>, index: number, type: FullscreenViewerState['type'], context?: FullscreenViewerState['context']) => void;
+  t: (key: TranslationKey, replacements?: { [key: string]: string | number; }) => string;
+  historyIndex: number;
+  activeTab: Tab;
+  setToolboxState: React.Dispatch<React.SetStateAction<{ activeTab: Tab; isOpen: boolean; }>>;
+  setIsHistoryExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  setSources: React.Dispatch<React.SetStateAction<GroundingChunk[]>>;
+  studioSubjects: File[];
+  updateStudioSubjectsInHistory: (newSubjects: File[]) => Promise<void>;
+};
 
 export const useStudio = ({
-  currentImage, getCommittedImage, setUiState, 
-  handleApiError, resultsManager, isMobile, openFullScreenViewer, t, 
-  historyIndex, activeTab, setToolboxState, setIsHistoryExpanded,
+  setUiState, 
+  handleApiError, 
+  resultsManager, 
+  isMobile, 
+  openFullScreenViewer, 
+  t, 
+  historyIndex, 
+  activeTab, 
+  setToolboxState, 
+  setIsHistoryExpanded,
   setSources,
-}) => {
+  studioSubjects,
+  updateStudioSubjectsInHistory,
+}: StudioHookProps) => {
   const [studioState, setStudioState] = useState({
     prompt: '',
     styleFile: null as File | null,
-    subjects: [] as File[],
     outfitFiles: [] as File[],
   });
   const prevStudioStyleFileRef = useRef<File | null>(null);
 
-  const { prompt: studioPrompt, styleFile: studioStyleFile, subjects: studioSubjects, outfitFiles: studioOutfitFiles } = studioState;
+  const { prompt: studioPrompt, styleFile: studioStyleFile, outfitFiles: studioOutfitFiles } = studioState;
 
   const handleStudioAddSubject = useCallback((file: File) => {
-    setStudioState(s => {
-      if ((s.subjects.length + 1) >= 7) return s;
-      return { ...s, subjects: [...s.subjects, file] };
-    });
-  }, []);
+    if (studioSubjects.length < 7) {
+      updateStudioSubjectsInHistory([...studioSubjects, file]);
+    }
+  }, [studioSubjects, updateStudioSubjectsInHistory]);
 
   const handleStudioRemoveSubject = useCallback((index: number) => {
-    setStudioState(s => ({ ...s, subjects: s.subjects.filter((_, i) => i !== index) }));
-  }, []);
-  
+    const newSubjects = studioSubjects.filter((_, i) => i !== index);
+    updateStudioSubjectsInHistory(newSubjects);
+  }, [studioSubjects, updateStudioSubjectsInHistory]);
+
   const handleStudioAddOutfitFile = useCallback((file: File) => {
     setStudioState(s => {
       if (s.outfitFiles.length >= 3) return s;
@@ -50,9 +82,7 @@ export const useStudio = ({
   }, []);
 
   const handleGeneratePhotoshoot = useCallback(async () => {
-    if (!currentImage) { setUiState(s => ({...s, error: t('errorNoImageLoaded')})); return; }
-
-    const allSubjects = [currentImage, ...studioSubjects];
+    if (!studioSubjects || studioSubjects.length === 0) { setUiState(s => ({...s, error: t('errorNoImageLoaded')})); return; }
     
     setUiState({ isLoading: true, loadingMessage: t('generatePhotoshoot'), error: null });
     resultsManager.startGeneratingResults(2, activeTab, historyIndex);
@@ -68,8 +98,7 @@ export const useStudio = ({
             setStudioState(s => ({...s, prompt: finalPrompt}));
         } else if (!finalPrompt) {
             setUiState(s => ({...s, loadingMessage: t('loadingAnalyzingScene')}));
-            // FIX: Destructure the response to get the prompt string.
-            const { prompt: creativePrompt } = await generateCreativePrompt(allSubjects, null, [], '');
+            const { prompt: creativePrompt } = await generateCreativePrompt(studioSubjects, null, [], '');
             finalPrompt = creativePrompt;
             setStudioState(s => ({...s, prompt: finalPrompt}));
         }
@@ -83,7 +112,7 @@ export const useStudio = ({
             outfitDescription = await generatePromptFromStyleImage(studioStyleFile, true);
         } else if (finalPrompt) {
             setUiState(s => ({ ...s, loadingMessage: t('loadingInferOutfit') }));
-            outfitDescription = await inferOutfitFromPrompt(finalPrompt, allSubjects);
+            outfitDescription = await inferOutfitFromPrompt(finalPrompt, studioSubjects);
         } else {
             outfitDescription = "Phù hợp với bối cảnh và phong cách của cảnh được mô tả";
         }
@@ -93,15 +122,11 @@ export const useStudio = ({
         setUiState(s => ({ ...s, loadingMessage: `${t('generatePhotoshoot')} (0/${seeds.length})` }));
         
         let generationPromises;
-        if (allSubjects.length > 1) {
-            const committedSubjects = await Promise.all(allSubjects.map(async (subj, index) => {
-                if (index === 0) return await getCommittedImage();
-                return subj;
-            }));
-            generationPromises = seeds.map(() => generateCompositeImage(committedSubjects, finalPrompt, outfitDescription, studioOutfitFiles));
+        const mainStudioSubject = studioSubjects[0];
+        if (studioSubjects.length > 1) {
+            generationPromises = seeds.map(() => generateCompositeImage(studioSubjects, finalPrompt, outfitDescription, studioOutfitFiles));
         } else {
-            const imageToProcess = await getCommittedImage();
-            generationPromises = seeds.map(() => generatePhotoshootImage(imageToProcess, finalPrompt, outfitDescription, studioStyleFile, studioOutfitFiles));
+            generationPromises = seeds.map(() => generatePhotoshootImage(mainStudioSubject, finalPrompt, outfitDescription, studioStyleFile, studioOutfitFiles));
         }
 
         const allSources: GroundingChunk[] = [];
@@ -142,25 +167,23 @@ export const useStudio = ({
       setUiState(s => ({...s, isLoading: false})); 
       resultsManager.finishGeneratingResults();
     }
-  }, [currentImage, studioSubjects, studioPrompt, studioStyleFile, t, handleApiError, historyIndex, activeTab, isMobile, getCommittedImage, studioOutfitFiles, openFullScreenViewer, setUiState, resultsManager, setToolboxState, setIsHistoryExpanded, setSources]);
+  }, [studioSubjects, studioPrompt, studioStyleFile, t, handleApiError, historyIndex, activeTab, isMobile, studioOutfitFiles, openFullScreenViewer, setUiState, resultsManager, setToolboxState, setIsHistoryExpanded, setSources]);
 
   const handleGenerateCreativePrompt = useCallback(async () => {
-    if (!currentImage) {
+    if (!studioSubjects || studioSubjects.length === 0) {
         setUiState(s => ({...s, error: t('errorNoImageLoaded')}));
         return;
     }
     setUiState(s => ({...s, isLoading: true, loadingMessage: t('loadingStudioAnalysis')}));
     try {
-        const subjectFiles = [currentImage, ...studioSubjects];
-        // FIX: Destructure the response object to get the prompt string.
-        const { prompt: newPrompt } = await generateCreativePrompt(subjectFiles, studioStyleFile, studioOutfitFiles, studioPrompt);
+        const { prompt: newPrompt } = await generateCreativePrompt(studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt);
         setStudioState(s => ({...s, prompt: newPrompt}));
     } catch (err) {
         handleApiError(err, 'errorFailedToProcessImage');
     } finally {
         setUiState(s => ({...s, isLoading: false}));
     }
-  }, [currentImage, studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t, setUiState]);
+  }, [studioSubjects, studioStyleFile, studioOutfitFiles, studioPrompt, handleApiError, t, setUiState]);
 
   useEffect(() => {
     if (studioStyleFile && studioStyleFile !== prevStudioStyleFileRef.current) {
@@ -176,17 +199,19 @@ export const useStudio = ({
   }, [studioStyleFile, handleApiError, t, setUiState]);
 
   useEffect(() => {
-    if (!currentImage) {
-      setStudioState(s => ({ ...s, prompt: '', styleFile: null, subjects: [], outfitFiles: [] }));
+    if (studioSubjects.length === 0) {
+      setStudioState(s => ({ ...s, prompt: '', styleFile: null, outfitFiles: [] }));
     }
-  }, [currentImage]);
+  }, [studioSubjects]);
 
   return {
     studioState, setStudioState,
-    studioPrompt, studioStyleFile, studioSubjects, studioOutfitFiles,
+    studioPrompt, studioStyleFile, studioOutfitFiles,
     handleGeneratePhotoshoot,
-    handleStudioAddSubject, handleStudioRemoveSubject,
-    handleStudioAddOutfitFile, handleStudioRemoveOutfitFile,
+    handleStudioAddSubject,
+    handleStudioRemoveSubject,
+    handleStudioAddOutfitFile,
+    handleStudioRemoveOutfitFile,
     handleGenerateCreativePrompt,
   };
 };

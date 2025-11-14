@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { UsersIcon, XMarkIcon, UploadIcon, SparklesIcon, IdCardIcon } from './icons';
 // Fix: Corrected the import path for the 'Tab' type from '../hooks/usePika' to '../types' to resolve module export error.
@@ -11,7 +11,6 @@ import type { Tab } from '../types';
 
 interface StudioPanelProps {
   isLoading: boolean;
-  isImageLoaded: boolean;
   studioPrompt: string;
   onStudioPromptChange: (prompt: string) => void;
   onApplyStudio: () => void;
@@ -21,7 +20,6 @@ interface StudioPanelProps {
   studioSubjects: File[];
   onStudioAddSubject: (file: File) => void;
   onStudioRemoveSubject: (index: number) => void;
-  currentImage: File | null;
   studioOutfitFiles: File[];
   onStudioAddOutfitFile: (file: File) => void;
   onStudioRemoveOutfitFile: (index: number) => void;
@@ -47,8 +45,10 @@ Preview.displayName = 'Preview';
 
 
 const StudioPanel: React.FC<StudioPanelProps> = React.memo(
-({ isLoading, isImageLoaded, studioPrompt, onStudioPromptChange, onApplyStudio, studioStyleFile, onStudioStyleFileChange, onGenerateCreativePrompt, studioSubjects, onStudioAddSubject, onStudioRemoveSubject, currentImage, studioOutfitFiles, onStudioAddOutfitFile, onStudioRemoveOutfitFile, setActiveTab, isMobile, onToggleToolbox }) => {
+({ isLoading, studioPrompt, onStudioPromptChange, onApplyStudio, studioStyleFile, onStudioStyleFileChange, onGenerateCreativePrompt, studioSubjects, onStudioAddSubject, onStudioRemoveSubject, studioOutfitFiles, onStudioAddOutfitFile, onStudioRemoveOutfitFile, setActiveTab, isMobile, onToggleToolbox }) => {
     const { t } = useTranslation();
+
+    const isImageLoaded = studioSubjects.length > 0;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,7 +70,7 @@ const StudioPanel: React.FC<StudioPanelProps> = React.memo(
     };
 
     const handleSubjectFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0] && isImageLoaded) {
+        if (e.target.files && e.target.files[0]) {
             onStudioAddSubject(e.target.files[0]);
         }
         e.target.value = '';
@@ -84,8 +84,6 @@ const StudioPanel: React.FC<StudioPanelProps> = React.memo(
       }
     };
     
-    const allSubjects = currentImage ? [currentImage, ...studioSubjects] : [];
-
     const titleContent = (
         <>
             <UsersIcon className="w-6 h-6" />
@@ -129,15 +127,15 @@ const StudioPanel: React.FC<StudioPanelProps> = React.memo(
             <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-3">
                 
                  <div className="w-full flex flex-col items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-300">{t('studioSubjectsCount', { count: allSubjects.length, max: 7 })}</span>
+                    <span className="text-sm font-semibold text-gray-300">{t('studioSubjectsCount', { count: studioSubjects.length, max: 7 })}</span>
                     <div className="w-full flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
-                        {allSubjects.map((subject, index) => (
-                            <div key={index} className="relative w-14 h-14 rounded-lg flex-shrink-0 bg-black/20 overflow-hidden border border-white/10">
+                        {studioSubjects.map((subject, index) => (
+                            <div key={`${subject.name}-${subject.lastModified}-${index}`} className="relative w-14 h-14 rounded-lg flex-shrink-0 bg-black/20 overflow-hidden border border-white/10">
                                 <Preview file={subject} />
-                                {index > 0 && !isLoading && (
+                                {!isLoading && (
                                 <button
                                     type="button"
-                                    onClick={() => onStudioRemoveSubject(index - 1)}
+                                    onClick={() => onStudioRemoveSubject(index)}
                                     className="absolute -top-1 -right-1 p-0.5 bg-black/70 rounded-full text-white hover:bg-red-500 transition-colors"
                                     title={t('remove')}
                                 >
@@ -146,12 +144,12 @@ const StudioPanel: React.FC<StudioPanelProps> = React.memo(
                                 )}
                             </div>
                         ))}
-                        {isImageLoaded && allSubjects.length < 7 && (
+                        {studioSubjects.length < 7 && (
                             <label htmlFor="studio-subject-file-input" className="w-14 h-14 flex-shrink-0 rounded-lg border-2 border-dashed border-white/20 hover:border-cyan-500 flex items-center justify-center cursor-pointer transition-colors" title={t('studioAddSubject')}>
                                 <UploadIcon className="w-6 h-6 text-gray-400" />
                             </label>
                         )}
-                        <input id="studio-subject-file-input" type="file" className="hidden" accept="image/*" onChange={handleSubjectFileChange} disabled={isLoading || !isImageLoaded || allSubjects.length >= 7} />
+                        <input id="studio-subject-file-input" type="file" className="hidden" accept="image/*" onChange={handleSubjectFileChange} disabled={isLoading || studioSubjects.length >= 7} />
                     </div>
                 </div>
 

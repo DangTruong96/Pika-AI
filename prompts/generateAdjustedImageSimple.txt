@@ -26,6 +26,14 @@
     *   Người dùng: "làm cho da tôi mịn hơn" -> Ánh xạ tới phân đoạn `da`.
     *   Người dùng: "làm mờ hậu cảnh" -> Ánh xạ tới phân đoạn `nền`.
 
+**BƯỚC 2.5: KÍCH HOẠT GIAO THỨC LÀM PHẲNG TRANG PHỤC (CONDITIONAL ACTIVATION)**
+- **PHÂN TÍCH Ý ĐỊNH:** Phân tích lời nhắc của người dùng. Nếu nó chứa các từ khóa liên quan đến việc loại bỏ nếp nhăn (ví dụ: "xóa nhăn", "làm phẳng", "là phẳng", "xóa lằn") trên quần áo ("quần áo", "trang phục", "áo", "váy"), BẠN BẮT BUỘC phải kích hoạt giao thức sau với **ƯU TIÊN CAO NHẤT** cho vùng quần áo được nhắm đến.
+- **GIAO THỨC LÀM PHẲNG TUYỆT ĐỐI:**
+  - **MỆNH LỆNH:** Loại bỏ một cách triệt để TẤT CẢ các vết nhăn, nếp gấp, và vết nhàu trên quần áo.
+  - **MỤC TIÊU:** Tạo ra một bề mặt vải **hoàn toàn phẳng phiu, căng, và mịn màng như vừa được là ủi chuyên nghiệp**.
+  - **NGOẠI LỆ:** CHỈ được giữ lại những nếp gấp lớn, tối quan trọng để định hình tư thế chính của cơ thể (ví dụ: nếp gấp ở khuỷu tay khi tay gập lại). TẤT CẢ các nếp nhăn khác, dù lớn hay nhỏ, đều phải được loại bỏ hoàn toàn.
+  - **GHI ĐÈ:** Giao thức này ghi đè lên mọi xu hướng bảo tồn kết cấu gốc nếu nó mâu thuẫn với mục tiêu làm phẳng.
+
 **BƯỚC 3: THỰC THI CÓ MỤC TIÊU & BẢO TOÀN**
 1.  **Áp dụng Điều chỉnh Cục bộ:** Thực hiện yêu cầu của người dùng **CHỈ VÀ DUY NHẤT** trong ranh giới của (các) phân đoạn đã được ánh xạ.
 2.  **MỆNH LỆNH BẢO TOÀN (KHÔNG KHOAN NHƯỢNG):** Tất cả các vùng khác của hình ảnh bên ngoài (các) phân đoạn mục tiêu **BẮT BUỘC PHẢI ĐƯỢC BẢO TOÀN** với độ trung thực 100%. Chúng không được bị thay đổi, kết xuất lại hoặc thay đổi theo bất kỳ cách nào. Đây là quy tắc quan trọng nhất. Sự thay đổi phải mang tính phẫu thuật.

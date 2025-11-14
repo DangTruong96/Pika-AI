@@ -1,54 +1,11 @@
 ---
-**GIAO THỨC CHỐNG ẢO GIÁC LÔNG MẶT & BẢO TỒN TUỔI TÁC v15.0 (ƯU TIÊN TUYỆT ĐỐI - GHI ĐÈ LÊN MỌI THỨ)**
+**GIAO THỨC TÁI TẠO PHÁP Y - BẢN GHI ĐÈ v10.0 (THÔNG BÁO NGỪNG SỬ DỤNG & CHUYỂN HƯỚNG)**
 
-**BỐI CẢNH & CẢNH BÁO LỖI NGHIÊM TRỌNG TỪ NGƯỜI DÙNG:** Người dùng đã báo cáo một cách dứt khoát rằng AI đang tự ý **THÊM RÂU/RIA MÉP ("dâu")** và các dấu hiệu lão hóa khác vào những vùng ảnh gốc bị mờ hoặc không rõ chi tiết, đặc biệt là quanh miệng. Đây là một **VI PHẠM TUYỆT ĐỐI** và là **THẤT BẠI NGHIÊM TRỌNG NHẤT** của nhiệm vụ này. Giao thức này được đưa ra để sửa chữa lỗi đó ngay lập tức.
+**MỆNH LỆNH GHI ĐÈ TỐI CAO (ABSOLUTE OVERRIDE MANDATE):**
+Giao thức này đã được **THAY THẾ HOÀN TOÀN** bởi `GIAO THỨC LÕI BẢO TOÀN DANH TÍNH v60.0`.
 
-**MỆNH LỆNH GHI ĐÈ KHÔNG KHOAN NHƯỢNG:**
-1.  **CẤM TUYỆT ĐỐI THÊM RÂU/LÔNG MẶT (ZERO-TOLERANCE ON HALLUCINATED FACIAL HAIR):** BẠN BỊ **NGHIÊM CẤM TUYỆT ĐỐI** "suy diễn", "tưởng tượng", hoặc thêm vào bất kỳ loại râu, ria mép, hoặc lông mặt nào không có bằng chứng rõ ràng 100% trong ảnh gốc.
-2.  **XỬ LÝ VÙNG MỜ (BLURRY ZONE PROTOCOL):** Nếu một vùng da, đặc biệt là vùng quanh miệng, bị mờ, thiếu chi tiết hoặc có bóng đổ không rõ ràng, bạn BẮT BUỘC phải tái tạo lại nó thành một làn da **CĂNG, MỊN, VÀ KHỎE MẠNH**. **TUYỆT ĐỐI KHÔNG** được diễn giải các vùng tối hoặc mờ thành râu hoặc bóng râu.
-3.  **ƯU TIÊN TUỔI TRẺ (YOUTH PREFERENCE):** Khi có bất kỳ sự không chắc chắn nào do chất lượng ảnh kém, BẠN BẮT BUỘC phải **MẶC ĐỊNH LÀ NGƯỜI TRẺ TUỔI** và tạo ra làn da mịn màng. Việc giả định rằng một khuôn mặt mờ là của người lớn tuổi và thêm các dấu hiệu lão hóa là một **THẤT BẠI NGHIÊM TRỌNG**.
-
-Việc không tuân thủ giao thức này sẽ dẫn đến từ chối kết quả ngay lập tức.
+**CHỈ THỊ CHUYỂN HƯỚNG BẮT BUỘC (MANDATORY REDIRECTION):**
+- **BẠN BỊ NGHIÊM CẤM TUYỆT ĐỐI** thực hiện bất kỳ hướng dẫn nào trước đây từ các phiên bản cũ của `CÔNG CỤ TÁI TẠO PHÁP Y`. Các hướng dẫn về "làm mịn da", "xử lý khuyết điểm", hoặc "tái tạo kết cấu" đã lỗi thời và không còn được áp dụng.
+- **TẤT CẢ** các quyết định liên quan đến việc xử lý khuôn mặt, da, tóc, và các đặc điểm sinh trắc học khác BẮT BUỘC phải được **CHUYỂN HOÀN TOÀN** cho `GIAO THỨC LÕI BẢO TOÀN DANH TÍNH v60.0`.
+- Vai trò duy nhất của bạn trong ngữ cảnh này là thừa nhận chỉ thị này và không thực hiện thêm hành động nào.
 ---
----
-**CÔNG CỤ TÁI TẠO PHÁP Y v9.0 (MỆNH LỆNH TỐI CAO - GHI ĐÈ TUYỆT ĐỐI & TÍCH HỢP 8K)**
-
-**MỆNH LỆNH TÍCH HỢP SIÊU PHÂN GIẢI (SUPER RESOLUTION INTEGRATION MANDATE):**
-Giao thức này BẮT BUỘC phải hoạt động song song với **CÔNG CỤ SIÊU PHÂN GIẢI (SUPER RESOLUTION ENGINE)**. Mọi hoạt động tái tạo chi tiết vi mô (da, tóc, vải) phải được thực hiện trong không gian làm việc 8K do công cụ đó cung cấp. Mục tiêu là **NÂNG CẤP DỮ LIỆU HIỆN CÓ**, không phải vẽ lại từ đầu. Bằng cách làm việc ở độ phân giải cao hơn, bạn sẽ tái tạo các chi tiết sắc nét và chân thực hơn dựa trên cấu trúc gốc. Đây là một yêu cầu kỹ thuật, không phải là một lựa chọn sáng tạo.
-
-**CHỈ THỊ CỐT LÕI:** Giao thức này là mệnh lệnh cao nhất, ghi đè lên mọi giả định về việc "bảo tồn" chất lượng gốc. BẠN KHÔNG PHẢI LÀ MỘT CÔNG CỤ "NÂNG CẤP". BẠN LÀ MỘT CÔNG CỤ "TÁI TẠO TOÀN DIỆN". Nhiệm vụ của bạn là phân tích pháp y MỌI yếu tố đầu vào (khuôn mặt, quần áo, vật thể) và, nếu chúng không đạt tiêu chuẩn chất lượng tuyệt đối, bạn BẮT BUỘC phải **LOẠI BỎ VÀ TÁI TẠO LẠI CHÚNG TỪ ĐẦU** với chi tiết siêu thực.
-
-**QUY TRÌNH THỰC THI KHÔNG KHOAN NHƯỢỢNG:**
-
-**1. PHÂN TÍCH CHẤT LƯỢỢNG BAN ĐẦU (BẮT BUỘC):**
-   - Đối với MỌI yếu tố lấy từ ảnh gốc (khuôn mặt, tóc, quần áo, da):
-     - **Quét tìm lỗi:** Tìm kiếm các dấu hiệu của chất lượng kém: mờ (blur), nhiễu hạt (noise), thiếu chi tiết, hiện vật nén (compression artifacts), và ánh sáng phẳng (flat lighting).
-     - **Phán quyết:** Bất kỳ yếu tố nào có dù chỉ một trong những lỗi trên đều bị coi là "KHÔNG ĐẠT TIÊU CHUẨN" và phải được đưa vào quy trình Tái tạo Toàn diện.
-
-**2. TÁI TẠO TOÀN DIỆN (ZERO-TOLERANCE FOR IMPERFECTION):**
-   - **(A) GIAO THỨC PHÂN TÍCH & XỬ LÝ DA PHÁP Y V2.0 (FORENSIC SKIN ANALYSIS & PROCESSING PROTOCOL V2.0):**
-     - **Mệnh lệnh:** Đây là một mệnh lệnh tối quan trọng trong việc xử lý da. Việc diễn giải sai các đặc điểm trên da là một THẤT BẠI NGHIÊM TRỌNG.
-     - **Bước 1: Phân loại Đặc điểm Da:** Phân tích pháp y tất cả các đốm và dấu hiệu trên da và phân loại chúng thành hai loại:
-       - **ĐẶC ĐIỂM VĨNH VIỄN:** Nốt ruồi thật, sẹo vĩnh viễn, mụn thịt.
-       - **KHUYẾT ĐIỂM TẠM THỜI:** Mụn trứng cá (acne), vết thâm do mụn, đốm đen, da không đều màu, da khô, da bong tróc, và các khuyết điểm tạm thời khác trên bề mặt da.
-     - **Bước 2: Xử lý:**
-       - **HÀNH ĐỘNG ĐỐI VỚI ĐẶC ĐIỂM VĨNH VIỄN:** BẮT BUỘC phải được **BẢO TỒN** và tái tạo với chi tiết sắc nét để duy trì danh tính.
-       - **HÀNH ĐỘNG ĐỐI VỚI KHUYẾT ĐIỂM TẠM THỜI (GHI ĐÈ - ƯU TIÊN VẺ ĐẸP TỰ NHIÊN):** Thay vì loại bỏ hoàn toàn, bạn BẮT BUỘC phải **LÀM MỊN NHẸ NHÀNG ("cà nhẹ")** các khuyết điểm tạm thời. Giảm mức độ hiển thị của chúng khoảng 70-80% nhưng **TUYỆT ĐỐI KHÔNG XÓA HOÀN TOÀN**. Mục tiêu là một vẻ ngoài tự nhiên hơn.
-     - **Quy tắc Vàng (ƯU TIÊN BẢO TỒN TUYỆT ĐỐI):** KHI CÓ NGHI NGỜ, HÃY BẢO TỒN. Nếu một dấu hiệu không chắc chắn 100% là khuyết điểm tạm thời (mụn, vết thâm), nó BẮT BUỘC phải được coi là một đặc điểm sinh học vĩnh viễn (nốt ruồi, sẹo, mụn thịt) và được **BẢO TỒN & TÁI TẠO**. Mụn thịt LUÔN LUÔN là đặc điểm vĩnh viễn.
-     - **Điều kiện Thất bại:** THẤT BẠI NGHIÊM TRỌNG NHẤT: Một đặc điểm sinh học vĩnh viễn như nốt ruồi, sẹo, hoặc mụn thịt bị xóa bỏ. Bất kỳ vết thâm mụn hoặc khuyết điểm tạm thời nào bị làm cho sắc nét hoặc rõ ràng hơn thay vì bị làm mờ.
-   - **(B) TÁI TẠO KẾT CẤU BỀ MẶT:**
-     - **Da:** Sau khi xử lý theo giao thức trên, BẠN BẮT BUỘC phải **NÂNG CẤP VÀ TÁI TẠO LẠI KẾT CẤU DA HIỆN CÓ** để đạt được một vẻ ngoài siêu thực, khỏe mạnh. Điều này bao gồm việc làm sắc nét và làm rõ các lỗ chân lông và đường nét da tinh tế đã tồn tại, không phải là tạo ra một bề mặt hoàn toàn mới.
-     - **Vải:** BẠN BẮT BUỘC phải tái tạo lại kết cấu của quần áo và các loại vải khác ở cấp độ sợi dệt.
-     - **Tóc:** BẠN BẮT BUỘC phải vẽ lại tóc ở cấp độ từng sợi. Tóc mờ hoặc bết từ ảnh gốc phải được thay thế bằng các sợi tóc riêng lẻ, sắc nét.
-   - **(C) TÁI CHIẾU SÁNG & TẠO KHỐI 3D:**
-     - **Loại bỏ Ánh sáng Gốc:** Bất kỳ ánh sáng phẳng, yếu, hoặc không đẹp nào trên các yếu tố gốc BẮT BUỘC phải bị loại bỏ hoàn toàn.
-     - **Tạo khối Lập thể (Volumetric Relighting):** BẠN BẮT BUỘC phải áp dụng một hệ thống ánh sáng 3D mới để tạo ra chiều sâu và khối.
-   - **(D) GIAO THỨC TÁI TẠO VÙNG CHÁY SÁNG PHÁP Y (FORENSIC BLOWN-OUT HIGHLIGHT RECONSTRUCTION PROTOCOL) - ZERO-TOLERANCE:**
-     - **Chỉ thị (Directive):** Bất kỳ vùng nào trên da bị cháy sáng hoàn toàn (trắng xóa, mất hết chi tiết) BẮT BUỘC phải được coi là "dữ liệu bị hỏng" và được TÁI TẠO LẠI HOÀN TOÀN.
-     - **Hành động (Action):** Phân tích các vùng da xung quanh để suy luận và tái tạo lại một cách logic các chi tiết kết cấu da đã bị mất.
-     - **Điều kiện Thất bại (Failure Condition):** Vẫn còn các mảng trắng, không có chi tiết trên da trong ảnh cuối cùng.
-
-**3. ĐIỀU KIỆN THẤT BẠI NGHIÊM TRỌNG (DẪN ĐẾN TỪ CHỐI KẾT QUẢ):**
-- **"DI SẢN" CHẤT LƯỢỢNG KÉM:** Bất kỳ yếu tố nào trong ảnh cuối cùng vẫn còn giữ lại sự mờ, nhiễu hạt, hoặc ánh sáng phẳng từ ảnh gốc.
-- **CHI TIẾT KHÔNG NHẤT QUÁN:** Một khuôn mặt được tái tạo sắc nét nhưng quần áo vẫn mờ từ ảnh gốc.
-- **BỀ MẶT PHẲNG:** Bất kỳ bề mặt nào (da, vải) thiếu kết cấu vi mô và trông phẳng hoặc nhân tạo.

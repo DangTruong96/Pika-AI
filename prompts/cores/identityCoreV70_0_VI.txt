@@ -1,0 +1,50 @@
+---
+**GIAO THỨC SAO CHÉP KỸ THUẬT SỐ v70.0 (GHI ĐÈ TỐI CAO - KHÔNG KHOAN NHƯỢNG)**
+**MÔ HÌNH THỰC THI THEO CƠ CHẾ KỸ THUẬT (ENGINEERING MECHANISM EXECUTION MODEL)**
+
+**MỆNH LỆNH GHI ĐÈ TỐI THƯỢỢNG (ABSOLUTE OVERRIDE MANDATE):**
+1.  **PHẠM VI QUYỀN HẠN (SCOPE OF AUTHORITY):** Giao thức này có **QUYỀN HẠN TUYỆT ĐỐI** đối với việc xử lý **KHUÔN MẶT, ĐẦU, VÀ TÓC**.
+2.  **GHI ĐÈ (OVERRIDE):** Các chỉ thị trong giao thức này **GHI ĐÈ HOÀN TOÀN** và **VÔ HIỆU HÓA** mọi chỉ thị mâu thuẫn từ BẤT KỲ tệp nào khác được nhúng (bao gồm `{forensicReconstructionEngine}`, `{superResolutionEngine}`) khi áp dụng cho vùng mặt, đầu, và tóc. Các công cụ đó chỉ được phép hoạt động trên các vùng khác (quần áo, nền).
+3.  **THẤT BẠI TUYỆT ĐỐI (CRITICAL FAILURE):** Việc thay đổi danh tính là một THẤT BẠI TUYỆT ĐỐI.
+
+---
+**GIAI ĐOẠN 1: THU THẬP & NIÊM PHONG DỮ LIỆU (DATA ACQUISITION & SEALING)**
+
+1.  **MỤC TIÊU:** Tạo một "Gói Dữ liệu Sinh trắc học được Niêm phong" (Sealed Biometric Packet - SBP) bất biến.
+2.  **QUY TRÌNH:**
+    a.  **THU THẬP HÌNH HỌC:** Tạo một "Đám mây Điểm 3D Cứng" (Rigid 3D Point Cloud) từ hình ảnh gốc, ánh xạ cấu trúc 3D của khuôn mặt và đầu với độ chính xác ở cấp độ micromet.
+    b.  **THU THẬP KẾT CẤU:** Tạo một "Bản đồ Albedo Độ phân giải Cao" (High-Resolution Albedo Map) ghi lại màu sắc và các chi tiết bề mặt của da, bao gồm nốt ruồi, sẹo, và kết cấu da.
+    c.  **NIÊM PHONG (SEAL):** Gói SBP (chứa Point Cloud và Albedo Map) được mã hóa và khóa ghi. Tính toán một tổng kiểm (checksum) cho SBP.
+
+---
+**GIAI ĐOẠN 2: CHIẾU KẾT CẤU (TEXTURE PROJECTION - "UV MAPPING")**
+
+1.  **MỤC TIÊU:** Áp dụng một cách máy móc dữ liệu đã niêm phong lên một hình học mới.
+2.  **QUY TRÌNH:**
+    a.  **CHUẨN BỊ HÌNH HỌC MỤC TIÊU:** Nhận một hình học đầu mới (từ tư thế được yêu cầu).
+    b.  **CHIẾU (PROJECTION):** Coi "Đám mây Điểm 3D Cứng" là hình học mục tiêu và "Bản đồ Albedo" là kết cấu. Thực hiện một thao tác tương đương với việc áp dụng một bản đồ UV (UV mapping) trong đồ họa 3D. Dữ liệu từ Albedo Map được "dán" lên Point Cloud mà không có bất kỳ sự thay đổi nào.
+    c.  **CÁC HOẠT ĐỘNG BỊ CẤM TUYỆT ĐỐI (ABSOLUTELY PROHIBITED OPERATIONS):**
+        -   **KHÔNG** được "làm mịn" (smoothing) Bản đồ Albedo.
+        -   **KHÔNG** được "sửa chữa" (healing) hoặc "inpainting" trên Bản đồ Albedo.
+        -   **KHÔNG** được "tái tạo" (reconstructing) hoặc "suy diễn" (inferring) bất kỳ chi tiết nào không có trong Bản đồ Albedo gốc.
+        -   **VAI TRÒ:** Bạn là một máy chiếu, không phải là một nghệ sĩ.
+
+---
+**GIAI ĐOẠN 3: XÁC MINH TỔNG KIỂM VI PHÂN (DIFFERENTIAL CHECKSUM VERIFICATION)**
+
+1.  **MỤC TIÊU:** Xác minh tính toàn vẹn dữ liệu.
+2.  **QUY TRÌNH:**
+    a.  **TÍNH TOÁN TỔNG KIỂM MỚI:** Sau khi kết xuất, tính toán tổng kiểm của dữ liệu khuôn mặt cuối cùng.
+    b.  **SO SÁNH:** So sánh tổng kiểm mới với tổng kiểm gốc của SBP.
+    c.  **ĐẠT/KHÔNG ĐẠT:**
+        -   **ĐẠT:** Các tổng kiểm khớp nhau.
+        -   **KHÔNG ĐẠT (THẤT BẠI THẢM HỌA):** Các tổng kiểm không khớp. **HỦY BỎ** kết quả và thực hiện lại Giai đoạn 2 với sự tuân thủ nghiêm ngặt hơn.
+
+---
+**CÁC KẾT QUẢ KHÔNG MONG MUỐN (THẤT BẠI NGHIÊM TRỌNG):**
+- Khuôn mặt bị thay đổi để trông "cân đối" hoặc "đẹp hơn".
+- Mất các đặc điểm độc nhất: hình dạng khuôn mặt, kiểu tóc, lông mày thưa.
+- Bất kỳ sự thay đổi nào về hình dạng của mắt, mũi, hoặc miệng.
+- **Kéo dài, thay đổi hình dạng, hoặc thay đổi vị trí khóe miệng.**
+- Biểu cảm bị thay đổi.
+- Xóa bỏ các đặc điểm nhận dạng như nốt ruồi hoặc sẹo.
