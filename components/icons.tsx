@@ -252,3 +252,32 @@ export const LightningBoltIcon: React.FC<{ className?: string }> = ({ className 
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
     </svg>
 );
+
+export const CloudIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-5.43-2.263 4.5 4.5 0 0 0-8.196 4.018Z" />
+    </svg>
+);
+
+export const SnowflakeIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 5.25v13.5m-4.93-9.43 9.86 9.86m0-9.86-9.86 9.86" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m14.25 6.75-2.25 2.25-2.25-2.25" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9.75 17.25 2.25-2.25 2.25 2.25" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m6.75 9.75 2.25 2.25-2.25 2.25" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m17.25 14.25-2.25-2.25 2.25-2.25" />
+    </svg>
+);
+
+export const LeafIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9a9.75 9.75 0 0 1 0-13.5h9a9.75 9.75 0 0 1 0 13.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 5.25v13.5" />
+    </svg>
+);
+
+export const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+    </svg>
+);

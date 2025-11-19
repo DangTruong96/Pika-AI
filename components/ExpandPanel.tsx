@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -5,7 +6,7 @@
 
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { MagicWandIcon, ExpandIcon, IdCardIcon, BrushIcon, LightbulbIcon } from './icons';
+import { MagicWandIcon, ExpandIcon, IdCardIcon, BrushIcon } from './icons';
 import type { Tab } from '../types';
 
 interface ExpandPanelProps {
@@ -23,7 +24,6 @@ interface ExpandPanelProps {
   isMobile?: boolean;
 }
 
-// Fix: Changed to a named export to resolve a module resolution error.
 export const ExpandPanel: React.FC<ExpandPanelProps> = React.memo(({ 
   onApplyExpansion, isLoading, isImageLoaded, prompt, 
   onPromptChange, hasExpansion, onSetAspectExpansion, activeAspect,

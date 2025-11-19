@@ -1,8 +1,11 @@
+
+
+
 {identityCore}
 {superResolutionEngine}
 {bodyformAndSilhouetteIntegrity}
 ---
-**GIAO THỨC ĐIỀU KHIỂN CHÍNH v18.0 (GHI ĐÈ TUYỆT ĐỐI - ZERO TOLERANCE)**
+**GIAO THỨC ĐIỀU KHIỂN CHÍNH v18.5 (GHI ĐÈ TUYỆT ĐỐI - ZERO TOLERANCE)**
 **PHÂN CẤP SỰ THẬT & KIỂM TOÁN SINH TRẮC HỌC**
 
 **CẢNH BÁO LỖI NGHIÊM TRỌNG & GHI ĐÈ v5.0 (DỰA TRÊN PHẢN HỒI LẶP LẠI CỦA NGƯỜI DÙNG):** Việc thay đổi danh tính của người trong ảnh gốc là một **THẤT BẠI TUYỆT ĐỐI KHÔNG THỂ CHẤP NHẬN ĐƯỢC**. Giao thức này buộc phải tuân thủ sự thật cơ sở bằng cách coi bất kỳ dữ liệu sinh trắc học nào xung đột là **DỮ LIỆU GÂY NHIỄU** và yêu cầu một **KIỂM TOÁN SINH TRẮC HỌC** cuối cùng như một cổng chất lượng không thể thương lượng.
@@ -21,20 +24,23 @@
 -   **ĐIỀU KIỆN ĐẠT/KHÔNG ĐẠT:** Hình ảnh cuối cùng chỉ được coi là thành công nếu nó vượt qua cuộc kiểm toán này với điểm khớp 100%. Bất kỳ sai lệch nào được phát hiện trong quá trình kiểm toán đều cấu thành một **THẤT BẠI NGHIÊM TRỌNG** và yêu cầu bạn phải loại bỏ kết quả và tạo lại, ưu tiên cao hơn cho Sự thật Cấp 1.
 
 ---
-**NHIỆM VỤ AI: TẠO ẢNH THẺ CHUYÊN NGHIỆP v12.2**
+**NHIỆM VỤ AI: TẠO ẢNH THẺ CHUYÊN NGHIỆP v13.0 (TĂNG CƯỜNG QUYỀN LỰC TÙY CHỈNH)**
 
-**MỤC TIÊU CHÍNH:** Tạo một bức ảnh thẻ chất lượng cao, chuyên nghiệp dựa trên hình ảnh gốc và các thông số kỹ thuật được cung cấp. Tuân thủ tuyệt đối các tiêu chuẩn ảnh thẻ phổ biến (nhìn thẳng, vai cân đối, nền trơn, lộ rõ tai).
+**MỤC TIÊU CHÍNH:** Tạo một bức ảnh thẻ chất lượng cao, chuyên nghiệp dựa trên hình ảnh gốc và các thông số kỹ thuật được cung cấp. Tuân thủ tuyệt đối các tiêu chuẩn ảnh thẻ phổ biến.
 
 **GIAO THỨC THỰC THI (BẮT BUỘC):**
-1.  **GIAI ĐOẠN 1: TUÂN THỦ SỰ THẬT CẤP 1 (IDENTITY LOCK):**
-    -   Tuân thủ nghiêm ngặt giao thức `{identityCore}` đã được nhúng. Danh tính, khuôn mặt, và các đặc điểm sinh trắc học là bất biến. Đây là ưu tiên cao nhất.
+1.  **GIAI ĐOẠN 1: TUÂN THỦ SỰ THẬT CẤP 1 (IDENTITY LOCK - FACE PRIORITY):**
+    -   Tuân thủ nghiêm ngặt giao thức `{identityCore}` đối với KHUÔN MẶT.
+    -   **GHI ĐÈ TÓC (HAIR OVERRIDE - CẤP ĐỘ 1):** Nếu người dùng chọn một kiểu tóc cụ thể (không phải 'Giữ nguyên'), bạn **BẮT BUỘC PHẢI THAY ĐỔI TÓC** của chủ thể để khớp hoàn toàn với mô tả kiểu tóc đó.
+    -   **QUY TẮC GHI ĐÈ (QUAN TRỌNG NHẤT):** Trong trường hợp này, các quy tắc về "bảo tồn tóc" và "độ dài tóc" trong `{identityCore}` bị **VÔ HIỆU HÓA HOÀN TOÀN**. Bạn chỉ cần bảo tồn khuôn mặt và hình dạng đầu (hộp sọ), còn tóc phải được vẽ lại hoàn toàn mới theo yêu cầu (ví dụ: từ tóc ngắn thành tóc dài, từ tóc dài thành tóc ngắn). Bạn có toàn quyền thay đổi độ dài, cấu trúc và khối lượng tóc để đạt được yêu cầu. **ĐỪNG NGẦN NGẠI THAY ĐỔI ĐỘ DÀI TÓC NẾU YÊU CẦU KHÁC VỚI ẢNH GỐC.**
+
 2.  **GIAI ĐOẠN 2: TÁI TẠO BỐI CẢNH (CONTEXT RECONSTRUCTION):**
     -   Loại bỏ hoàn toàn nền và quần áo gốc.
     -   Tạo một cơ thể mới với tư thế chuẩn (vai thẳng, nhìn thẳng về phía trước).
     -   Áp dụng các thuộc tính được chỉ định trong phần **THÔNG SỐ KỸ THUẬT** bên dưới.
 3.  **GIAI ĐOẠN 3: HỢP NHẤT & KIỂM TOÁN (GHI ĐÈ):**
     -   Chiếu dữ liệu sinh trắc học đã khóa lên cơ thể mới.
-    -   **MỆNH LỆNH HỢP NHẤT (UNIFICATION MANDATE):** Áp dụng `{superResolutionEngine}` và các công cụ nâng cao khác **CHỈ** cho các vùng phi sinh trắc học (quần áo, nền) để đảm bảo chất lượng đồng nhất. Vùng mặt, đầu, và tóc được quản lý **DUY NHẤT** bởi `{identityCore}` và không được bị ảnh hưởng bởi các công cụ khác.
+    -   **MỆNH LỆNH HỢP NHẤT (UNIFICATION MANDATE):** Áp dụng `{superResolutionEngine}` và các công cụ nâng cao khác **CHỈ** cho các vùng phi sinh trắc học (quần áo, nền) để đảm bảo chất lượng đồng nhất. Vùng mặt được quản lý bởi `{identityCore}`.
     -   Thực hiện Kiểm toán Sinh trắc học cuối cùng.
 
 **THÔNG SỐ KỸ THUẬT (SPECIFICATIONS):**
@@ -47,6 +53,16 @@
 - **Biểu cảm:** {expression}
 - **Yêu cầu tùy chỉnh:** {customInstructions}
 
+**GIAO THỨC ƯU TIÊN TÙY CHỈNH (CUSTOM PRIORITY PROTOCOL - TỐI CAO):**
+Nếu trường "Yêu cầu tùy chỉnh" ({customInstructions}) có nội dung (khác 'Không có' và 'Không'), nó mang quyền lực **TỐI CAO VÀ GHI ĐÈ TUYỆT ĐỐI**.
+1. **QUYỀN LỰC TUYỆT ĐỐI:** Bất kỳ mô tả nào trong "Yêu cầu tùy chỉnh" đều GHI ĐÈ hoàn toàn các tùy chọn đã chọn ở trên (Trang phục, Tóc, Biểu cảm).
+2. **GHI ĐÈ TRANG PHỤC (CLOTHING OVERRIDE):**
+   - Nếu người dùng nhập tên một loại trang phục (ví dụ: "vest", "suit", "áo dài", "sơ mi"), bạn phải **BỎ QUA HOÀN TOÀN** thông số {outfit} ở trên và tạo ra trang phục đó.
+   - **QUY TẮC "VEST" (CỰC KỲ QUAN TRỌNG):** Trong bối cảnh tiếng Việt, khi người dùng nhập từ khóa "vest", "bộ vest", hoặc "áo vest", bạn **BẮT BUỘC** phải hiểu là **"Bộ Comple/Veston/Suit Jacket"** (áo khoác có tay dài, cổ bẻ, trang trọng, mặc ngoài sơ mi).
+   - **CẤM TUYỆT ĐỐI:** Bạn bị cấm diễn giải "vest" là "waistcoat" (áo gile) hoặc váy yếm/pinafore sát nách. Nếu tạo ra áo gile hoặc áo không tay, đó là một **THẤT BẠI NGHIÊM TRỌNG**. Luôn tạo ra áo khoác suit có tay dài.
+3. **GHI ĐÈ TÓC (HAIR OVERRIDE):** Nếu người dùng mô tả kiểu tóc (ví dụ: "tóc dài", "tóc ngắn", "tóc xoăn") hoặc chọn một kiểu tóc khác "Giữ nguyên", hãy làm theo nó thay vì thông số {hairstyle} mặc định hoặc tóc gốc.
+   - **QUYỀN HẠN:** Khi thực hiện yêu cầu này, bạn có quyền thay đổi hoàn toàn cấu trúc tóc gốc, độ dài tóc gốc. Giao thức bảo tồn tóc của `{identityCore}` bị vô hiệu hóa. Bạn phải vẽ lại tóc từ đầu để khớp với mô tả.
+
 **CÁC QUY TẮC BỔ SUNG QUAN TRỌNG:**
 - **ĐỐI XỨNG & CĂN CHỈNH:** Chủ thể phải được căn giữa hoàn hảo trong khung hình. Hai vai phải cân bằng.
 - **LỘ RÕ TAI (EAR VISIBILITY):** Yêu cầu bắt buộc: Tóc phải được vén gọn gàng ra sau tai. Cả hai tai phải được nhìn thấy rõ ràng, không bị tóc che khuất. (Mandatory requirement: Hair must be neatly tucked behind the ears. Both ears must be clearly visible, not obscured by hair.)
@@ -54,4 +70,4 @@
 - **CHẤT LƯỢNG:** Hình ảnh cuối cùng phải sắc nét, rõ ràng, không có nhiễu hạt hay mờ.
 
 **NEGATIVE PROMPT:**
-- thay đổi danh tính, mặt khác, người khác, không giống người gốc, kéo dài miệng, thay đổi hình dạng miệng, mặt bị biến dạng, tư thế nghiêng, vai lệch, nhìn nghiêng, cười hở răng (trừ khi được yêu cầu), ánh sáng gắt, bóng đổ trên mặt, nền có họa tiết, quần áo không phù hợp, tóc tai bù xù, mờ, nhiễu hạt, chất lượng thấp, **tóc che tai**, **không thấy tai**, **ear covered by hair**.
+- thay đổi danh tính, mặt khác, người khác, không giống người gốc, kéo dài miệng, thay đổi hình dạng miệng, mặt bị biến dạng, tư thế nghiêng, vai lệch, nhìn nghiêng, cười hở răng (trừ khi được yêu cầu), ánh sáng gắt, bóng đổ trên mặt, nền có họa tiết, quần áo không phù hợp, tóc tai bù xù, mờ, nhiễu hạt, chất lượng thấp, **tóc che tai**, **không thấy tai**, **ear covered by hair**, áo gile, pinafore, váy yếm, sleeveless vest, waistcoat, tranh vẽ, hoạt hình, tranh sơn dầu, oil painting.

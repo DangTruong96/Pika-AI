@@ -3,19 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { BrushIcon, IdCardIcon, ExpandIcon, SparklesIcon, UsersIcon } from './icons';
 import type { Tab, Gender, SelectionMode } from '../types';
 import type { IdPhotoOptions } from '../services/geminiService';
+import Spinner from './Spinner';
 
-// Statically import panels to eliminate loading delays when switching tabs.
-// This increases initial bundle size but improves in-app responsiveness.
-import RetouchPanel from './RetouchPanel';
-import IdPhotoPanel from './IdPhotoPanel';
-import AdjustmentPanel from './AdjustmentPanel';
-import { ExpandPanel } from './ExpandPanel';
-import StudioPanel from './StudioPanel';
+// Dynamic imports (Lazy Loading) to optimize initial bundle size
+const RetouchPanel = React.lazy(() => import('./RetouchPanel'));
+const IdPhotoPanel = React.lazy(() => import('./IdPhotoPanel'));
+const AdjustmentPanel = React.lazy(() => import('./AdjustmentPanel'));
+// Handle named export for ExpandPanel
+const ExpandPanel = React.lazy(() => import('./ExpandPanel').then(module => ({ default: module.ExpandPanel })));
+const StudioPanel = React.lazy(() => import('./StudioPanel'));
 
 
 interface EditorSidebarProps {
@@ -78,6 +79,13 @@ export const TABS_CONFIG = [
     { id: 'idphoto', icon: IdCardIcon, tooltip: 'tooltipIdPhoto' },
     { id: 'expand', icon: ExpandIcon, tooltip: 'tooltipExpand' },
 ];
+
+const PanelLoader = () => (
+    <div className="w-full h-64 flex flex-col items-center justify-center gap-3 bg-black/30 rounded-2xl border border-white/10">
+        <Spinner className="w-8 h-8" />
+        <span className="text-gray-400 text-sm animate-pulse">Đang tải công cụ...</span>
+    </div>
+);
 
 const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const { className, isImageLoaded, isLoading, activeTab, setActiveTab, isMobile } = props;
@@ -180,8 +188,6 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
       case 'studio':
         return <StudioPanel
             isLoading={isLoading}
-            isImageLoaded={isImageLoaded}
-            currentImage={props.currentImage}
             studioPrompt={props.studioPrompt}
             onStudioPromptChange={props.onStudioPromptChange}
             onApplyStudio={props.onApplyStudio}
@@ -242,7 +248,9 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
         </div>
       )}
       
-      {renderActivePanel()}
+      <Suspense fallback={<PanelLoader />}>
+        {renderActivePanel()}
+      </Suspense>
       
       {props.sources && props.sources.length > 0 && (
         <div className="w-full p-3 bg-black/20 rounded-2xl text-xs mt-2 animate-fade-in border border-white/10">

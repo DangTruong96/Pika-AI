@@ -1,6 +1,6 @@
 {
-  "name": "Pika-AI v1.0",
-  "description": "Pika-AI v1.0 introduces a Modular Core Architecture. Instead of shared technology prompts, each function (Retouch, Adjust, Studio, etc.) now uses its own dedicated set of core protocols (e.g., Identity, Forensic Reconstruction). This isolates functions, ensuring that updates to one tool do not affect another, and allows for future, tool-specific optimizations.",
+  "name": "Pika AI: Studio Sáng Tạo",
+  "description": "Pika AI: Studio Nhiếp Ảnh Số Toàn Năng. Công nghệ AI tiên tiến biến ý tưởng thành hiện thực: Chỉnh Sửa Ma Thuật, Nhiếp Ảnh Gia AI, Mở Rộng Vô Hạn và Ảnh Thẻ Chuẩn Quốc Tế. Đỉnh cao nhiếp ảnh trong tầm tay.",
   "requestFramePermissions": [],
   "prompt": ""
 }

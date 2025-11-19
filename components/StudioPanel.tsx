@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -6,7 +7,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { UsersIcon, XMarkIcon, UploadIcon, SparklesIcon, IdCardIcon } from './icons';
-// Fix: Corrected the import path for the 'Tab' type from '../hooks/usePika' to '../types' to resolve module export error.
 import type { Tab } from '../types';
 
 interface StudioPanelProps {

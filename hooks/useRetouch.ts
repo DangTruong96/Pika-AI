@@ -1,9 +1,9 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-// FIX: Added 'React' to the import statement to resolve errors with event types.
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateAdjustedImage, generateExtractedItem, dataURLtoFile } from '../services/geminiService';
 import type { SelectionMode } from '../types';

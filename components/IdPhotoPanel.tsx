@@ -1,9 +1,10 @@
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-// Fix: Imported 'useEffect' from React.
 import React, { useState, useCallback, useRef, useLayoutEffect, useEffect, useMemo } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { type IdPhotoOptions } from '../services/geminiService';
@@ -26,11 +27,10 @@ type PhotoType = 'standard' | 'newborn';
 type Expression = 'neutral' | 'smile' | 'keep' | 'big-smile';
 type Outfit = 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai';
 type Background = 'white' | 'blue' | 'gray' | 'green';
-type Hair = 'keep' | 'professional-short' | 'professional-tied-back' | 'professional-neat-down' | 'male-neat' | 'male-short' | 'male-medium';
+type Hair = 'keep' | 'professional-short' | 'professional-tied-back' | 'professional-neat-down' | 'male-neat' | 'male-short' | 'male-medium' | 'long-hair';
 type Size = '3x4' | '4x6' | '2x3' | '2x2' | '3.5x4.5' | '5x5' | '2.4x3' | '4x5';
 
 
-// Fix: Correctly define a generic memoized component to accept type arguments.
 interface SegmentedControlProps<T extends string> {
     label?: string;
     options: { value: T; label: string, icon?: React.FC<{ className?: string }>, hideLabel?: boolean }[];
@@ -77,7 +77,6 @@ export const SegmentedControl = React.memo(function SegmentedControl<T extends s
         const resizeObserver = new ResizeObserver(() => debouncedCalculate());
         
         resizeObserver.observe(container);
-        // Fix: Replaced Array.from() with a direct forEach on the NodeList to resolve a TypeScript type inference issue where button elements were incorrectly typed as 'unknown'.
         container.querySelectorAll('button').forEach(btn => resizeObserver.observe(btn));
 
         return () => {
@@ -138,27 +137,22 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
     onGenderChange(newGender);
   }, [onGenderChange]);
   
-  // Effect to sync outfit and hair when gender prop changes from parent (e.g., quick actions)
   useEffect(() => {
-    // When gender changes, check if the current outfit is gender-specific and incorrect.
-    // If so, switch to the default outfit for the new gender.
     setOutfit(prevOutfit => {
       const isFemaleOutfit = ['ao-dai', 'blouse', 'collared-shirt-f'].includes(prevOutfit);
       const isMaleOutfit = ['suit', 'collared-shirt-m'].includes(prevOutfit);
 
       if (gender === 'male' && isFemaleOutfit) {
-        return 'collared-shirt-m'; // User requested default for male
+        return 'collared-shirt-m';
       }
       if (gender === 'female' && isMaleOutfit) {
-        return 'blouse'; // Default for female
+        return 'blouse';
       }
-      // If current outfit is unisex (office-wear) or already correct for gender, keep it.
       return prevOutfit;
     });
-    setHair('keep'); // Always reset hair style on gender change for simplicity
+    setHair('keep');
   }, [gender]);
 
-  // Effect to reset custom prompt when image changes
   useEffect(() => {
     setCustomPrompt('');
   }, [currentImage]);
@@ -222,6 +216,7 @@ const IdPhotoPanel: React.FC<IdPhotoPanelProps> = ({ onApplyIdPhoto, isLoading, 
     : [
         { value: 'keep' as Hair, label: t('idPhotoHairKeep') },
         { value: 'professional-short' as Hair, label: t('idPhotoHairShortNeat') },
+        { value: 'long-hair' as Hair, label: t('idPhotoHairLong') },
         { value: 'professional-tied-back' as Hair, label: t('idPhotoHairTiedBack') },
         { value: 'professional-neat-down' as Hair, label: t('idPhotoHairNeatDown') },
       ]), [gender, t]);

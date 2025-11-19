@@ -24,7 +24,7 @@ const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => voi
 
   return (
     <div
-      className={`w-full h-full flex flex-col items-center justify-center text-gray-400 p-4 sm:p-8 transition-all duration-300 rounded-2xl border-2 bg-black/30 backdrop-blur-xl shadow-2xl shadow-black/30 ${isDraggingOver ? 'border-dashed border-cyan-400' : 'border-transparent'}`}
+      className={`w-full h-full flex flex-col items-center justify-center text-gray-400 p-4 sm:p-8 transition-all duration-500 ease-out rounded-3xl bg-white/5 backdrop-blur-md border ${isDraggingOver ? 'border-cyan-400 bg-cyan-500/10 scale-[1.02]' : 'border-white/10 hover:border-white/20'}`}
       onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
       onDragLeave={() => setIsDraggingOver(false)}
       onDrop={(e) => {
@@ -33,16 +33,19 @@ const ImagePlaceholder: React.FC<{ onFileSelect: (files: FileList | null) => voi
         onFileSelect(e.dataTransfer.files);
       }}
     >
-      <div className="flex flex-col items-center gap-4 text-center">
-        <label htmlFor="image-upload-main" className="flex flex-col items-center gap-4 cursor-pointer group">
-            <div className="p-4 bg-white/5 rounded-full border border-white/10 transition-colors duration-200 group-hover:bg-white/10 group-hover:border-cyan-400/50">
-              <UploadIcon className="w-12 h-12 text-gray-300" />
+      <div className="flex flex-col items-center gap-6 text-center max-w-md animate-fade-in">
+        <label htmlFor="image-upload-main" className="flex flex-col items-center gap-5 cursor-pointer group">
+            <div className={`relative p-6 rounded-full transition-all duration-500 ${isDraggingOver ? 'bg-cyan-500/20 shadow-[0_0_40px_rgba(6,182,212,0.3)]' : 'bg-gradient-to-b from-white/10 to-white/5 border border-white/10 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]'}`}>
+              <UploadIcon className={`w-10 h-10 transition-colors duration-300 ${isDraggingOver ? 'text-cyan-300' : 'text-gray-300 group-hover:text-white'}`} />
+              {isDraggingOver && <div className="absolute inset-0 rounded-full animate-ping bg-cyan-400/20" />}
             </div>
-            <span className="font-semibold text-cyan-300 group-hover:underline text-lg">
-              {t('uploadImage')}
-            </span>
+            <div className="flex flex-col gap-2">
+                <span className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 group-hover:from-cyan-200 group-hover:to-blue-400 transition-all duration-300">
+                  {t('uploadImage')}
+                </span>
+                <p className="text-sm text-gray-500 font-medium tracking-wide group-hover:text-gray-400 transition-colors">{t('dragAndDrop')}</p>
+            </div>
         </label>
-        <p className="text-sm text-gray-500">{t('dragAndDrop')}</p>
       </div>
     </div>
   );
@@ -196,7 +199,7 @@ const App: React.FC = () => {
 
   return (
     <div
-      className={`w-screen ${pika.currentImage ? 'bg-transparent' : 'bg-black'} text-gray-100 flex flex-col overflow-hidden antialiased`}
+      className={`w-screen ${pika.currentImage ? 'bg-transparent' : 'bg-transparent'} text-gray-100 flex flex-col overflow-hidden antialiased`}
       style={{ height: pika.isMobile ? `${pika.windowSize.height}px` : '100vh' }}
     >
        {pika.currentImageUrl && (
@@ -204,9 +207,9 @@ const App: React.FC = () => {
                 <div 
                     aria-hidden="true"
                     className="fixed inset-0 z-[-2] bg-cover bg-center transition-opacity duration-500 scale-110"
-                    style={{ backgroundImage: `url(${pika.currentThumbnailUrl ?? pika.currentImageUrl})`, filter: 'blur(24px)' }}
+                    style={{ backgroundImage: `url(${pika.currentThumbnailUrl ?? pika.currentImageUrl})`, filter: 'blur(40px) brightness(0.4)' }}
                 />
-                <div aria-hidden="true" className="fixed inset-0 z-[-1] bg-black/40" />
+                <div aria-hidden="true" className="fixed inset-0 z-[-1] bg-black/20 backdrop-blur-3xl" />
             </>
         )}
        <input id="image-upload-main" type="file" className="hidden" accept="image/*" onChange={(e) => { pika.handleFileSelect(e.target.files); e.target.value = ''; }} />
@@ -244,14 +247,17 @@ const App: React.FC = () => {
                             style={{ transform: pika.transformString }}
                         />
                     )}
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-                    <p className="relative z-10 text-lg font-semibold animate-pulse">{pika.loadingMessage}</p>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+                    <div className="relative z-10 flex flex-col items-center gap-4">
+                        <div className="liquid-spinner"></div>
+                        <p className="text-lg font-medium tracking-wide animate-pulse text-cyan-100 text-shadow">{pika.loadingMessage}</p>
+                    </div>
                 </div>
             )}
             {!pika.currentImage ? <ImagePlaceholder onFileSelect={pika.handleFileSelect} /> : (
                 <div ref={pika.imageViewerRef} className="w-full h-full relative">
                     {pika.isComparing && pika.isMobile && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm font-bold py-1 px-3 rounded-md pointer-events-none z-30 animate-fade-in">
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/10 text-white text-sm font-bold py-1.5 px-4 rounded-full pointer-events-none z-30 animate-fade-in shadow-lg">
                             {pika.t('historyOriginal')}
                         </div>
                     )}
@@ -289,7 +295,7 @@ const App: React.FC = () => {
             )}
             {pika.currentImage && (
                 <>
-                    <div className={`absolute left-4 top-4 flex flex-col items-center gap-0.5 lg:gap-1 p-1.5 lg:p-2 bg-black/40 rounded-full backdrop-blur-xl border border-white/10 z-40 transition-all duration-300 ease-in-out
+                    <div className={`absolute left-4 top-4 flex flex-col items-center gap-0.5 lg:gap-1 p-1.5 lg:p-2 bg-black/40 rounded-full backdrop-blur-xl border border-white/10 z-40 transition-all duration-300 ease-in-out shadow-xl
                         ${areControlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}
                         ${pika.isMobile && areControlsVisible ? '!translate-y-16' : ''}`}>
                         <button onClick={() => pika.handleZoom('in')} disabled={pika.isLoading} className="p-2 lg:p-2.5 rounded-full bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95 disabled:opacity-50" title={pika.t('zoomIn')}><ZoomInIcon className="w-5 h-5 lg:w-6 lg:h-6"/></button>
@@ -298,7 +304,7 @@ const App: React.FC = () => {
                         {pika.canUndo && <div className="h-px w-8 lg:w-10 my-0.5 lg:my-1 bg-white/20"></div>}
                         {pika.canUndo && <button onClick={() => pika.setComparisonState(s => ({...s, isComparing: !s.isComparing}))} disabled={pika.isLoading} className="p-2 lg:p-2.5 rounded-full bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95 disabled:opacity-50" aria-label={pika.isComparing ? pika.t('viewEdited') : pika.t('viewOriginal')} title={pika.isComparing ? pika.t('viewEdited') : pika.t('viewOriginal')}>{pika.isComparing ? <EyeSlashIcon className="w-5 h-5 lg:w-6 lg:h-6 text-cyan-400"/> : <EyeIcon className="w-5 h-5 lg:w-6 lg:h-6"/>}</button>}
                     </div>
-                    <div className={`absolute right-4 top-4 flex flex-col items-center gap-0.5 lg:gap-1 p-1.5 lg:p-2 bg-black/40 rounded-full backdrop-blur-xl border border-white/10 z-40 transition-all duration-300 ease-in-out
+                    <div className={`absolute right-4 top-4 flex flex-col items-center gap-0.5 lg:gap-1 p-1.5 lg:p-2 bg-black/40 rounded-full backdrop-blur-xl border border-white/10 z-40 transition-all duration-300 ease-in-out shadow-xl
                         ${areControlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}
                         ${pika.isMobile && areControlsVisible ? '!translate-y-16' : ''}`}>
                         <button onClick={() => pika.handleApplyTransform('rotate-ccw')} disabled={pika.isLoading} className="p-2 lg:p-2.5 rounded-full bg-white/5 text-white hover:bg-white/10 transition-colors active:scale-95 disabled:opacity-50" title={pika.t('transformRotateCCW')}><UndoIcon className="w-5 h-5 lg:w-6 lg:h-6"/></button>
@@ -310,7 +316,7 @@ const App: React.FC = () => {
             )}
         </div>
         
-        <div ref={pika.toolsContainerRef} className={`flex-shrink-0 bg-black/30 transition-all duration-300 ease-in-out ${ pika.isMobile ? (pika.isLandscape ? `h-full ${pika.isToolboxOpen ? 'w-[40%]' : 'w-0'}` : `w-full ${pika.isToolboxOpen ? 'h-[40%]' : 'h-0'}`) : `h-full ${pika.isToolboxOpen ? 'lg:w-[30%]' : 'lg:w-0'}` } ${ pika.isToolboxOpen ? 'overflow-y-auto will-change-scroll' : 'overflow-hidden' } ${pika.isMobile ? (pika.isToolboxOpen ? 'pb-4' : 'p-0') : 'lg:pb-4'}`} onTouchStart={pika.handleToolsTouchStart} onTouchMove={pika.handleToolsTouchMove} onTouchEnd={pika.handleToolsTouchEnd}>
+        <div ref={pika.toolsContainerRef} className={`flex-shrink-0 bg-black/30 border-l border-white/5 transition-all duration-300 ease-in-out ${ pika.isMobile ? (pika.isLandscape ? `h-full ${pika.isToolboxOpen ? 'w-[40%]' : 'w-0'}` : `w-full ${pika.isToolboxOpen ? 'h-[40%]' : 'h-0'}`) : `h-full ${pika.isToolboxOpen ? 'lg:w-[30%]' : 'lg:w-0'}` } ${ pika.isToolboxOpen ? 'overflow-y-auto will-change-scroll' : 'overflow-hidden' } ${pika.isMobile ? (pika.isToolboxOpen ? 'pb-4' : 'p-0') : 'lg:pb-4'}`} onTouchStart={pika.handleToolsTouchStart} onTouchMove={pika.handleToolsTouchMove} onTouchEnd={pika.handleToolsTouchEnd}>
             <EditorSidebar className="w-full" isImageLoaded={!!pika.currentImage} isLoading={pika.isLoading} activeTab={pika.activeTab} setActiveTab={pika.handleTabChange} currentImage={pika.currentImage}
               onApplyRetouch={pika.handleGenerate} retouchPrompt={pika.retouchPrompt} onRetouchPromptChange={v => pika.setRetouchState(s=>({...s, prompt: v}))} retouchPromptInputRef={pika.retouchPromptInputRef} selectionMode={pika.selectionMode} onSelectionModeChange={pika.handleSelectionModeChange}
               onApplyIdPhoto={pika.handleGenerateIdPhoto} idPhotoGender={pika.idPhotoGender} onIdPhotoGenderChange={pika.setIdPhotoGender}

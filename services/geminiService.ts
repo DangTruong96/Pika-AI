@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -48,7 +49,7 @@ interface StandardIdPhotoOptions extends IdPhotoOptionsBase {
   gender: 'male' | 'female';
   expression: 'neutral' | 'smile' | 'keep' | 'big-smile';
   outfit: 'suit' | 'blouse' | 'collared-shirt-m' | 'collared-shirt-f' | 'ao-dai';
-  hairstyle: 'keep' | 'professional-short' | 'professional-tied-back' | 'professional-neat-down' | 'male-neat' | 'male-short' | 'male-medium';
+  hairstyle: 'keep' | 'professional-short' | 'professional-tied-back' | 'professional-neat-down' | 'male-neat' | 'male-short' | 'male-medium' | 'long-hair';
   customPrompt?: string;
 }
 interface NewbornIdPhotoOptions extends IdPhotoOptionsBase {
@@ -426,21 +427,22 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
     return withErrorHandling(async () => {
         // Mappings from keys to Vietnamese descriptions for the AI model
         const outfitMap: Record<StandardIdPhotoOptions['outfit'], string> = {
-            'suit': 'Áo vest công sở trang trọng',
-            'blouse': 'Áo sơ mi nữ kiểu',
-            'collared-shirt-m': 'Áo sơ mi nam có cổ',
-            'collared-shirt-f': 'Áo công sở nữ',
-            'ao-dai': 'Áo dài truyền thống Việt Nam (chỉ phần cổ và vai)',
+            'suit': 'Áo vest đen công sở hiện đại, form dáng chuẩn, kèm áo sơ mi trắng và cà vạt (nếu là nam), toát lên vẻ chuyên nghiệp, thành đạt.',
+            'blouse': 'Áo sơ mi nữ kiểu blouse màu trắng tinh khôi, thiết kế thanh lịch, cổ tròn hoặc cổ trụ, chất liệu mềm mại.',
+            'collared-shirt-m': 'Áo sơ mi nam trắng cao cấp, cổ đức đứng dáng, không cà vạt, cài cúc gọn gàng, phong cách doanh nhân trẻ.',
+            'collared-shirt-f': 'Áo sơ mi trắng nữ công sở, cổ đức, form dáng ôm vừa vặn, lịch sự và trang nhã.',
+            'ao-dai': 'Áo dài Việt Nam truyền thống màu trắng, chất liệu lụa mềm mại, cổ đứng thấp, tôn vinh vẻ đẹp dịu dàng.',
         };
 
         const hairMap: Record<StandardIdPhotoOptions['hairstyle'], string> = {
-            'keep': 'Giữ nguyên kiểu tóc gốc nhưng làm cho gọn gàng hơn',
-            'professional-short': 'Kiểu tóc ngắn chuyên nghiệp, gọn gàng',
-            'professional-tied-back': 'Tóc được buộc/búi cao gọn gàng về phía sau',
-            'professional-neat-down': 'Tóc xõa thẳng, được chải chuốt gọn gàng',
-            'male-neat': 'Kiểu tóc nam được chải chuốt gọn gàng',
-            'male-short': 'Kiểu tóc nam cắt ngắn',
-            'male-medium': 'Kiểu tóc nam có độ dài trung bình, được tạo kiểu',
+            'keep': 'Giữ nguyên kiểu tóc hiện tại nhưng làm cho tóc bóng mượt, vào nếp gọn gàng, loại bỏ tóc con lòa xòa.',
+            'professional-short': 'Kiểu tóc Bob hiện đại (nữ) hoặc cắt ngắn gọn gàng, vén nhẹ sau tai, tạo cảm giác năng động, chuyên nghiệp.',
+            'professional-tied-back': 'Tóc được buộc đuôi ngựa thấp hoặc búi gọn gàng sau gáy, lộ rõ vầng trán và đôi tai, tác phong nghiêm túc.',
+            'professional-neat-down': 'Tóc xõa dài thẳng mượt, vén gọn hai bên tai để lộ rõ khuôn mặt và đôi tai, suôn mượt óng ả.',
+            'long-hair': 'MỆNH LỆNH GHI ĐÈ TUYỆT ĐỐI (ABSOLUTE PRIORITY OVERRIDE): BỎ QUA HOÀN TOÀN tóc thật của người trong ảnh. Bất kể tóc gốc là tóc ngắn, đầu trọc, tóc tém hay tóc nam, bạn BẮT BUỘC phải thay thế nó bằng một mái tóc dài ngang lưng, dày, đen nhánh, suôn mượt và nữ tính. Việc vẽ tóc ngắn là một THẤT BẠI CỰC KỲ NGHIÊM TRỌNG. Tóc mới phải vén gọn sau tai để lộ rõ 100% hai tai. Hãy tưởng tượng bạn đang đội một bộ tóc giả dài tuyệt đẹp cho họ. KHÔNG ĐƯỢC GIỮ LẠI TÓC NGẮN.',
+            'male-neat': 'Kiểu tóc nam Undercut hoặc Side Part 7/3 vuốt keo gọn gàng, lịch lãm, lộ trán sáng sủa.',
+            'male-short': 'Kiểu tóc nam cắt ngắn (Crew Cut/Buzz Cut) gọn gàng, nam tính, sạch sẽ.',
+            'male-medium': 'Kiểu tóc nam layer Hàn Quốc có độ dài vừa phải, tỉa layer tự nhiên, vuốt nhẹ tạo kiểu.',
         };
 
         const expressionMap: Record<StandardIdPhotoOptions['expression'], string> = {

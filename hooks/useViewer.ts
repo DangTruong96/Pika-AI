@@ -1,9 +1,9 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-// Fix: Added missing React import to resolve errors with event types.
 import React, { useReducer, useCallback, useRef, useState, useEffect } from 'react';
 
 // --- TYPES & REDUCER ---
@@ -97,7 +97,6 @@ export const useViewer = ({ isComparing, isMobile, isToolboxOpen, toggleToolbox,
         interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 300);
     }, []);
     
-    // Cleanup timeouts on unmount
     useEffect(() => () => {
         if (interactionTimeoutRef.current) window.clearTimeout(interactionTimeoutRef.current);
     }, []);
