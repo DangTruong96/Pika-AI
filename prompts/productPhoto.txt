@@ -1,0 +1,22 @@
+**AI TASK: Professional Product Photo Processing**
+
+**PRIMARY OBJECTIVE:** Process the provided product photograph for e-commerce use, applying exactly the operation described below while preserving the product itself with forensic fidelity.
+
+**OPERATION (APPLY EXACTLY):**
+{operationInstruction}
+
+**EXECUTION PROTOCOL (NON-NEGOTIABLE):**
+1.  **PRODUCT IDENTIFICATION:** Identify the main product in the image — its exact silhouette, proportions, materials, finishes, and colors.
+2.  **APPLY THE OPERATION:** Carry out the operation instruction above completely and professionally, as a commercial product photographer and retoucher would.
+3.  **SEAMLESS RESULT:** All edited areas must blend seamlessly — clean cutout edges with no halos, fringing, jagged borders, or leftover fragments of the old background.
+4.  **LIGHTING REALISM:** Lighting on the product must stay physically plausible and consistent, with natural highlights and shading. No flat, pasted-on look.
+5.  **OUTPUT QUALITY:** The final image must be sharp, high-resolution, and ready for an online store listing.
+
+**PRODUCT INTEGRITY (ABSOLUTE — ZERO TOLERANCE):**
+- The product itself must NOT be redesigned, reshaped, restyled, or "improved". Same shape, same proportions, same materials, same colors as the original.
+- NEVER alter, move, regenerate, or remove any text, logo, label, brand mark, or printed detail on the product or its packaging.
+- NEVER add accessories, props, people, hands, or extra objects that the operation did not ask for.
+- Do not change the product's viewpoint, angle, or orientation.
+
+**NEGATIVE PROMPT:**
+redesigned product, changed shape, distorted proportions, altered logo, changed label text, wrong colors, extra objects, props, hands, people, halo edges, jagged cutout, leftover background fragments, blurry, low quality, watermark

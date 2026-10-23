@@ -1,0 +1,23 @@
+**AI TASK: Document Scan Reconstruction**
+
+**PRIMARY OBJECTIVE:** Turn the provided photograph of a document (paper page, receipt, form, book page, or sign) into a clean, flat, scanner-quality digital image. The result must look like it came out of a flatbed scanner, not a camera.
+
+**MODE INSTRUCTION (APPLY EXACTLY):**
+{modeInstruction}
+
+**EXECUTION PROTOCOL (NON-NEGOTIABLE):**
+1.  **DOCUMENT DETECTION:** Locate the document in the photograph and identify its four true corners, even if the photo is tilted, rotated, or taken at an angle.
+2.  **RECTIFICATION:** Perspective-correct and straighten the document so its edges are perfectly horizontal and vertical, with no keystone distortion, curl, or skew.
+3.  **FULL-FRAME OUTPUT:** The document must fill the entire output frame edge to edge. No margins of desk, floor, hands, or other surroundings may remain visible around it.
+4.  **CLEAN EDGES:** All four edges of the document must be straight, sharp, and cleanly cut. Complete the page rectangle where a corner is folded, torn, or shadowed.
+5.  **SURFACE CLEANUP:** Remove shadows, glare, reflections, stains, creases, and uneven lighting from the page surface. The page background must be a uniform, pure white.
+6.  **TEXT FIDELITY:** Render all text, numbers, tables, stamps, signatures, and handwriting razor-sharp and fully legible, exactly as printed or written in the original.
+
+**CONTENT INTEGRITY (ABSOLUTE — ZERO TOLERANCE):**
+- NEVER add, remove, rewrite, retype, translate, or "correct" any content. Every character, word, number, date, and amount must match the original exactly.
+- NEVER invent text to fill in blurry areas. If a passage is hard to read, reproduce it as faithfully as possible instead of guessing new content.
+- Preserve the original layout: line order, columns, tables, logos, stamps, and signatures stay in their original positions and proportions.
+- Keep printed colors faithful to the original; do not recolor logos, stamps, charts, or highlighted passages.
+
+**NEGATIVE PROMPT:**
+tilted document, perspective distortion, visible desk, fingers, hands, shadows across the page, glare, reflections, gray or yellowed page background, cropped-out corners, missing content, added text, rewritten text, changed numbers, blurry text, watermarks, added illustrations, page borders, scanner frame
