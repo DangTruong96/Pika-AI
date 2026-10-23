@@ -5,6 +5,9 @@
 */
 
 import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
+import { resolveApiKey } from "./apiKey";
+import { applyReplacements } from "../utils/promptTemplate";
+import { ID_PHOTO_SIZES } from "../utils/idPhoto";
 
 // --- ERROR CLASSES ---
 export class RateLimitError extends Error {
@@ -18,12 +21,14 @@ export class NetworkError extends APIError { constructor() { super('Could not co
 export class InvalidInputError extends APIError { constructor(message: string = 'The API received invalid input.') { super(message); this.name = 'InvalidInputError'; } }
 export class ContentSafetyError extends APIError { constructor(message: string = 'The request was blocked due to content safety policies.') { super(message); this.name = 'ContentSafetyError'; } }
 export class ModelExecutionError extends APIError { constructor(message: string = 'The AI model failed to execute.') { super(message); this.name = 'ModelExecutionError'; } }
+export class MissingApiKeyError extends APIError { constructor(message: string = 'No Gemini API key is configured. Add your own key in Settings (BYOK).') { super(message); this.name = 'MissingApiKeyError'; } }
 
 
 // --- TYPE DEFINITIONS ---
 export interface WebGroundingAttribution {
-  uri: string;
-  title: string;
+  // Both fields optional to match the @google/genai SDK's GroundingChunkWeb shape.
+  uri?: string;
+  title?: string;
 }
 
 export interface GroundingChunk {
@@ -57,14 +62,64 @@ interface NewbornIdPhotoOptions extends IdPhotoOptionsBase {
 }
 export type IdPhotoOptions = StandardIdPhotoOptions | NewbornIdPhotoOptions;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Model IDs, verified against Google's official Gemini API documentation
+ * (ai.google.dev/gemini-api/docs/models and the Nano Banana image-generation
+ * guide) in October 2026:
+ * - Image generation/editing: gemini-3.1-flash-image ("Nano Banana 2"), the
+ *   documented high-efficiency image workhorse and Google's stated migration
+ *   target from both gemini-2.5-flash-image and the shut-down Imagen 4.
+ * - Text / prompt drafting: gemini-2.5-flash (current stable Flash text model).
+ */
+export const MODELS = {
+    image: 'gemini-3.1-flash-image',
+    text: 'gemini-2.5-flash',
+} as const;
+
+// --- API KEY / CLIENT MANAGEMENT (BYOK) ---
+// The deployed app runs with the end user's own key, stored only in their
+// browser (see services/apiKey.ts). The build-time process.env.API_KEY is
+// kept as a development fallback for the owner's local flow (.env.local).
+let cachedClient: GoogleGenAI | null = null;
+let cachedClientKey: string | null = null;
+
+export const getAIClient = (): GoogleGenAI => {
+    const apiKey = resolveApiKey(process.env.API_KEY);
+    if (!apiKey) {
+        throw new MissingApiKeyError();
+    }
+    if (!cachedClient || cachedClientKey !== apiKey) {
+        cachedClient = new GoogleGenAI({ apiKey });
+        cachedClientKey = apiKey;
+    }
+    return cachedClient;
+};
+
+/** True when a usable key exists (stored BYOK key or dev fallback). */
+export const hasConfiguredApiKey = (): boolean => resolveApiKey(process.env.API_KEY) !== null;
+
+/**
+ * Validates a user-pasted key with one lightweight live API call (a model
+ * metadata lookup — no generation, no content is sent). Resolves when the
+ * key is accepted; rejects with the usual typed API errors otherwise.
+ */
+export const validateApiKey = async (apiKey: string): Promise<void> => {
+    const key = apiKey.trim();
+    if (!key) {
+        throw new InvalidInputError('The API key is empty.');
+    }
+    return withErrorHandling(async () => {
+        const client = new GoogleGenAI({ apiKey: key });
+        await client.models.get({ model: MODELS.text });
+    });
+};
 
 const promptCache = new Map<string, string>();
 
 export async function getPrompt(path: string, replacements: Record<string, any> = {}): Promise<string> {
     let template = promptCache.get(path);
     if (!template) {
-        const response = await fetch(`/prompts/${path}`);
+        const response = await fetch(`${import.meta.env.BASE_URL}prompts/${path}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch prompt: ${path}`);
         }
@@ -72,11 +127,7 @@ export async function getPrompt(path: string, replacements: Record<string, any> 
         promptCache.set(path, template);
     }
 
-    let prompt = template;
-    for (const key in replacements) {
-        prompt = prompt.replace(new RegExp(`\\{${key}\\}`, 'g'), String(replacements[key]));
-    }
-    return prompt;
+    return applyReplacements(template, replacements);
 }
 
 
@@ -106,7 +157,7 @@ export const dataURLtoFile = (dataUrl: string, filename: string): File => {
     return new File([u8arr], filename, { type: mime });
 };
 
-const fileToGenerativePart = async (file: File) => {
+export const fileToGenerativePart = async (file: File) => {
     if (!file) {
         throw new Error("fileToGenerativePart received a null or undefined file.");
     }
@@ -130,7 +181,7 @@ const fileToGenerativePart = async (file: File) => {
     };
 };
 
-async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
+export async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
     const MAX_RETRIES = 3;
     const INITIAL_DELAY = 1000; // 1 second
 
@@ -138,6 +189,11 @@ async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
         try {
             return await apiCall();
         } catch (err: unknown) {
+            // A missing BYOK key is a configuration state, not an API
+            // failure: never retry it and never remap it to another type.
+            if (err instanceof MissingApiKeyError) {
+                throw err;
+            }
             console.error(`Gemini Service Error (Attempt ${i + 1}/${MAX_RETRIES}):`, err);
             
             let messageContent = '';
@@ -205,7 +261,7 @@ async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T> {
 
 // --- IMPLEMENTED API FUNCTIONS ---
 
-async function getImageUrlFromResponse(response: GenerateContentResponse): Promise<ImageResponse> {
+export async function getImageUrlFromResponse(response: GenerateContentResponse): Promise<ImageResponse> {
     const candidate = response.candidates?.[0];
     const sources = candidate?.groundingMetadata?.groundingChunks ?? [];
     let imageUrl: string | null = null;
@@ -253,21 +309,29 @@ async function getImageUrlFromResponse(response: GenerateContentResponse): Promi
 
 export const generateImageFromText = async (prompt: string, numberOfImages: number, aspectRatio: '1:1' | '16:9' | '9:16' | '4:3' | '3:4'): Promise<string[]> => {
     return withErrorHandling(async () => {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt,
-            config: {
-                numberOfImages,
-                outputMimeType: 'image/png',
-                aspectRatio,
-            },
-        });
+        // Imagen 4 was shut down in the Gemini API (Google's migration guide
+        // points text-to-image to the Nano Banana image models via
+        // generateContent), so this now generates with MODELS.image and
+        // issues one request per requested image.
+        const results: string[] = [];
+        for (let i = 0; i < numberOfImages; i++) {
+            const response = await getAIClient().models.generateContent({
+                model: MODELS.image,
+                contents: { parts: [{ text: prompt }] },
+                config: {
+                    responseModalities: [Modality.IMAGE],
+                    imageConfig: { aspectRatio },
+                },
+            });
+            const { imageUrl } = await getImageUrlFromResponse(response);
+            results.push(imageUrl);
+        }
 
-        if (!response.generatedImages || response.generatedImages.length === 0) {
+        if (results.length === 0) {
             throw new ModelExecutionError("No image was generated by the model.");
         }
-        
-        return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+
+        return results;
     });
 };
 
@@ -300,8 +364,8 @@ export const generateEditedImageWithMask = (imageFile: File, prompt: string, mas
             parts.push(maskPart);
         }
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts },
             config: {
                 responseModalities: [Modality.IMAGE],
@@ -323,8 +387,8 @@ export const generateFilteredImage = async (imageFile: File, prompt: string): Pr
             prompt
         });
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts: [imagePart, { text: finalPrompt }] },
             config: {
                 responseModalities: [Modality.IMAGE],
@@ -364,8 +428,8 @@ export const generateAdjustedImage = async (imageFile: File, prompt: string): Pr
             });
         }
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts: [imagePart, { text: finalPrompt }] },
             config: { 
                 responseModalities: [Modality.IMAGE],
@@ -390,8 +454,8 @@ export const generateExpandedImage = async (imageDataUrl: string, prompt: string
             prompt
         });
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts: [imagePart, { text: finalPrompt }] },
             config: {
                 responseModalities: [Modality.IMAGE],
@@ -405,8 +469,8 @@ export const generateExtractedItem = async (imageFile: File, prompt: string): Pr
     return withErrorHandling(async () => {
         const imagePart = await fileToGenerativePart(imageFile);
         const fullPrompt = await getPrompt('generateExtractedItem.txt', { prompt });
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts: [imagePart, { text: fullPrompt }] },
             config: { responseModalities: [Modality.IMAGE] },
         });
@@ -459,27 +523,8 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
             'green': 'xanh lá',
         };
         
-        const sizeMap: Record<IdPhotoOptionsBase['size'], string> = {
-            '3x4': '3x4 cm (tỷ lệ 3:4, chiều dọc)',
-            '4x6': '4x6 cm (tỷ lệ 2:3, chiều dọc)',
-            '2x2': '2x2 inch (tỷ lệ 1:1, hình vuông)',
-            '3.5x4.5': '3.5x4.5 cm (tỷ lệ 7:9, chiều dọc, cỡ hộ chiếu tiêu chuẩn)',
-            '5x5': '5x5 cm (tỷ lệ 1:1, hình vuông)',
-            '2x3': '2x3 cm (tỷ lệ 2:3, chiều dọc)',
-            '2.4x3': '2.4x3 cm (tỷ lệ 4:5, chiều dọc)',
-            '4x5': '4x5 cm (tỷ lệ 4:5, chiều dọc)',
-        };
-        
-        const sizeRatioMap: Record<IdPhotoOptionsBase['size'], string> = {
-            '3x4': '3:4',
-            '4x6': '2:3',
-            '2x2': '1:1',
-            '3.5x4.5': '7:9',
-            '5x5': '1:1',
-            '2x3': '2:3',
-            '2.4x3': '4:5',
-            '4x5': '4:5',
-        };
+        // Size descriptions/ratios live in utils/idPhoto.ts (unit tested).
+        const sizeSpec = ID_PHOTO_SIZES[options.size];
 
         const imagePart = await fileToGenerativePart(imageFile);
         const isNewborn = options.type === 'newborn';
@@ -496,8 +541,8 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
             superResolutionEngine,
             bodyformAndSilhouetteIntegrity,
             photoType: options.type,
-            size: sizeMap[options.size],
-            size_ratio: sizeRatioMap[options.size],
+            size: sizeSpec.descriptionVi,
+            size_ratio: sizeSpec.ratio,
             backgroundColor: backgroundMap[options.backgroundColor],
             gender: options.type === 'standard' ? (options.gender === 'male' ? 'Nam' : 'Nữ') : 'Không áp dụng',
             outfit: options.type === 'standard' ? outfitMap[options.outfit] : 'Thực thi GIAO THỨC XỬ LÝ TRANG PHỤC CHO TRẺ SƠ SINH v1.0.',
@@ -508,8 +553,8 @@ export const generateIdPhoto = async (imageFile: File, options: IdPhotoOptions):
 
         const prompt = await getPrompt('generateIdPhoto.txt', promptParams);
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts: [imagePart, { text: prompt }] },
             config: { responseModalities: [Modality.IMAGE] },
         });
@@ -566,8 +611,8 @@ export const generateCompositeImage = async (subjectImages: File[], prompt: stri
             }
         }
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts },
             config: {
                 responseModalities: [Modality.IMAGE],
@@ -627,8 +672,8 @@ export const generatePhotoshootImage = async (imageFile: File, prompt: string, o
             }
         }
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.image,
             contents: { parts },
             config: {
                 responseModalities: [Modality.IMAGE],
@@ -667,8 +712,8 @@ export const generateCreativePrompt = async (subjectFiles: File[], styleFile: Fi
             allParts.push(await fileToGenerativePart(file));
         }
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.text,
             contents: { parts: allParts },
             config: {
                 tools: [{googleSearch: {}}],
@@ -691,8 +736,8 @@ export const inferOutfitFromPrompt = async (photoshootPrompt: string, subjectIma
         const resolvedImageParts = await Promise.all(imagePartPromises);
         parts.push(...resolvedImageParts);
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.text,
             contents: { parts },
         });
         return response.text || '';
@@ -709,8 +754,8 @@ export const generatePromptFromStyleImage = async (styleFile: File, describeOutf
             prompt = await getPrompt('promptFromStyleImageScene.txt');
         }
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.text,
             contents: { parts: [imagePart, { text: prompt }] },
         });
         return response.text || '';
@@ -733,8 +778,8 @@ export const generateOutfitDescriptionFromFiles = async (outfitFiles: File[]): P
         const allParts: any[] = [{ text: prompt }];
         allParts.push(...resolvedImageParts);
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+        const response = await getAIClient().models.generateContent({
+            model: MODELS.text,
             contents: { parts: allParts },
         });
         return response.text || '';
