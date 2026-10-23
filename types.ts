@@ -20,7 +20,7 @@ export type HistoryItem = {
 };
 
 // From usePika
-export type Tab = 'retouch' | 'idphoto' | 'adjust' | 'expand' | 'studio' | 'generate';
+export type Tab = 'retouch' | 'idphoto' | 'adjust' | 'expand' | 'studio' | 'generate' | 'faceswap' | 'beauty' | 'scan' | 'product' | 'crop';
 export type TransformType = 'rotate-cw' | 'rotate-ccw' | 'flip-h' | 'flip-v';
 export type ExpansionHandle = 'top' | 'right' | 'bottom' | 'left' | 'tl' | 'tr' | 'br' | 'bl';
 export type Gender = 'male' | 'female';

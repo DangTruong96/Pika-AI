@@ -20,6 +20,11 @@ import { useExpansion } from './useExpansion';
 import { useStudio } from './useStudio';
 import { useIdPhoto } from './useIdPhoto';
 import { useAdjustments } from './useAdjustments';
+import { useFaceSwap } from './useFaceSwap';
+import { useBeauty } from './useBeauty';
+import { useScan } from './useScan';
+import { useProduct } from './useProduct';
+import { useCrop } from './useCrop';
 
 
 const createThumbnail = async (file: File): Promise<string> => {
@@ -275,6 +280,11 @@ export const usePika = () => {
   const idPhotoManager = useIdPhoto(sharedHookProps);
   const retouchManager = useRetouch({ ...sharedHookProps, handleUseExtractedAsOutfit, openFullScreenViewer });
   const expansionManager = useExpansion({ ...sharedHookProps, imageDimensions, getRelativeCoords, imgRef });
+  const faceSwapManager = useFaceSwap(sharedHookProps);
+  const beautyManager = useBeauty(sharedHookProps);
+  const scanManager = useScan(sharedHookProps);
+  const productManager = useProduct(sharedHookProps);
+  const cropManager = useCrop(sharedHookProps);
 
   const { studioPrompt, studioStyleFile, studioOutfitFiles, setStudioState } = studioManager;
 
@@ -590,6 +600,11 @@ export const usePika = () => {
     ...studioManager,
     studioSubjects,
     ...expansionManager,
+    ...faceSwapManager,
+    ...beautyManager,
+    ...scanManager,
+    ...productManager,
+    ...cropManager,
     handleDownloadExtractedItem,
     handleGenerateCreativePrompt,
   };

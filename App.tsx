@@ -328,6 +328,12 @@ const App: React.FC = () => {
               studioSubjects={pika.studioSubjects} onStudioAddSubject={pika.handleStudioAddSubject} onStudioRemoveSubject={pika.handleStudioRemoveSubject}
               onRequestFileUpload={pika.handleRequestFileUpload}
               onGenerateCreativePrompt={pika.handleGenerateCreativePrompt}
+              onApplyFaceSwap={pika.handleApplyFaceSwap}
+              onApplyBeauty={pika.handleApplyBeauty}
+              onApplyScan={pika.handleApplyScan}
+              onApplyProduct={pika.handleApplyProduct}
+              onApplyCrop={pika.handleApplyCrop}
+              onApplyCropAndEnhance={pika.handleApplyCropAndEnhance}
               sources={pika.sources}
               isMobile={pika.isMobile}
               onToggleToolbox={pika.toggleToolbox}

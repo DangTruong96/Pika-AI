@@ -107,6 +107,10 @@ const vi = {
   loadingOutfitStyle: 'Đang xem đồ...',
   loadingInferOutfit: 'Đang đoán đồ...',
   loadingScan: 'Đang quét...',
+  loadingFaceSwap: 'Đang ghép mặt...',
+  loadingBeauty: 'Đang làm đẹp...',
+  loadingProduct: 'Đang xử lý ảnh sản phẩm...',
+  loadingCrop: 'Đang cắt ảnh...',
 
   // --- Retouch ---
   retouchTitle: 'Chỉnh Sửa',
@@ -244,6 +248,59 @@ const vi = {
   tooltipExpand: 'Mở Rộng',
   tooltipStudio: 'Studio',
   tooltipGenerate: 'Tạo Ảnh',
+  tooltipFaceSwap: 'Ghép Mặt',
+  tooltipBeauty: 'Làm Đẹp',
+  tooltipScan: 'Quét Tài Liệu',
+  tooltipProduct: 'Ảnh Sản Phẩm',
+  tooltipCrop: 'Cắt Ảnh',
+
+  // --- Face Swap ---
+  faceSwapTitle: 'Ghép Mặt AI',
+  faceSwapDesc: 'Tải lên một ảnh khuôn mặt rõ nét, AI sẽ ghép khuôn mặt đó vào người trong ảnh hiện tại, giữ nguyên tư thế, trang phục và bối cảnh.',
+  faceSwapUploadFace: 'Chọn ảnh khuôn mặt',
+  faceSwapFaceReady: 'Đã chọn ảnh khuôn mặt',
+  faceSwapApply: 'Ghép mặt',
+  faceSwapNote: 'Chỉ ghép mặt với ảnh của chính bạn hoặc khi đã được người trong ảnh đồng ý.',
+  faceSwapNeedFace: 'Hãy chọn một ảnh khuôn mặt trước.',
+
+  // --- Beauty ---
+  beautyTitle: 'Làm Đẹp Chuyên Sâu',
+  beautyDesc: 'Chỉnh sửa chân dung nâng cao: mịn da tự nhiên, cân chỉnh gương mặt và trang điểm nhẹ — vẫn giữ đúng danh tính người trong ảnh.',
+  beautyPresetNatural: 'Tự nhiên',
+  beautyPresetGlamour: 'Quyến rũ',
+  beautyPresetSkin: 'Da mịn',
+  beautyPresetFaceShape: 'Thon gọn mặt',
+  beautyPresetCustom: 'Tuỳ chỉnh',
+  beautyCustomPlaceholder: 'Mô tả yêu cầu làm đẹp của bạn…',
+  beautyIntensity: 'Mức độ',
+  beautyApply: 'Làm đẹp',
+
+  // --- Scan ---
+  scanTitle: 'Quét Tài Liệu',
+  scanDesc: 'Biến ảnh chụp giấy tờ, hoá đơn, trang sách thành bản quét sạch: nắn thẳng, nền trắng, chữ rõ.',
+  scanModeCleanup: 'Làm sạch & nắn thẳng',
+  scanModeEnhance: 'Tăng nét chữ',
+  scanApply: 'Quét ngay',
+  scanNote: 'AI không thay đổi nội dung chữ trên tài liệu — chỉ làm sạch hình ảnh.',
+
+  // --- Product ---
+  productTitle: 'Ảnh Sản Phẩm',
+  productDesc: 'Công cụ cho ảnh bán hàng: tách nền, nền trắng chuẩn sàn thương mại, thêm bóng đổ và nâng cấp chuyên nghiệp.',
+  productOpRemoveBg: 'Tách nền',
+  productOpWhiteBg: 'Nền trắng',
+  productOpShadow: 'Thêm bóng đổ',
+  productOpEnhance: 'Nâng cấp chuyên nghiệp',
+  productApply: 'Xử lý ảnh',
+
+  // --- Crop ---
+  cropTitle: 'Cắt & Đổi Kích Thước',
+  cropDesc: 'Cắt ảnh theo tỷ lệ khung phổ biến ngay trên trình duyệt, không cần tải lên máy chủ.',
+  cropAspectLabel: 'Tỷ lệ khung',
+  cropAspectFree: 'Tự do',
+  cropAspectOriginal: 'Theo ảnh gốc',
+  cropApply: 'Cắt ảnh',
+  cropApplyEnhance: 'Cắt + AI nâng cấp',
+  cropHint: 'Kéo để chọn vùng cắt, kéo các góc để đổi kích thước vùng chọn.',
 
   // --- Prompts (Optimized & Simplified) ---
   

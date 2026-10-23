@@ -5,9 +5,12 @@
 
 import React, { useEffect, useRef, Suspense } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { BrushIcon, IdCardIcon, ExpandIcon, SparklesIcon, UsersIcon } from './icons';
+import { BrushIcon, IdCardIcon, ExpandIcon, SparklesIcon, UsersIcon, ArrowPathIcon, FaceRestoreIcon, DocumentScannerIcon, TagIcon, ViewfinderCircleIcon } from './icons';
 import type { Tab, Gender, SelectionMode } from '../types';
 import type { IdPhotoOptions } from '../services/geminiService';
+import type { BeautyPreset } from '../services/beautyService';
+import type { ScanMode } from '../services/scanService';
+import type { ProductOperation } from '../services/productService';
 import Spinner from './Spinner';
 
 // Dynamic imports (Lazy Loading) to optimize initial bundle size
@@ -17,6 +20,11 @@ const AdjustmentPanel = React.lazy(() => import('./AdjustmentPanel'));
 // Handle named export for ExpandPanel
 const ExpandPanel = React.lazy(() => import('./ExpandPanel').then(module => ({ default: module.ExpandPanel })));
 const StudioPanel = React.lazy(() => import('./StudioPanel'));
+const FaceSwapPanel = React.lazy(() => import('./FaceSwapPanel'));
+const BeautyPanel = React.lazy(() => import('./BeautyPanel'));
+const ScanPanel = React.lazy(() => import('./ScanPanel'));
+const ProductPanel = React.lazy(() => import('./ProductPanel'));
+const CropPanel = React.lazy(() => import('./CropPanel'));
 
 
 interface EditorSidebarProps {
@@ -66,6 +74,12 @@ interface EditorSidebarProps {
   onStudioRemoveSubject: (index: number) => void;
   expandActiveAspect: number | null;
   onGenerateCreativePrompt: () => void;
+  onApplyFaceSwap: (faceFile: File) => void;
+  onApplyBeauty: (preset: BeautyPreset, intensity: number, customRequest?: string) => void;
+  onApplyScan: (mode: ScanMode) => void;
+  onApplyProduct: (operation: ProductOperation) => void;
+  onApplyCrop: (dataUrl: string) => void;
+  onApplyCropAndEnhance: (dataUrl: string) => void;
   sources: any[];
   onViewExtractedItem: (setIndex: number, itemIndex: number) => void;
   isMobile?: boolean;
@@ -78,6 +92,11 @@ export const TABS_CONFIG = [
     { id: 'studio', icon: UsersIcon, tooltip: 'tooltipStudio' },
     { id: 'idphoto', icon: IdCardIcon, tooltip: 'tooltipIdPhoto' },
     { id: 'expand', icon: ExpandIcon, tooltip: 'tooltipExpand' },
+    { id: 'faceswap', icon: ArrowPathIcon, tooltip: 'tooltipFaceSwap' },
+    { id: 'beauty', icon: FaceRestoreIcon, tooltip: 'tooltipBeauty' },
+    { id: 'scan', icon: DocumentScannerIcon, tooltip: 'tooltipScan' },
+    { id: 'product', icon: TagIcon, tooltip: 'tooltipProduct' },
+    { id: 'crop', icon: ViewfinderCircleIcon, tooltip: 'tooltipCrop' },
 ];
 
 const PanelLoader = () => (
@@ -91,6 +110,16 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
   const { className, isImageLoaded, isLoading, activeTab, setActiveTab, isMobile } = props;
   const { t } = useTranslation();
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Object URL of the current image for panels that render it directly
+  // (Crop). Revoked when the image changes or the sidebar unmounts.
+  const currentImageUrl = React.useMemo(
+      () => (props.currentImage ? URL.createObjectURL(props.currentImage) : null),
+      [props.currentImage]
+  );
+  useEffect(() => {
+      return () => { if (currentImageUrl) URL.revokeObjectURL(currentImageUrl); };
+  }, [currentImageUrl]);
 
   const handleWheel = (e: WheelEvent) => {
     if (tabsContainerRef.current) {
@@ -203,6 +232,54 @@ const EditorSidebar: React.FC<EditorSidebarProps> = (props) => {
             setActiveTab={props.setActiveTab}
             isMobile={props.isMobile}
             onToggleToolbox={props.onToggleToolbox}
+        />;
+      case 'faceswap':
+        return <FaceSwapPanel
+          onApplyFaceSwap={props.onApplyFaceSwap}
+          isLoading={isLoading}
+          isImageLoaded={isImageLoaded}
+          setActiveTab={props.setActiveTab}
+          isMobile={props.isMobile}
+          onToggleToolbox={props.onToggleToolbox}
+        />;
+      case 'beauty':
+        return <BeautyPanel
+          onApplyBeauty={props.onApplyBeauty}
+          isLoading={isLoading}
+          isImageLoaded={isImageLoaded}
+          setActiveTab={props.setActiveTab}
+          isMobile={props.isMobile}
+          onToggleToolbox={props.onToggleToolbox}
+        />;
+      case 'scan':
+        return <ScanPanel
+          onApplyScan={props.onApplyScan}
+          isLoading={isLoading}
+          isImageLoaded={isImageLoaded}
+          setActiveTab={props.setActiveTab}
+          isMobile={props.isMobile}
+          onToggleToolbox={props.onToggleToolbox}
+        />;
+      case 'product':
+        return <ProductPanel
+          onApplyProduct={props.onApplyProduct}
+          isLoading={isLoading}
+          isImageLoaded={isImageLoaded}
+          setActiveTab={props.setActiveTab}
+          isMobile={props.isMobile}
+          onToggleToolbox={props.onToggleToolbox}
+        />;
+      case 'crop':
+        return <CropPanel
+          currentImage={currentImageUrl}
+          imageDimensions={props.imageDimensions}
+          onApplyCrop={props.onApplyCrop}
+          onApplyCropAndEnhance={props.onApplyCropAndEnhance}
+          isLoading={isLoading}
+          isImageLoaded={isImageLoaded}
+          setActiveTab={props.setActiveTab}
+          isMobile={props.isMobile}
+          onToggleToolbox={props.onToggleToolbox}
         />;
       default:
         return null;
