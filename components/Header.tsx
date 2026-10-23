@@ -66,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({
                     <h1 className="text-xl font-bold tracking-tight text-white">
                       {t('appName')}
                     </h1>
-                    <span className="ml-1.5 text-xs font-semibold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded-full border border-cyan-400/50">v1.0</span>
+                    <span className="ml-1.5 text-xs font-semibold text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded-full border border-cyan-400/50">v2.0</span>
                 </div>
             </button>
             

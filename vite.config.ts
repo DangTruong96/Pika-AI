@@ -5,6 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      // Base path: '/' for local dev and root deployments. The GitHub
+      // Pages demo is built with VITE_BASE=/Pika-AI/ (project subpath).
+      base: process.env.VITE_BASE || '/',
       server: {
         port: 3000,
         host: '0.0.0.0',

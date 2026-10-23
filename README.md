@@ -8,16 +8,18 @@ The interface is in Vietnamese.
 
 ## Status
 
-Pika AI was developed during 2025 and is **not currently under active
-development**. The repository is kept as a working reference implementation:
-as of October 2026 it still installs, builds (`npm run build`) and runs
-locally (`npm run dev`) with the steps below. The AI features call the live
-Gemini API, so they need your own API key and may reflect whatever the
-current Gemini models return.
+**v2.0.0 (October 2026) — maintained.** This release adds five new tools
+(ten in total), switches the app to a bring-your-own-key model, migrates
+to the current Gemini image models, and adds a unit-test suite. See
+[CHANGELOG.md](CHANGELOG.md) for details.
+
+**Live demo:** https://dangtruong96.github.io/Pika-AI/ — the demo runs
+entirely in your browser; paste your own Gemini API key (see below) to
+use the AI tools. The Crop tool works without a key.
 
 ## Features
 
-The editor has five tools, plus the usual editor basics (rotate, flip,
+The editor has ten tools, plus the usual editor basics (rotate, flip,
 undo/redo history, and a fullscreen viewer with before/after comparison):
 
 - **Retouch** — Paint a mask over part of a photo, describe the change in
@@ -39,6 +41,17 @@ undo/redo history, and a fullscreen viewer with before/after comparison):
   plus a dedicated newborn mode.
 - **Expand** — AI outpainting: drag the frame past any edge of the original
   photo and the AI fills in the new area.
+- **Face Swap** — Put a face from a reference photo onto the person in the
+  current photo, keeping pose, outfit, lighting and background.
+- **Beauty** — Deep portrait retouch: five presets (natural, glamour,
+  skin, face-shape, or your own written request) with an intensity scale.
+- **Scan** — Turn a photo of a paper document into a clean scan:
+  straightened, white background, shadows removed, text sharpened.
+- **Product** — E-commerce photo tools: background removal, pure-white
+  background, realistic contact shadow, professional retouch.
+- **Crop** — Crop to common aspect ratios (1:1, 4:3, 3:4, 16:9, 9:16)
+  entirely in the browser — no API key needed — with an optional AI
+  enhance pass afterwards.
 
 Behavior is driven by editable prompt templates in the `prompts/` folder
 (loaded at runtime), so most tools can be re-tuned without touching code.
@@ -46,9 +59,11 @@ Behavior is driven by editable prompt templates in the `prompts/` folder
 ## Tech stack
 
 - **React 19 + TypeScript 5.8**, bundled with **Vite 6**
-- **Google Gemini API** via `@google/genai` — Gemini 2.5 Flash,
-  Gemini 2.5 Flash Image and Imagen 4 for text-to-image
-- **Tailwind CSS** (CDN) for styling
+- **Google Gemini API** via `@google/genai` — `gemini-3.1-flash-image`
+  ("Nano Banana 2") for image generation/editing and `gemini-2.5-flash`
+  for text/prompt drafting (model IDs verified against Google's official
+  documentation, October 2026)
+- **Tailwind CSS** (CDN) for styling, **Vitest** for unit tests
 - All processing happens through the Gemini API from the browser; there is
   no backend in this repository.
 
@@ -62,44 +77,43 @@ Behavior is driven by editable prompt templates in the `prompts/` folder
    npm install
    ```
 
-2. Provide your Gemini API key. Copy the example file to `.env.local`
-   (which is git-ignored) and fill in a key from
-   [Google AI Studio](https://aistudio.google.com/apikey):
+2. Start the app, then add your Gemini API key **in the app itself**
+   (bring-your-own-key): click **Khóa API** in the header, paste a key
+   from [Google AI Studio](https://aistudio.google.com/apikey), and the
+   app validates it with a lightweight API call before saving. The key
+   is stored only in your browser's `localStorage` and is only ever sent
+   to Google's API endpoints; you can change or remove it at any time in
+   the same dialog.
 
    ```bash
-   cp .env.example .env.local
-   # then edit .env.local:
-   # GEMINI_API_KEY=your-key-here
+   npm run dev        # dev server at http://localhost:3000
+   npm run build      # production build into dist/
+   npm test           # unit tests (Vitest)
    ```
 
-3. Start the dev server (http://localhost:3000):
+3. *(Optional, local development only)* Instead of pasting a key, you can
+   copy `.env.example` to `.env.local` (git-ignored) and set
+   `GEMINI_API_KEY` there; a key pasted in the app takes precedence.
 
-   ```bash
-   npm run dev
-   ```
-
-4. Or build for production:
-
-   ```bash
-   npm run build
-   ```
-
-> **API key caution:** Vite inlines `GEMINI_API_KEY` into the client bundle
-> at dev/build time (see `vite.config.ts`). Use a key you control, ideally
-> with API restrictions, and do not publish a build that contains a personal
-> key you intend to keep private.
+> **API key caution:** a key set via `.env.local` is inlined into the
+> client bundle at build time (see `vite.config.ts`). Only build with an
+> env key for your own local use — never publish a bundle that contains
+> a personal key. The deployed demo is built **without** any env key;
+> every visitor uses their own.
 
 > **Prompt templates:** the app fetches its prompt templates from
-> `/prompts/` at runtime. The Vite dev server serves the repository's
-> `prompts/` folder directly; if you deploy the contents of `dist/`
-> somewhere else, serve the `prompts/` folder alongside it.
+> `prompts/` at runtime. `npm run build` copies them into `dist/`
+> automatically; the dev server serves the repository folder directly.
 
 ## Project layout
 
-- `App.tsx`, `components/` — the editor shell and the five tool panels
+- `App.tsx`, `components/` — the editor shell and the ten tool panels
 - `hooks/` — editor state (history, results, per-tool logic)
-- `services/geminiService.ts` — all Gemini API calls
+- `services/` — Gemini API access (`geminiService.ts` plus one service
+  per AI tool) and BYOK key storage (`apiKey.ts`)
 - `prompts/` — the prompt templates that drive each tool
+- `utils/` — pure helpers (crop geometry, ID-photo sizes, prompt
+  templating), covered by the tests in `tests/`
 - `translations/`, `contexts/` — Vietnamese UI strings and language context
 
 ## License
