@@ -4,7 +4,7 @@
 */
 
 import React, { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { dataURLtoFile, RateLimitError, APIError, NetworkError, InvalidInputError, ContentSafetyError, ModelExecutionError, generateCreativePrompt, type GroundingChunk } from '../services/geminiService';
+import { dataURLtoFile, RateLimitError, APIError, NetworkError, InvalidInputError, ContentSafetyError, ModelExecutionError, MissingApiKeyError, generateCreativePrompt, type GroundingChunk } from '../services/geminiService';
 import { useTranslation } from '../contexts/LanguageContext';
 import type { TranslationKey } from '../translations';
 import { TABS_CONFIG } from '../components/EditorSidebar';
@@ -159,7 +159,8 @@ export const usePika = () => {
 
   const handleApiError = useCallback((err: unknown, contextKey: TranslationKey) => {
     let errorMessage: string;
-    if (err instanceof NetworkError) errorMessage = t('errorNetwork');
+    if (err instanceof MissingApiKeyError) errorMessage = t('errorMissingApiKey');
+    else if (err instanceof NetworkError) errorMessage = t('errorNetwork');
     else if (err instanceof InvalidInputError) errorMessage = t('errorInvalidInput');
     else if (err instanceof ContentSafetyError) errorMessage = t('errorContentSafety');
     else if (err instanceof ModelExecutionError) errorMessage = t('errorModelExecution');

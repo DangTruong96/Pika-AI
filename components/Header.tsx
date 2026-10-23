@@ -5,6 +5,7 @@
 import React from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { SparklesIcon, UndoIcon, RedoIcon, DownloadIcon, ArrowPathIcon, UploadIcon } from './icons';
+import ApiKeySettings from './ApiKeySettings';
 
 interface HeaderProps {
     isImageLoaded: boolean;
@@ -125,6 +126,7 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* Right Section: Actions & Language */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <ApiKeySettings />
             {isImageLoaded && (
                 <>
                     <button 

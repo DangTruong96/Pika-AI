@@ -34,6 +34,25 @@ const vi = {
   errorModelExecution: 'Lỗi dịch vụ AI.',
   errorContentSafety: 'Nội dung không phù hợp.',
   errorAPI: 'Lỗi phản hồi AI.',
+  errorMissingApiKey: 'Chưa có khóa API. Hãy thêm khóa Gemini của bạn trong Cài đặt khóa API.',
+
+  // --- API Key (BYOK) ---
+  apiKeySettings: 'Khóa API',
+  apiKeyTitle: 'Khóa API Gemini của bạn',
+  apiKeyIntro: 'Pika AI chạy bằng khóa API Gemini của chính bạn (BYOK). Lấy khóa miễn phí tại Google AI Studio, dán vào đây — hệ thống sẽ kiểm tra khóa bằng một lần gọi API nhẹ trước khi lưu.',
+  apiKeyGetKey: 'Mở Google AI Studio để lấy khóa',
+  apiKeyPlaceholder: 'Dán khóa API (AIza…)',
+  apiKeySave: 'Kiểm tra & lưu khóa',
+  apiKeyValidating: 'Đang kiểm tra khóa…',
+  apiKeySaved: 'Đã lưu khóa. Bạn có thể bắt đầu dùng các tính năng AI.',
+  apiKeyInvalid: 'Khóa không hợp lệ hoặc không có quyền truy cập Gemini API. Hãy kiểm tra lại khóa và thử lại.',
+  apiKeyImplausible: 'Khóa trông chưa đúng định dạng (quá ngắn hoặc chứa khoảng trắng).',
+  apiKeyCurrent: 'Khóa hiện tại',
+  apiKeyNotSet: 'Chưa có khóa nào được lưu.',
+  apiKeyStoredNote: 'Khóa chỉ được lưu trong trình duyệt trên thiết bị này (localStorage) và chỉ được gửi tới máy chủ Google khi gọi API. Khóa không bao giờ được gửi tới bất kỳ máy chủ nào khác.',
+  apiKeyRemove: 'Xóa khóa',
+  apiKeyRemoved: 'Đã xóa khóa khỏi trình duyệt này.',
+  apiKeyClose: 'Đóng',
 
   // --- UI Actions ---
   uploadImage: 'Tải Ảnh',
