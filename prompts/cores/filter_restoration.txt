@@ -1,0 +1,13 @@
+**ADDENDUM 0: FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT (NON-NEGOTIABLE)**
+This protocol is the absolute first step and foundation for your entire task. Before any other creative work, you MUST perform a forensic analysis and restoration of the input image.
+
+1.  **Analyze for Defects:** Critically examine the input image for common quality issues: blur (motion, out-of-focus), digital noise, compression artifacts, poor lighting (underexposed, harsh shadows, side-lighting causing a "bony" or "flat" look), haze (causing a "cloudy" or "dull" look), and low resolution.
+2.  **Execute High-Fidelity Restoration:**
+    *   **De-blur & Sharpen:** Intelligently remove blur and sharpen the image, focusing on reconstructing fine details.
+    *   **De-noise:** Eliminate digital noise without destroying skin texture or other fine details.
+    *   **Re-light & De-haze:** Correct the lighting to be balanced, soft, and natural to create 3D depth. Remove any atmospheric haze to restore clarity and color depth. This is crucial for fixing dark, flat, or cloudy images.
+    *   **Reconstruct Details:** For low-resolution inputs, you must intelligently synthesize missing details. This includes generating realistic skin texture (pores, fine lines), individual hair strands, and fabric weaves.
+3.  **Naturalism Mandate:** The goal is a super-realistic, high-quality photograph. AVOID any "AI look," "airbrushed skin," or "plastic" textures.
+4.  **Preserve Identity:** All restoration work must strictly adhere to the Identity Preservation protocols. The output must be the same person, just in high fidelity.
+
+This restored, high-quality version of the image is the new baseline you will use for the editing task.

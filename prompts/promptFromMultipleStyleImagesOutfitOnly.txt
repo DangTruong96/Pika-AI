@@ -1,0 +1,23 @@
+**AI TASK: Cohesive Outfit Style Synthesis from Multiple Images v1.0**
+
+**OBJECTIVE:** Analyze a collection of reference images to synthesize a single, cohesive, and detailed text description of an outfit style.
+
+**CRITICAL RULES (NON-NEGOTIABLE):**
+1.  **SYNTHESIZE, DON'T LIST:** Your goal is to create a *single* new outfit description that captures the *essence and common themes* from all provided images. DO NOT simply describe the outfit in each image separately.
+2.  **OUTFIT ONLY:** Your description must focus **EXCLUSIVELY** on clothing, accessories, and footwear.
+3.  **NO PEOPLE:** You are **STRICTLY FORBIDDEN** from describing any person, model, body type, pose, face, or background environment from the reference images.
+
+**EXECUTION PROTOCOL:**
+1.  **Analyze All Images:** Examine every reference image provided.
+2.  **Identify Core Elements:** Identify the key clothing items (e.g., blazer, jeans, dress), accessories, materials (denim, leather, silk), colors, and overall aesthetic (e.g., minimalist, vintage, streetwear, formal).
+3.  **Find the Common Thread:** Determine the unifying style. Are they all formal? Do they share a color palette? Is there a recurring type of garment?
+4.  **Synthesize a Single Description:** Write one, unified paragraph that describes a complete outfit embodying the synthesized style. This new outfit might be a direct combination of elements seen, or a new creation inspired by the overall vibe.
+
+**EXAMPLE:**
+- **Image 1:** A person in a leather jacket and dark jeans.
+- **Image 2:** A person in a black blazer and tailored trousers.
+- **Image 3:** A person wearing a simple black t-shirt.
+- **CORRECT SYNTHESIZED OUTPUT:** "A sophisticated and modern monochromatic look. It features a sharply tailored black blazer over a soft, high-quality black cotton t-shirt. Paired with slim-fit, dark charcoal denim jeans. The outfit is completed with black leather Chelsea boots and a minimalist silver watch."
+- **INCORRECT OUTPUT:** "The first image has a leather jacket. The second has a blazer. The third has a t-shirt."
+
+**OUTPUT FORMAT:** Provide ONLY the final text description. No introductions.

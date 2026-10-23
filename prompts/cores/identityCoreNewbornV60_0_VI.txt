@@ -1,0 +1,49 @@
+---
+**GIAO THỨC LÕI BẢO TOÀN DANH TÍNH TRẺ SƠ SINH v60.0 (ƯU TIÊN TUYỆT ĐỐI - KHÔNG KHOAN NHƯỢNG)**
+**MÔ HÌNH THỰC THI THEO GIAI ĐOẠN (PHASED EXECUTION MODEL)**
+
+**MỆNH LỆNH GHI ĐÈ TỐI THƯỢỢNG:** Đây là quy trình kỹ thuật bắt buộc. Việc thay đổi danh tính của em bé là một **THẤT BẠI TUYỆT ĐỐI**.
+
+---
+**GIAI ĐOẠN 1: QUÉT & KHÓA (SCAN & LOCK) - TRÍCH XUẤT DỮ LIỆU BẤT BIẾN**
+
+1.  **MỤC TIÊU:** Tạo ra một "Đối tượng Dữ liệu Sinh trắc học" (BDO) bất biến cho trẻ sơ sinh.
+2.  **QUY TRÌNH:**
+    a.  **QUÉT HÌNH HỌC 3D:** Tạo một "Lưới Cấu trúc 3D" chính xác của đầu và mặt em bé. Lưới này phải ghi lại:
+        -   Hình dạng tự nhiên: má phúng phính, cằm nọng (nếu có), hình dạng trán.
+        -   Vị trí, kích thước, và hình dạng chính xác của mắt, mũi, và môi.
+    b.  **TRÍCH XUẤT BẢN ĐỒ KẾT CẤU:** Tạo ra một "Bản đồ Kết cấu". Bản đồ này phải ghi lại:
+        -   Các đặc điểm độc nhất như ban sữa, nếp gấp da tự nhiên.
+        -   Số lượng, kết cấu, và kiểu dáng tự nhiên của tóc (xoáy tóc, tóc dựng).
+    c.  **KHÓA (LOCK):** BDO được coi là **BẤT BIẾN** và được khóa ghi.
+
+---
+**GIAI ĐOẠN 2: TÁI CHIẾU (RE-PROJECTION) - ÁP DỤNG DỮ LIỆU BẤT BIẾN**
+
+1.  **MỤC TIÊU:** "Chiếu" BDO đã được khóa lên một tư thế ảnh thẻ mới.
+2.  **QUY TRÌNH:**
+    a.  **CĂN CHỈNH & TÁI CHIẾU:** Chiếu Lưới Cấu trúc 3D lên vị trí đầu mới. Áp dụng Bản đồ Kết cấu.
+    b.  **CẤM TUYỆT ĐỐI LÝ TƯỞNG HÓA (ZERO-TOLERANCE ON IDEALIZATION):**
+        -   **KHÔNG** "làm đẹp", "cân đối", hoặc "sửa chữa" bất kỳ đặc điểm nào.
+        -   **KHÔNG** thay đổi các đặc điểm độc nhất: má phúng phính, hình dạng môi/mắt/cằm.
+        -   **TÓC:** Không thêm tóc, thay đổi kiểu tóc, hoặc làm tóc dày hơn.
+        -   **DA:** Không thêm lỗ chân lông. Da trẻ sơ sinh phải có độ mịn tự nhiên.
+        -   **CỔ:** Tránh tạo ra các ngấn nọng cằm sâu hoặc không tự nhiên ở vùng cổ. Mục tiêu là một đường viền cổ mềm mại, tự nhiên.
+
+---
+**GIAI ĐOẠN 3: KIỂM TOÁN SINH TRẮC HỌC SAU KHI KẾT XUẤT**
+
+1.  **MỤC TIÊU:** Xác minh danh tính không bị thay đổi.
+2.  **QUY TRÌNH:**
+    a.  **QUÉT KẾT QUẢ & SO SÁNH:** So sánh BDO của ảnh kết quả với BDO gốc.
+    b.  **PHÂN TÍCH SAI LỆCH:** Bất kỳ sai lệch nào về hình dạng khuôn mặt, vị trí đặc điểm, hoặc kết cấu tóc đều là lỗi nghiêm trọng.
+    c.  **ĐẠT/KHÔNG ĐẠT:** Nếu không đạt, hủy bỏ và làm lại.
+
+---
+**CÁC KẾT QUẢ KHÔNG MONG MUỐN (THẤT BẠI NGHIÊM TRỌNG):**
+- Em bé bị "cân đối" hoặc "lý tưởng hóa" như búp bê.
+- Mất các đặc điểm độc nhất: má phúng phính, hình dạng môi/mắt/cằm.
+- Số lượng hoặc kiểu dáng tóc bị thay đổi.
+- Biểu cảm bị thay đổi.
+- Da có kết cấu của người lớn hoặc bị làm mịn quá mức.
+- Cổ có các ngấn không tự nhiên.

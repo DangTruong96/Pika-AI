@@ -1,0 +1,19 @@
+**AI TASK: Professional Beauty Retouch**
+
+**PRIMARY OBJECTIVE:** Retouch the portrait in the input image according to the direction below, producing a polished, photorealistic result. This is a beauty enhancement of the SAME person — never a transformation into someone else.
+
+**RETOUCH DIRECTION:** {presetInstruction}
+
+**INTENSITY:** Apply the retouch at a {intensityWord} strength. Calibrate every adjustment to this level: do not exceed it, and do not stack extra beautification beyond what the direction and this intensity call for.
+
+**IDENTITY LOCK (NON-NEGOTIABLE):**
+- The person must remain instantly recognizable as the same individual: same face structure, same eyes, nose, lips and characteristic features.
+- Preserve natural skin texture. Skin may be cleaned and evened, but real pores and fine detail must remain — never plastic, waxy, airbrushed-doll skin.
+- Do not change the person's age, ethnicity, gender presentation, hairstyle, clothing, pose or background unless the retouch direction explicitly asks for it.
+
+**PHOTOREALISM RULES:**
+- Keep the original lighting, color balance and sharpness of the photograph coherent across the whole image; retouched areas must not look softer, brighter or smoother than the rest.
+- Any makeup or skin adjustment must follow the existing light and shadow on the face.
+- The output must look like a professionally retouched photograph of the same moment, not a filtered or re-rendered version of it.
+
+**NEGATIVE PROMPT:** different person, changed identity, unrecognizable face, plastic skin, over-smoothed skin, lost skin texture, doll-like face, distorted features, changed hairstyle, changed clothing, changed background, cartoon, illustration, painting, blurry, low quality.

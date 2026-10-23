@@ -1,0 +1,28 @@
+---
+**GIAO THỨC MÔ PHỎNG VẬT LÝ VẢI NÂNG CAO v3.0 (KHÓA DÁNG NGƯỜI & VẢI)**
+
+**CHỈ THỊ GHI ĐÈ:** Chỉ thị này là mệnh lệnh tuyệt đối, không thể phá vỡ, và ghi đè lên mọi diễn giải về kiểu dáng hay phong cách. Mệnh lệnh cốt lõi là: Quần áo được tạo ra BẮT BUỘC phải tuân theo và làm nổi bật hình dáng tự nhiên của cơ thể người mặc, đồng thời thể hiện các đặc tính vật lý chính xác của chất liệu vải.
+
+1.  **QUÉT HÌNH DÁNG CƠ THỂ 3D (3D BODYFORM SCAN - BẮT BUỘC):**
+    -   Trước khi render bất kỳ sợi vải nào, BẠN BẮT BUỘC phải thực hiện một "quét" kỹ thuật số để suy ra hình dạng 3D đầy đủ của cơ thể chủ thể bên dưới lớp quần áo gốc. Điều này bao gồm việc xác định chính xác vị trí của eo, hông, ngực, vai và độ cong của lưng.
+    -   "Khung 3D" được suy ra này trở thành một manơcanh vật lý (physical mannequin) không thể thay đổi, có thuộc tính va chạm. MỌI quần áo mới BẮT BUỘC phải được mô phỏng vật lý để vừa vặn trên manơcanh này.
+
+2.  **MÔ PHỎNG VẬT LÝ ĐA THAM SỐ (MULTI-PARAMETER PHYSICS SIMULATION):**
+    -   **(A) MỆNH LỆNH "ĐIỂM NEO" (ANCHOR POINT MANDATE):** Quần áo phải được "neo" một cách hợp lý vào cơ thể tại các điểm chính để thể hiện hình dáng (eo, hông). Việc bỏ qua các "điểm neo" này dẫn đến "hiệu ứng lều" (tent effect) và là một THẤT BẠI NGHIÊM TRỌNG.
+    -   **(B) THAM SỐ TRỌNG LƯỢNG VẢI (FABRIC WEIGHT PARAMETER):** Bạn BẮT BUỘC phải mô phỏng trọng lượng của vải.
+        -   **Vải nhẹ (ví dụ: lụa, voan):** Phải rủ xuống một cách mềm mại, chảy và dễ dàng di chuyển theo cơ thể.
+        -   **Vải nặng (ví dụ: denim, len, da):** Phải có độ cứng và cấu trúc rõ rệt, tạo ra các nếp gấp lớn hơn, ít hơn và không chảy theo đường cong cơ thể một cách dễ dàng.
+    -   **(C) THAM SỐ ĐỘ CO GIÃN (ELASTICITY PARAMETER):** Bạn BẮT BUỘC phải mô phỏng độ co giãn của vải.
+        -   **Vải co giãn (ví dụ: spandex, jersey):** Phải ôm sát vào cơ thể, thể hiện rõ các đường cong bên dưới.
+        -   **Vải không co giãn (ví dụ: linen, cotton dệt thoi):** Phải giữ nguyên hình dạng và tạo ra các nếp gấp khi cơ thể di chuyển, không được giãn ra để vừa vặn.
+    -   **(D) PHÁT HIỆN VA CHẠM (COLLISION DETECTION - ZERO TOLERANCE):**
+        -   **Vải-với-Cơ thể:** Vải **TUYỆT ĐỐI KHÔNG ĐƯỢC** xuyên qua cơ thể của manơcanh 3D. Mọi phần của quần áo phải nằm trên bề mặt cơ thể hoặc cách nó một khoảng hợp lý.
+        -   **Vải-với-Vải:** Các lớp quần áo khác nhau phải tương tác với nhau. Một chiếc áo khoác phải nằm bên ngoài áo sơ mi; chúng không được xuyên qua nhau.
+
+**ĐIỀU KIỆN THẤT BẠI NGHIÊM TRỌNG (IMMEDIATE REJECTION):**
+-   **"Hiệu ứng lều":** Quần áo tạo thành một đường thẳng từ vai/ngực xuống hông.
+-   **Mất dáng người:** Không thể phân biệt được eo hoặc hông của chủ thể.
+-   **Sai lệch Vật lý:** Vải nặng rủ xuống như vải nhẹ, hoặc vải không co giãn lại ôm sát như spandex.
+-   **Lỗi Va chạm (Clipping):** Bất kỳ phần nào của cơ thể xuyên qua quần áo, hoặc các lớp quần áo xuyên qua nhau.
+-   **Sai lệch tỷ lệ:** Quần áo làm cho chủ thể trông to hơn hoặc có hình dáng khác biệt đáng kể.
+---

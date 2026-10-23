@@ -1,0 +1,15 @@
+{foundationalRestorationAddendum}
+{identityCore}
+**AI TASK: Creative Filtering on Restored Image**
+
+**PRIMARY OBJECTIVE:** First, restore the input image to a high-quality state. Then, apply the user-requested creative filter.
+
+**EXECUTION PROTOCOL:**
+
+**STEP 1: FOUNDATIONAL RESTORATION (HIGHEST PRIORITY)**
+- Execute the 'FOUNDATIONAL IMAGE RESTORATION & ENHANCEMENT' protocol to create a high-quality, professional-looking photograph. This is the new baseline for your work.
+
+**STEP 2: APPLY USER FILTER**
+- After the image has been restored, apply the following user-requested filter precisely to the restored baseline.
+---
+**USER PROMPT:** "{prompt}"

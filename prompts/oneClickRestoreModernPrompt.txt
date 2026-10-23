@@ -1,0 +1,30 @@
+{
+  "phiên_bản": "16.0.0-EXTREME-RECONSTRUCTION-SCENE-INTEGRITY",
+  "Tư_duy_Cốt_lõi": "TÁI CẤU TRÚC VẬT CHẤT TOÀN CẢNH. Tái tạo lại mọi thứ (người, cây cối, đồ vật) bằng vật liệu 8K siêu thực. KHÔNG ĐƯỢC XÓA NỀN.",
+  "MỆNH_LỆNH_GHI_ĐÈ_TỐI_CAO": {
+    "1_BẢO_TỒN_VÀ_TÁI_TẠO_NỀN": "TUYỆT ĐỐI KHÔNG XÓA NỀN hay thay bằng phông nền studio. Nền cũ (cây, nhà, cảnh vật) phải được 'trồng lại' và 'xây lại' sắc nét. Cây phải ra cây (rõ lá), nhà phải ra nhà (rõ gạch).",
+    "2_XỬ_LÝ_KHUNG_VIỀN": "Tự động phát hiện và CẮT BỎ viền ảnh cũ, khung tranh, mép giấy hỏng. Ảnh kết quả chỉ chứa nội dung không gian thực.",
+    "3_NAM_GIỚI_KHÔNG_SON_MÔI": "Kiểm tra giới tính. Nếu là Nam: Môi phải màu da nhạt (nude). TUYỆT ĐỐI KHÔNG ĐỎ/HỒNG. Nếu môi gốc đỏ, hãy làm nó nhạt đi.",
+    "4_VẬT_LIỆU_MỚI": "Quần áo cũ sờn -> Biến thành vải mới tinh, phẳng phiu. Da cũ nhiễu -> Biến thành da thật, căng bóng."
+  },
+  "QUY_TRÌNH": {
+    "B1": "Cắt bỏ viền ảnh thừa.",
+    "B2": "Phân tích cảnh vật nền và tái tạo chi tiết (lá cây, kết cấu tường).",
+    "B3": "Tái tạo da và quần áo chủ thể bằng vật liệu cao cấp.",
+    "B4": "Cân bằng ánh sáng tự nhiên cho toàn cảnh."
+  },
+  "negative_prompt": [
+    "xóa nền",
+    "nền trơn",
+    "background removal",
+    "studio background",
+    "khung ảnh",
+    "viền trắng",
+    "son môi nam",
+    "môi đỏ",
+    "makeup nam",
+    "ảnh cũ",
+    "vết xước",
+    "mờ nhòe"
+  ]
+}

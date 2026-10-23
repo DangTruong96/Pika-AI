@@ -1,0 +1,59 @@
+{hierarchyOfTruth}
+
+**AI TASK: Professional Photoshoot Generation v9.0 (Phased Execution Protocol)**
+
+**MỆNH LỆNH TỐI CAO:** Bạn phải thực hiện nhiệm vụ này theo một quy trình gồm 3 giai đoạn riêng biệt. Việc bỏ qua hoặc gộp các giai đoạn là một **THẤT BẠI NGHIÊM TRỌNG**.
+
+---
+**GIAI ĐOẠN 1: TRÍCH XUẤT VÀ KHÓA DỮ LIỆU SINH TRẮC HỌC**
+1.  **NHIỆM VỤ:** Xác định (các) hình ảnh `--- SUBJECT ... ---`.
+2.  **THỰC THI:** Thực thi nghiêm ngặt Giai đoạn 1 "QUÉT VÀ KHÓA (SCAN & LOCK)" từ giao thức `{identityCore}`. Tạo và khóa ghi "Lưới Cấu trúc 3D" và "Bản đồ Kết cấu Tần số cao".
+3.  **XÁC NHẬN:** Giai đoạn này hoàn tất khi dữ liệu sinh trắc học nguồn đã được bảo mật và không thể thay đổi.
+---
+**GIAI ĐOẠN 2: XÂY DỰNG BỐI CẢNH VÀ CƠ THỂ MỚI**
+1.  **NHIỆM VỤ:** Xây dựng một thế giới mới xung quanh dữ liệu sinh trắc học đã được khóa.
+2.  **THỰC THI:**
+    -   **Phân tích Hướng dẫn:** Đọc và diễn giải `USER SCENE PROMPT` và `OUTFIT DESCRIPTION`.
+    -   **Thực thi Giao thức Nhận dạng:** Tuân thủ "CONDITIONAL IDENTITY GENERATION PROTOCOL" để xác định có cần tạo thêm người nổi tiếng hay không.
+    -   **Tạo Tư thế & Trang phục:** Tạo một cơ thể mới với tư thế phù hợp và mặc trang phục được mô tả, tuân thủ `{bodyformAndSilhouetteIntegrity}`. Tại thời điểm này, đầu có thể là một ma-nơ-canh không có đặc điểm.
+    -   **Tạo Bối cảnh:** Xây dựng môi trường, tuân thủ `{physicalInteractionEngine}` và `{forensicReconstructionEngine}` cho các vật thể.
+    -   **Tích hợp Vật thể:** Nếu có hình ảnh `--- OBJECT ... ---`, thực thi `OBJECT INTEGRATION PROTOCOL`.
+---
+**GIAI ĐOẠN 3: TÁI CHIẾU, HỢP NHẤT VÀ KIỂM TOÁN**
+1.  **NHIỆM VỤ:** Tích hợp dữ liệu sinh trắc học vào bối cảnh mới và hoàn thiện.
+2.  **THỰC THI:**
+    -   **Tái chiếu:** Thực thi Giai đoạn 2 "TÁI CHIẾU (RE-PROJECTION)" từ `{identityCore}`. Vứt bỏ đầu ma-nơ-canh và chiếu dữ liệu đã khóa lên cơ thể.
+    -   **Hợp nhất Ánh sáng & Phong cách:** Thực thi `{photorealisticLightingEngine}` và `{unificationEngine}` để đảm bảo chủ thể hòa hợp hoàn hảo với môi trường.
+    -   **KIỂM TOÁN CUỐI CÙNG (BẮT BUỘC):** Thực thi Giai đoạn 3 "KIỂM TOÁN SINH TRẮC HỌC SAU KHI KẾT XUẤT" từ `{identityCore}`. Nếu không đạt, hủy bỏ và làm lại.
+---
+
+**CÁC GIAO THỨC PHỤ TRỢ (Sub-Protocols):**
+{restorationAddendum}
+{identityCore}
+{physicalInteractionEngine}
+{unificationEngine}
+{forensicReconstructionEngine}
+{bodyformAndSilhouetteIntegrity}
+{photorealisticLightingEngine}
+{criticalDirective}
+
+**OBJECT INTEGRATION PROTOCOL v2.0 (ZERO-TOLERANCE FIDELITY MANDATE)**
+-   **DIRECTIVE:** If you are provided with "--- OBJECT X ---" images, you MUST execute this.
+-   **MANDATE:** The object is a "LOCKED ASSET". You are **STRICTLY FORBIDDEN** from altering its form, design, or color. The ONLY permitted modification is re-lighting. Integrate the **EXACT, UNMODIFIED** object into the scene.
+
+**CONDITIONAL IDENTITY GENERATION PROTOCOL (ZERO-TOLERANCE):**
+-   **ANALYSIS:** Does the `USER SCENE PROMPT` explicitly name a second, famous individual?
+-   **LOGIC:** IF NO, the final image must ONLY contain the person from `SUBJECT IMAGE`. IF YES, you are authorized to generate ONE new, recognizable famous person in addition to the preserved subject.
+
+**GROUP PHOTO PROTOCOL (ZERO-TOLERANCE):**
+-   You **MUST** identify **EVERY** person in the 'SUBJECT IMAGE'. The `identityCore` protocol applies to **EACH** person. Your task is to place **ALL** identified subjects into the new scene.
+
+**SCENE INTERPRETATION MANDATE (ZERO-TOLERANCE):**
+-   You are **STRICTLY FORBIDDEN** from rendering any photography or studio equipment (cameras, lights, etc.). The scene described IS THE FINAL IMAGE.
+
+---
+**USER SCENE PROMPT (Guideline):**
+"{prompt}"
+
+**OUTFIT DESCRIPTION (Guideline):**
+"{outfitDescription}"

@@ -1,0 +1,27 @@
+---
+**PHYSICAL INTERACTION & OCCLUSION ENGINE v4.0 (STRICT PROTOCOL)**
+
+**PRIMARY DIRECTIVE:** This protocol overrides all blending or stylistic choices. All objects, especially people, are SOLID, OPAQUE, and COMPLETE entities that occupy physical space and adhere to realistic physics and proportions.
+
+1.  **ZERO-TOLERANCE ON BODY MERGING:** Each person is a distinct, solid, and complete physical entity. Their bodies, limbs, and clothing **CANNOT** be merged, blended, fused, or unnaturally combined with another person's. Each person must be rendered as a whole, anatomically correct individual.
+
+2.  **Strict Occlusion Mandate:** One object in front of another MUST completely block the view of the object behind it. **ZERO-TOLERANCE for transparency or "ghosting" effects at object boundaries.** Where two subjects overlap, the foreground subject's edge must be sharp and completely opaque.
+
+3.  **Hard Boundary Segmentation:** Before composition, you MUST perform a high-precision segmentation to define the exact, hard-edge silhouette of each subject. This boundary is non-negotiable and must not be blurred or blended away during integration.
+
+4.  **Physics-Based Contact & Shadowing:**
+    *   **Contact Points:** Where one object touches another (e.g., a hand on a table, an arm around a shoulder), you MUST render realistic contact shadows to ground the objects together.
+    *   **No Light Bleed:** Light from the background MUST NOT bleed through the edges of foreground subjects. The silhouette must be solid.
+
+5.  **Layer-Based Composition Logic:** Treat the scene as a stack of layers (e.g., Background, Person 1, Person 2, Foreground Object). Each layer is 100% opaque. Render them in order from back to front.
+
+6.  **Realistic Scale & Proportion Mandate (ZERO-TOLERANCE):** All objects, especially those provided as input or described in the prompt (e.g., phones, cups, books), **MUST** be rendered at a scale that is believable and proportionate to the human subjects and the environment. An oversized phone or an undersized car is a **CRITICAL FAILURE** that breaks realism.
+
+**FAILURE CONDITIONS (IMMEDIATE REJECTION):**
+- Any merging, blending, or fusing of subjects' bodies or limbs.
+- Any visible transparency or translucency at the edges of a person or object where it overlaps another.
+- "Ghosting" or "blending" effect between two distinct subjects or between a subject and the background.
+- Lack of contact shadows where objects should be touching.
+- Illogical continuation of background textures or light 'through' a foreground subject.
+- Objects rendered at an unrealistic or disproportionate scale (e.g., an oversized phone).
+---

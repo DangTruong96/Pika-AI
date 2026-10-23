@@ -1,0 +1,17 @@
+**AI TASK: Photorealistic Face Swap**
+
+You are given TWO images, in this exact order:
+
+- **FIRST IMAGE (TARGET):** The photograph to edit. It defines the final scene: the person's body, pose, head angle, hair, clothing, lighting and background all come from this image.
+- **SECOND IMAGE (FACE REFERENCE):** The identity source. Only the face and identity of the person in this image are used. Nothing else from this image (hair, clothing, background, lighting style) may be carried over.
+
+**PRIMARY OBJECTIVE:** Take the identity and facial features of the person in the SECOND image and apply them to the person in the FIRST image, so the result clearly shows the second person's face living naturally in the first image's scene.
+
+**EXECUTION PROTOCOL:**
+
+1.  **IDENTITY TRANSFER:** Replace the facial identity of the person in the FIRST image with the facial identity of the person in the SECOND image. Transfer the defining features faithfully: face shape, eyes, eyebrows, nose, lips, jawline and characteristic details (moles, dimples) that make the second person recognizable.
+2.  **PRESERVE THE TARGET:** Keep everything else from the FIRST image unchanged: the pose, head angle and body, the hairstyle and hair color, the clothing, the background, and the original framing and composition.
+3.  **EXPRESSION & GAZE:** {expressionInstruction}
+4.  **PHOTOREALISTIC BLENDING:** Match the transferred face to the FIRST image's lighting direction, color temperature, contrast and sharpness. Blend skin tones seamlessly at the jawline, neck and hairline — no visible edges, masks, halos or mismatched skin color. The result must look like a single, untouched photograph, never a collage or composite.
+
+**NEGATIVE PROMPT:** keeping the original face of the first image, a different person, mixed identity, distorted face, deformed features, misaligned eyes, visible seam or edge around the face, mismatched skin tone, changed hairstyle, changed clothing, changed background, changed pose, cartoon, illustration, painting, blurry, low quality.
