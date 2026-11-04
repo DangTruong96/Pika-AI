@@ -8,10 +8,12 @@ The interface is in Vietnamese.
 
 ## Status
 
-**v2.0.0 (October 2026) — maintained.** This release adds five new tools
-(ten in total), switches the app to a bring-your-own-key model, migrates
-to the current Gemini image models, and adds a unit-test suite. See
-[CHANGELOG.md](CHANGELOG.md) for details.
+**v2.0.1 (November 2026) — maintained.** This release fixes
+prompt-template substitution corrupting user text (`$` patterns and
+placeholder-like text in prompts); see [CHANGELOG.md](CHANGELOG.md).
+v2.0.0 added five new tools (ten in total), switched the app to a
+bring-your-own-key model, migrated to the current Gemini image models,
+and added a unit-test suite.
 
 **Live demo:** https://dangtruong96.github.io/Pika-AI/ — the demo runs
 entirely in your browser; paste your own Gemini API key (see below) to

@@ -16,4 +16,27 @@ describe('applyReplacements', () => {
   it('returns the template unchanged without replacements', () => {
     expect(applyReplacements('Plain template.')).toBe('Plain template.');
   });
+  it('keeps $ patterns in values verbatim (no String.replace expansion)', () => {
+    expect(
+      applyReplacements('User: {prompt}', {
+        prompt: "price $& and $' and $$ and $50 done",
+      }),
+    ).toBe("User: price $& and $' and $$ and $50 done");
+  });
+  it('does not rescan inserted values for later placeholders', () => {
+    expect(
+      applyReplacements('A {prompt} B {outfitDescription} C', {
+        prompt: 'wear {outfitDescription} please',
+        outfitDescription: 'RED DRESS',
+      }),
+    ).toBe('A wear {outfitDescription} please B RED DRESS C');
+  });
+  it('does not rescan inserted values regardless of key order', () => {
+    expect(
+      applyReplacements('{outfitDescription} then {prompt}', {
+        outfitDescription: 'says {prompt} aloud',
+        prompt: 'HELLO',
+      }),
+    ).toBe('says {prompt} aloud then HELLO');
+  });
 });

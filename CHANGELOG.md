@@ -4,6 +4,32 @@ All notable changes to Pika AI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 semantic versioning.
 
+## [2.0.1] — 2026-11-04
+
+### Fixed
+
+- **Prompt-template substitution corrupted user text in two ways
+  (`utils/promptTemplate.ts`).** Substitution is now a single pass over
+  the template, with inserted values never rescanned and `$` patterns
+  passed through verbatim:
+  - A user prompt containing `$` patterns (for example a price like
+    "$50") was mangled before reaching the model, because
+    `String.replace()` with a string replacement expands `$&`, `$'`
+    and `$$` — "$&" was even replaced by the literal placeholder text
+    "{prompt}".
+  - A value inserted for an earlier key was re-scanned for later
+    placeholders, so a user prompt mentioning "{outfitDescription}"
+    was silently rewritten to the actual outfit description in
+    composite/photoshoot prompts (where `prompt` precedes
+    `outfitDescription`), and the literal "{superResolutionEngine}"
+    mention inside the ID-photo identity core was expanded into the
+    full super-resolution engine text. Unknown placeholders are still
+    left untouched, as before.
+- Regression tests added in `tests/promptTemplate.test.ts` (suite:
+  35 → 38 tests). Verified with `npm test`, `tsc --noEmit` and a
+  production build; live Gemini behavior is unchanged in scope (no API
+  key exists in the development environment, by design).
+
 ## [2.0.0] — 2026-10-23
 
 ### Added
