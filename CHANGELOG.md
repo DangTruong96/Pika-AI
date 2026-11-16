@@ -4,6 +4,43 @@ All notable changes to Pika AI are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 semantic versioning.
 
+## [2.0.2] — 2026-11-16
+
+### Fixed
+
+- **Extract panel crashed on image-less model responses
+  (`services/geminiService.ts`).** `generateExtractedItem` was the only
+  image function that read `response.candidates[0].content.parts` inline
+  instead of going through `getImageUrlFromResponse`, so an empty
+  candidate list — or a safety-blocked candidate with no content — threw
+  a raw `TypeError: Cannot read properties of undefined (reading
+  'content')`, which surfaced to the user as a generic API error. Response
+  parsing is now shared: image parts are collected with optional chaining,
+  and a response with no image is classified the same way everywhere —
+  the model's own text explanation when there is one, a
+  `ContentSafetyError` naming the blocked categories for safety blocks,
+  otherwise a `ModelExecutionError`.
+- **`withErrorHandling` silently downgraded the typed errors thrown by
+  the service layer.** A `ModelExecutionError` / `InvalidInputError` /
+  `ContentSafetyError` thrown inside an API call was caught and re-thrown
+  as a plain `APIError`, so the UI branches for those classes (for
+  example `errorModelExecution`) could never fire, and for safety blocks
+  the blocked-category detail was replaced by the generic message. Errors
+  that are already instances of `APIError` are now rethrown unchanged;
+  only unclassified SDK/network errors still go through the string-based
+  remapping (and rate-limit retries).
+- **Demo favicon 404 (`index.html`).** The page referenced `/vite.svg`,
+  a file that exists nowhere in the repo, so every load of the GitHub
+  Pages demo logged a 404 (and a root-absolute path would miss under the
+  `/Pika-AI/` subpath anyway). The icon is now an inline SVG data URI,
+  which resolves under any base path.
+- Regression tests added: `tests/geminiService.test.ts` (8 tests, mocked
+  Gemini client — no live key) and `tests/indexHtml.test.ts` (2 tests).
+  Suite: 38 → 48 tests. Verified with `npm test`, `tsc --noEmit` and a
+  production build with `VITE_BASE=/Pika-AI/`; live Gemini behavior is
+  unchanged in scope (no API key exists in the development environment,
+  by design).
+
 ## [2.0.1] — 2026-11-04
 
 ### Fixed

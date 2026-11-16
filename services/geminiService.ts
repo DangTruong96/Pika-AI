@@ -189,9 +189,14 @@ export async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T
         try {
             return await apiCall();
         } catch (err: unknown) {
-            // A missing BYOK key is a configuration state, not an API
-            // failure: never retry it and never remap it to another type.
-            if (err instanceof MissingApiKeyError) {
+            // Errors already classified by the service layer are final and
+            // must never be remapped below: a missing BYOK key is a
+            // configuration state, not an API failure, and InvalidInputError
+            // / ContentSafetyError / ModelExecutionError carry both the
+            // class the UI branches on and the detail message (the model's
+            // own explanation, the blocked categories). Remapping them to a
+            // generic APIError would lose both.
+            if (err instanceof APIError) {
                 throw err;
             }
             console.error(`Gemini Service Error (Attempt ${i + 1}/${MAX_RETRIES}):`, err);
@@ -261,25 +266,31 @@ export async function withErrorHandling<T>(apiCall: () => Promise<T>): Promise<T
 
 // --- IMPLEMENTED API FUNCTIONS ---
 
-export async function getImageUrlFromResponse(response: GenerateContentResponse): Promise<ImageResponse> {
-    const candidate = response.candidates?.[0];
-    const sources = candidate?.groundingMetadata?.groundingChunks ?? [];
-    let imageUrl: string | null = null;
-
-    if (candidate?.content?.parts) {
-        for (const part of candidate.content.parts) {
+/**
+ * Collects every inline image part of the first candidate as data URLs.
+ * A missing/empty candidate list yields an empty array — never a crash —
+ * so callers can classify the failure instead of tripping on
+ * `candidates[0].content`.
+ */
+const collectImageUrls = (response: GenerateContentResponse): string[] => {
+    const urls: string[] = [];
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (parts) {
+        for (const part of parts) {
             if (part.inlineData) {
-                const base64ImageBytes: string = part.inlineData.data;
-                imageUrl = `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
-                break; // Found the image, no need to loop further
+                urls.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
             }
         }
     }
+    return urls;
+};
 
-    if (imageUrl) {
-        return { imageUrl, sources };
-    }
-
+/**
+ * Throws the most specific error for a response that carried no image:
+ * the model's own text explanation when there is one, a safety error for
+ * blocked content, otherwise a plain model-execution failure.
+ */
+const throwNoImageError = (response: GenerateContentResponse): never => {
     // If no image part was found, check for a text response which might contain an error message.
     const textResponse = (response.text || '').trim();
 
@@ -289,6 +300,7 @@ export async function getImageUrlFromResponse(response: GenerateContentResponse)
     }
 
     // If there's no image and no text, check for other reasons like safety blocks.
+    const candidate = response.candidates?.[0];
     if (candidate) {
         const finishReason = candidate.finishReason as string | undefined;
         if (finishReason && finishReason !== 'STOP' && finishReason !== 'FINISH_REASON_UNSPECIFIED') {
@@ -303,8 +315,20 @@ export async function getImageUrlFromResponse(response: GenerateContentResponse)
             throw new ModelExecutionError(`Image generation failed. Finish reason: ${finishReason}.`);
         }
     }
-    
+
     throw new ModelExecutionError("No image found in the response from the AI model, and no explanation was provided.");
+};
+
+export async function getImageUrlFromResponse(response: GenerateContentResponse): Promise<ImageResponse> {
+    const candidate = response.candidates?.[0];
+    const sources = candidate?.groundingMetadata?.groundingChunks ?? [];
+    const imageUrls = collectImageUrls(response);
+
+    if (imageUrls.length > 0) {
+        return { imageUrl: imageUrls[0], sources };
+    }
+
+    throwNoImageError(response);
 }
 
 export const generateImageFromText = async (prompt: string, numberOfImages: number, aspectRatio: '1:1' | '16:9' | '9:16' | '4:3' | '3:4'): Promise<string[]> => {
@@ -474,14 +498,9 @@ export const generateExtractedItem = async (imageFile: File, prompt: string): Pr
             contents: { parts: [imagePart, { text: fullPrompt }] },
             config: { responseModalities: [Modality.IMAGE] },
         });
-        const results: string[] = [];
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                results.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
-            }
-        }
+        const results = collectImageUrls(response);
         if (results.length === 0) {
-          throw new ModelExecutionError("No item extracted from image.");
+            throwNoImageError(response);
         }
         return results;
     });
